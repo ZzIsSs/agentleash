@@ -2,7 +2,7 @@ import { http, createConfig } from "wagmi";
 import { avalancheFuji } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
-// Tuần 1 chỉ dùng Fuji C-Chain (chainId 43113). L1 permissioned thêm ở tuần 2.
+// Chỉ dùng Fuji C-Chain (chainId 43113). Chưa chốt giữ wagmi hay chỉ dùng viem, xem docs/SPEC.md.
 export const config = createConfig({
   chains: [avalancheFuji],
   connectors: [injected()],

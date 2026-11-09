@@ -6,7 +6,7 @@ Người phụ trách kỹ thuật: **Nguyên**. Mọi việc vượt ra ngoài 
 
 ## 1. Dự án
 
-Receivable Registry là sổ đăng ký khoản phải thu chống cầm cố trùng, thi Avalanche Team1 Vietnam UniHack 2026 (hạn nộp 21/11/2026). Đọc [README.md](README.md) và [docs/SPEC.md](docs/SPEC.md).
+AgentLeash là ví cho AI agent có "dây xích" on-chain: agent tự trả tiền API qua x402, nhưng mọi khoản chi phải qua policy contract có hạn mức, whitelist và nút tắt khẩn cấp. Dự án thi Avalanche Team1 Vietnam UniHack 2026 (hạn nộp 21/11/2026). Đọc [README.md](README.md) và [docs/SPEC.md](docs/SPEC.md).
 
 ## 2. Người bạn đang hỗ trợ
 
@@ -32,14 +32,16 @@ Trang mới chỉ làm phần **giao diện tĩnh**. Chỗ cần dữ liệu blo
 Không sửa, không xóa, không đổi tên, không di chuyển:
 
 - `contracts/` (toàn bộ): smart contract và test.
+- `agent/` và `sellers/` (toàn bộ, khi đã có): code agent, rule engine và các API thu phí.
 - `web/src/lib/`: cấu hình ví, chuỗi và địa chỉ contract.
 - `package.json`, `package-lock.json`, các file cấu hình (`*.config.*`, `tsconfig.json`).
 - `README.md`, `docs/SPEC.md`, `AGENTS.md`, `CLAUDE.md`.
 
 ## 5. Bí mật và an toàn
 
-- **Không bao giờ** đọc, mở, in ra, tạo hay commit file `.env` hoặc bất kỳ file nào chứa private key, seed phrase, mật khẩu. Thấy chuỗi giống private key (`0x` + 64 ký tự hex) thì dừng, báo người dùng, không chép lại.
+- **Không bao giờ** đọc, mở, in ra, tạo hay commit file `.env` hoặc bất kỳ file nào chứa private key, seed phrase, mật khẩu, app secret. Thấy chuỗi giống private key (`0x` + 64 ký tự hex) thì dừng, báo người dùng, không chép lại.
 - Không kết nối ví, không ký hay gửi giao dịch, không deploy contract.
+- Không chạy agent hay API thu phí: chúng tiêu USDC test thật trên Fuji.
 - Không gửi code hay dữ liệu dự án lên dịch vụ bên ngoài.
 
 ## 6. Lệnh terminal và git
@@ -53,13 +55,13 @@ Không sửa, không xóa, không đổi tên, không di chuyển:
 - Bất kỳ lệnh nào ghi lên nhánh `main`: commit thẳng vào `main`, `git push origin main`, merge vào `main`.
 - `git push --force`, `git reset --hard`, `git rebase`, `git clean`, `git checkout -- .`, xóa nhánh.
 - `rm -rf`, xóa thư mục, xóa hàng loạt file.
-- `forge`, `cast`, `anvil` hay lệnh nào trong `contracts/`.
+- `forge`, `cast`, `anvil` hay lệnh nào trong `contracts/`, `agent/`, `sellers/`.
 - `npm install` hay cài thêm gói. Cần thư viện mới thì đề xuất cho Nguyên.
 - `git add .` hoặc `git add -A`. Luôn `add` từng file.
 
 **Quy trình mỗi việc:**
 1. `git pull` để lấy bản mới nhất.
-2. Tạo nhánh mới, tên mô tả việc, ví dụ `ui-trang-verify`, `docs-quy-trinh-factoring`.
+2. Tạo nhánh mới, tên mô tả việc, ví dụ `ui-trang-tong-quan`, `docs-kich-ban-demo`.
 3. Sửa, mở trình duyệt kiểm tra, chụp màn hình cho người dùng.
 4. Người dùng đồng ý thì commit (thông điệp tiếng Việt, ngắn, nói rõ đã đổi gì) và đẩy nhánh lên GitHub.
 5. Mở pull request vào `main`: `gh pr create --base main --fill`, hoặc hướng dẫn người dùng bấm "Compare & pull request" trên GitHub. Dán báo cáo ở mục 7 vào phần mô tả.
