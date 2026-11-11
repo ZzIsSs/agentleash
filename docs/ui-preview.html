@@ -7,7 +7,9 @@
   <title>AgentLeash — Xem thử 2 Theme (Light/Dark) &amp; 2 Bố cục UI/UX</title>
   <script>
     try {
-      const saved = localStorage.getItem("agentleash-preview-theme");
+      const params = new URLSearchParams(location.search);
+      const qTheme = params.get("theme");
+      const saved = (qTheme === "light" || qTheme === "dark") ? qTheme : localStorage.getItem("agentleash-preview-theme");
       if (saved === "light" || saved === "dark") {
         document.querySelector('meta[name="color-scheme"]').content = saved;
       }
@@ -130,6 +132,10 @@
 
     *, *::before, *::after {
       box-sizing: border-box;
+    }
+
+    [hidden]:not([hidden="until-found"]) {
+      display: none !important;
     }
 
     body {
@@ -1401,8 +1407,12 @@
     (function initThemeButtonState() {
       let current = "system";
       try {
-        const saved = localStorage.getItem("agentleash-preview-theme");
-        if (saved === "light" || saved === "dark") current = saved;
+        const qTheme = new URLSearchParams(location.search).get("theme");
+        if (qTheme === "light" || qTheme === "dark") current = qTheme;
+        else {
+          const saved = localStorage.getItem("agentleash-preview-theme");
+          if (saved === "light" || saved === "dark") current = saved;
+        }
       } catch {}
       syncThemeButtons(current);
     })();
@@ -1568,7 +1578,6 @@
     }
 
     function applyDemoStep(step) {
-      stepBtns.forEach((b) => b.setAttribute("aria-current", b.dataset.demoStep === String(step) ? "step" : "false"));
       const hint = document.getElementById("stepHintText");
 
       if (step === 1) {
@@ -1633,6 +1642,7 @@
         });
         hint.textContent = "Bước 6: Đã bấm nút đỏ Kill Switch — Toàn bộ Agent dừng ngay lập tức.";
       }
+      stepBtns.forEach((b) => b.setAttribute("aria-current", b.dataset.demoStep === String(step) ? "step" : "false"));
       updateUI();
     }
 
@@ -1737,7 +1747,11 @@
       });
     });
 
-    applyDemoStep(3);
+    const initParams = new URLSearchParams(location.search);
+    const qLayout = initParams.get("layout");
+    if (qLayout === "A" || qLayout === "B") state.layout = qLayout;
+    const qStep = Number(initParams.get("step"));
+    applyDemoStep(qStep >= 1 && qStep <= 6 ? qStep : 3);
   </script>
 </body>
 </html>
