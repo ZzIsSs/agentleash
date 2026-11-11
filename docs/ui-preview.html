@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>AgentLeash — Xem thử 2 Theme (Light/Dark) &amp; 2 Bố cục UI/UX</title>
+  <script>
+    try {
+      const saved = localStorage.getItem("agentleash-preview-theme");
+      if (saved === "light" || saved === "dark") {
+        document.querySelector('meta[name="color-scheme"]').content = saved;
+      }
+    } catch {}
+  </script>
+  <style>
+    :root {
+      color-scheme: light dark;
+
+      /* Surface & text tokens using light-dark() with accessible contrast >= 4.5:1 */
+      --bg-page: light-dark(#f1f5f9, #020617);
+      --bg-bar: light-dark(#ffffff, #0b1120);
+      --bg-card: light-dark(#ffffff, #0f172a);
+      --bg-subtle: light-dark(#f8fafc, #1e293b);
+      --bg-muted: light-dark(#e2e8f0, #1e293b);
+      --text-primary: light-dark(#0f172a, #f8fafc);
+      --text-secondary: light-dark(#475569, #94a3b8);
+      --text-muted: light-dark(#64748b, #94a3b8);
+      --border-default: light-dark(#cbd5e1, #334155);
+      --border-strong: light-dark(#94a3b8, #475569);
+
+      /* Semantic accent tokens (WCAG AA contrast compliant per mode >= 4.5:1) */
+      --brand-accent: light-dark(#0369a1, #38bdf8);
+      --brand-accent-bg: light-dark(#e0f2fe, #082f49);
+      --brand-accent-border: light-dark(#7dd3fc, #0369a1);
+
+      --safe-fg: light-dark(#047857, #34d399);
+      --safe-bg: light-dark(#ecfdf5, #052e16);
+      --safe-border: light-dark(#6ee7b7, #065f46);
+
+      --sandbox-fg: light-dark(#b45309, #fbbf24);
+      --sandbox-bg: light-dark(#fffbeb, #2a1802);
+      --sandbox-border: light-dark(#fcd34d, #92400e);
+
+      --danger-fg: light-dark(#b91c1c, #fca5a5);
+      --danger-solid: light-dark(#dc2626, #ef4444);
+      --danger-solid-hover: light-dark(#b91c1c, #dc2626);
+      --danger-bg: light-dark(#fef2f2, #310b0e);
+      --danger-border: light-dark(#fca5a5, #991b1b);
+
+      --shadow-sm: light-dark(0 1px 3px rgb(15 23 42 / 0.08), 0 1px 3px rgb(0 0 0 / 0.4));
+      --shadow-md: light-dark(0 8px 24px rgb(15 23 42 / 0.08), 0 8px 24px rgb(0 0 0 / 0.5));
+
+      --font-sans: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+      --scrollbar-track: light-dark(#e2e8f0, #0f172a);
+      --scrollbar-thumb: light-dark(#64748b, #475569);
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+      accent-color: var(--brand-accent);
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+    }
+
+    @supports not (color: light-dark(white, black)) {
+      :root {
+        --bg-page: #f1f5f9;
+        --bg-bar: #ffffff;
+        --bg-card: #ffffff;
+        --bg-subtle: #f8fafc;
+        --bg-muted: #e2e8f0;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --border-default: #cbd5e1;
+        --border-strong: #94a3b8;
+        --brand-accent: #0369a1;
+        --brand-accent-bg: #e0f2fe;
+        --brand-accent-border: #7dd3fc;
+        --safe-fg: #047857;
+        --safe-bg: #ecfdf5;
+        --safe-border: #6ee7b7;
+        --sandbox-fg: #b45309;
+        --sandbox-bg: #fffbeb;
+        --sandbox-border: #fcd34d;
+        --danger-fg: #b91c1c;
+        --danger-solid: #dc2626;
+        --danger-solid-hover: #b91c1c;
+        --danger-bg: #fef2f2;
+        --danger-border: #fca5a5;
+        --shadow-sm: 0 1px 3px rgb(15 23 42 / 0.08);
+        --shadow-md: 0 8px 24px rgb(15 23 42 / 0.08);
+      }
+
+      :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+        --bg-page: #020617;
+        --bg-bar: #0b1120;
+        --bg-card: #0f172a;
+        --bg-subtle: #1e293b;
+        --bg-muted: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-muted: #94a3b8;
+        --border-default: #334155;
+        --border-strong: #475569;
+        --brand-accent: #38bdf8;
+        --brand-accent-bg: #082f49;
+        --brand-accent-border: #0369a1;
+        --safe-fg: #34d399;
+        --safe-bg: #052e16;
+        --safe-border: #065f46;
+        --sandbox-fg: #fbbf24;
+        --sandbox-bg: #2a1802;
+        --sandbox-border: #92400e;
+        --danger-fg: #fca5a5;
+        --danger-solid: #ef4444;
+        --danger-solid-hover: #dc2626;
+        --danger-bg: #310b0e;
+        --danger-border: #991b1b;
+        --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.4);
+        --shadow-md: 0 8px 24px rgb(0 0 0 / 0.5);
+      }
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    [tabindex="0"]:focus-visible {
+      outline: 2px solid var(--brand-accent);
+      outline-offset: 2px;
+    }
+
+    /* Reviewer Control Bar (for Nguyên to switch Theme & Layout & Demo Step) */
+    .review-bar {
+      background: var(--bg-bar);
+      border-bottom: 2px solid var(--brand-accent-border);
+      padding: 0.75rem 1.25rem;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .review-bar-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .review-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+    }
+
+    .review-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      background: var(--brand-accent-bg);
+      color: var(--brand-accent);
+      border: 1px solid var(--brand-accent-border);
+    }
+
+    .review-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .segmented-group {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: 0.625rem;
+      padding: 0.2rem;
+      gap: 0.2rem;
+    }
+
+    .segmented-btn {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.35rem 0.7rem;
+      border-radius: 0.45rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .segmented-btn[aria-pressed="true"] {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Demo Walkthrough Strip */
+    .demo-strip {
+      max-width: 1400px;
+      margin: 0.85rem auto 0;
+      padding: 0 1.25rem;
+    }
+
+    .demo-strip-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: 0.75rem;
+      padding: 0.65rem 0.9rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+    }
+
+    .demo-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .step-btn {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.45rem;
+      border: 1px solid var(--border-default);
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+    }
+
+    .step-btn[aria-current="step"] {
+      background: var(--brand-accent-bg);
+      color: var(--brand-accent);
+      border-color: var(--brand-accent);
+    }
+
+    /* App Shell */
+    .app-container {
+      max-width: 1400px;
+      margin: 0.85rem auto 2.5rem;
+      padding: 0 1.25rem;
+    }
+
+    .app-frame {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Shared Top Header inside App (Gợi ý Mục 2 + Luật 6 + Kill Switch) */
+    .app-header {
+      background: var(--bg-bar);
+      border-bottom: 1px solid var(--border-default);
+      padding: 0.9rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.9rem;
+    }
+
+    .brand-cluster {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .logo-mark {
+      width: 2.35rem;
+      height: 2.35rem;
+      border-radius: 0.65rem;
+      background: var(--brand-accent-bg);
+      border: 1px solid var(--brand-accent-border);
+      color: var(--brand-accent);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .agent-picker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: 0.55rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .btn-ghost {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border: 1px solid var(--border-default);
+      border-radius: 0.5rem;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--border-strong);
+    }
+
+    .btn-primary {
+      background: var(--brand-accent);
+      color: light-dark(#ffffff, #020617);
+      border: 1px solid transparent;
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.28rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-default);
+      background: var(--bg-subtle);
+    }
+
+    .pill-safe {
+      background: var(--safe-bg);
+      color: var(--safe-fg);
+      border-color: var(--safe-border);
+    }
+
+    .pill-sandbox {
+      background: var(--sandbox-bg);
+      color: var(--sandbox-fg);
+      border-color: var(--sandbox-border);
+    }
+
+    .pill-danger {
+      background: var(--danger-bg);
+      color: var(--danger-fg);
+      border-color: var(--danger-border);
+    }
+
+    /* Highlighted Demo Bar (Gợi ý Mục 2) */
+    .demo-toolbar {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 0.55rem;
+      background: var(--sandbox-bg);
+      border: 1px dashed var(--sandbox-border);
+      color: var(--sandbox-fg);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .switch-btn {
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--sandbox-border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .switch-btn[aria-pressed="true"] {
+      background: var(--danger-solid);
+      border-color: var(--danger-solid);
+      color: #ffffff;
+    }
+
+    /* Big Red Kill Switch */
+    .kill-switch-btn {
+      background: var(--danger-solid);
+      color: #ffffff;
+      border: 2px solid var(--danger-border);
+      border-radius: 0.6rem;
+      padding: 0.5rem 0.95rem;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      box-shadow: 0 2px 10px rgb(220 38 38 / 0.25);
+    }
+
+    .kill-switch-btn:hover {
+      background: var(--danger-solid-hover);
+    }
+
+    .kill-switch-btn[aria-pressed="true"] {
+      background: var(--safe-fg);
+      border-color: var(--safe-border);
+      box-shadow: none;
+    }
+
+    /* Law 6 Simulation Disclosure Banner + Paused Banner */
+    .law6-banner {
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border-default);
+      padding: 0.45rem 1.25rem;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .paused-banner {
+      background: var(--danger-bg);
+      border-bottom: 2px solid var(--danger-solid);
+      color: var(--danger-fg);
+      padding: 0.65rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .paused-banner[hidden] {
+      display: none;
+    }
+
+    /* Layout A vs Layout B Container */
+    .workspace-body {
+      padding: 1.25rem;
+      background: var(--bg-page);
+    }
+
+    /* Layout A: 2-column grid */
+    .grid-layout-a {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    @media (max-width: 980px) {
+      .grid-layout-a {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Layout B: Sidebar + Tabs */
+    .layout-b-shell {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .layout-b-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sidebar-nav {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: 0.85rem;
+      padding: 0.65rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    @media (max-width: 860px) {
+      .sidebar-nav[role="tablist"] {
+        flex-direction: row;
+        overflow-x: auto;
+      }
+    }
+
+    .nav-tab {
+      position: relative;
+      text-align: left;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.84rem;
+      font-weight: 600;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.55rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .nav-tab:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Modern Web Guidance (tabs): indicate selected state with shape/border, not color alone */
+    .nav-tab[aria-selected="true"] {
+      background: var(--brand-accent-bg);
+      color: var(--brand-accent);
+      border-color: var(--brand-accent-border);
+    }
+
+    .nav-tab[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset-block: 6px;
+      inset-inline-start: 0;
+      border-inline-start: 4px solid var(--brand-accent);
+      border-radius: 2px;
+    }
+
+    @media (max-width: 860px) {
+      .nav-tab[aria-selected="true"]::after {
+        inset-block: auto 0;
+        inset-inline: 8px;
+        border-inline-start: none;
+        border-block-end: 3px solid var(--brand-accent);
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: 0.85rem;
+      padding: 1.05rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .card-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 0.96rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .card-subtitle {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    /* Fuel Gauges (2 Tiers: 1B) */
+    .tier-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: 0.65rem;
+      padding: 0.75rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .tier-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+    }
+
+    .gauge-track {
+      height: 0.65rem;
+      border-radius: 999px;
+      background: var(--bg-muted);
+      border: 1px solid var(--border-default);
+      overflow: hidden;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+
+    .gauge-fill.tier1 {
+      background: var(--safe-fg);
+    }
+
+    .gauge-fill.tier2 {
+      background: var(--sandbox-fg);
+    }
+
+    .gauge-fill.full {
+      background: var(--danger-solid);
+    }
+
+    /* Action Simulator inside Overview */
+    .sim-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding-top: 0.25rem;
+    }
+
+    /* Cashflow SVG Diagram (Requirement 5) */
+    .cashflow-stage {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: 0.7rem;
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+
+    .cashflow-svg {
+      width: 100%;
+      min-width: 470px;
+      height: 215px;
+      display: block;
+    }
+
+    .flow-node-rect {
+      fill: var(--bg-card);
+      stroke: var(--border-strong);
+      stroke-width: 1.5;
+    }
+
+    .flow-node-title {
+      fill: var(--text-primary);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font-sans);
+    }
+
+    .flow-node-sub {
+      fill: var(--text-secondary);
+      font-size: 10px;
+      font-family: var(--font-mono);
+    }
+
+    .flow-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+    }
+
+    /* Whitelist & Sandbox Rules */
+    .rule-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 0.55rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      font-size: 0.8rem;
+    }
+
+    .rule-input-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .field-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: 0.5rem;
+      padding: 0.45rem 0.65rem;
+    }
+
+    .field-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      display: block;
+    }
+
+    .field-val {
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    /* Responsive Table (modern-web-guidance: responsive-table) */
+    .table-wrapper {
+      overflow: auto;
+      max-inline-size: 100%;
+      max-block-size: 320px;
+      container-type: inline-size;
+      border: 1px solid var(--border-default);
+      border-radius: 0.65rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.79rem;
+    }
+
+    thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 1;
+      background: var(--bg-subtle);
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.55rem 0.65rem;
+      border-bottom: 1px solid var(--border-default);
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 700;
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+    }
+
+    tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      background: var(--bg-card);
+      font-weight: 700;
+    }
+
+    .tx-link {
+      color: var(--brand-accent);
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    @container (width < 520px) {
+      .table-wrapper table,
+      .table-wrapper thead,
+      .table-wrapper tbody,
+      .table-wrapper tr,
+      .table-wrapper th,
+      .table-wrapper td {
+        display: block;
+      }
+
+      .table-wrapper thead {
+        display: none;
+      }
+
+      .table-wrapper tr {
+        margin: 0.5rem;
+        border: 1px solid var(--border-default);
+        border-radius: 0.5rem;
+        background: var(--bg-subtle);
+      }
+
+      .table-wrapper td,
+      .table-wrapper tbody th {
+        border-bottom: 1px solid var(--border-default);
+        white-space: normal;
+        position: static;
+        background: transparent;
+      }
+
+      .table-wrapper td:last-child {
+        border-bottom: 0;
+      }
+
+      .table-wrapper td:nth-child(2)::before { content: "Tầng: "; font-weight: 700; color: var(--text-secondary); }
+      .table-wrapper td:nth-child(3)::before { content: "Số tiền: "; font-weight: 700; color: var(--text-secondary); }
+      .table-wrapper td:nth-child(4)::before { content: "Trạng thái: "; font-weight: 700; color: var(--text-secondary); }
+      .table-wrapper td:nth-child(5)::before { content: "Kiểm tra: "; font-weight: 700; color: var(--text-secondary); }
+    }
+
+    /* Sub-tabs inside Layout A Ledger/Rejected card */
+    .sub-tablist {
+      display: inline-flex;
+      gap: 0.35rem;
+      border-bottom: 1px solid var(--border-default);
+      padding-bottom: 0.25rem;
+    }
+
+    .sub-tab {
+      position: relative;
+      border: 0;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.35rem 0.6rem;
+    }
+
+    .sub-tab[aria-selected="true"] {
+      color: var(--brand-accent);
+    }
+
+    .sub-tab[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 -0.25rem;
+      border-block-end: 3px solid var(--brand-accent);
+    }
+
+    /* Rejected Log Cards */
+    .reject-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .reject-item {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      border-radius: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .reject-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-weight: 700;
+      color: var(--danger-fg);
+    }
+
+    /* Login Overlay Frame (Step 1 of Demo) */
+    .login-card-wrap {
+      padding: 2.5rem 1.25rem;
+      display: grid;
+      place-items: center;
+      background: var(--bg-page);
+    }
+
+    .login-card {
+      max-width: 440px;
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Native Modal for + Tạo Agent */
+    dialog {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      border-radius: 0.9rem;
+      max-width: 460px;
+      width: calc(100% - 2rem);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    dialog::backdrop {
+      background: rgb(2 6 23 / 0.6);
+      backdrop-filter: blur(2px);
+    }
+
+    /* Tabpanel wrappers (no padding/border on [hidden] element itself per modern-web-guidance) */
+    .tabpanel-wrap[hidden] {
+      display: none;
+    }
+
+    @media (forced-colors: active) {
+      .card, .tier-box, .pill, .kill-switch-btn {
+        border: 1px solid CanvasText;
+      }
+      .nav-tab[aria-selected="true"]::after,
+      .sub-tab[aria-selected="true"]::after {
+        border-color: Highlight;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP REVIEWER BAR: CHỌN THEME (2 THEME) + BỐ CỤC (2 BẢN) + BƯỚC DEMO -->
+  <header class="review-bar" aria-label="Bảng chọn bản xem thử cho Nguyên">
+    <div class="review-bar-inner">
+      <div class="review-title">
+        <span class="review-badge">Bản xem thử cho Nguyên</span>
+        <span>So sánh 2 Theme &amp; 2 Bố cục AgentLeash</span>
+      </div>
+
+      <div class="review-controls">
+        <!-- Theme Selector (Mục 4) -->
+        <div class="segmented-group" role="group" aria-label="Chọn giao diện sáng hoặc tối">
+          <button type="button" class="segmented-btn" data-theme-choice="light" aria-pressed="false">
+            <span aria-hidden="true">☀️</span> Theme Sáng (Light)
+          </button>
+          <button type="button" class="segmented-btn" data-theme-choice="dark" aria-pressed="false">
+            <span aria-hidden="true">🌙</span> Theme Tối (Dark)
+          </button>
+          <button type="button" class="segmented-btn" data-theme-choice="system" aria-pressed="true">
+            <span aria-hidden="true">🖥️</span> Theo máy
+          </button>
+        </div>
+
+        <!-- Layout Selector (Mục 3) -->
+        <div class="segmented-group" role="group" aria-label="Chọn bố cục Bản A hoặc Bản B">
+          <button type="button" class="segmented-btn" data-layout-choice="A" aria-pressed="true">
+            <span aria-hidden="true">📋</span> Bản A: 1 Trang Tổng Hợp
+          </button>
+          <button type="button" class="segmented-btn" data-layout-choice="B" aria-pressed="false">
+            <span aria-hidden="true">🗂️</span> Bản B: Menu 4 Tab
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- DEMO 6-STEP QUICK WALKTHROUGH -->
+  <section class="demo-strip" aria-label="Mô phỏng nhanh 6 khung hình Video Demo">
+    <div class="demo-strip-card">
+      <div class="demo-steps">
+        <button type="button" class="step-btn" data-demo-step="1">1. Đăng nhập Privy</button>
+        <button type="button" class="step-btn" data-demo-step="2">2. Thiết lập 2 tầng</button>
+        <button type="button" class="step-btn" data-demo-step="3" aria-current="step">3. Mua 3 lần OK</button>
+        <button type="button" class="step-btn" data-demo-step="4">4. Vượt hạn mức (Chặn)</button>
+        <button type="button" class="step-btn" data-demo-step="5">5. Giả lập hack (Sandbox chặn)</button>
+        <button type="button" class="step-btn" data-demo-step="6">6. Bấm Kill Switch</button>
+      </div>
+      <span id="stepHintText" style="font-size:0.78rem; color:var(--text-secondary);">
+        Đang xem Bước 3: Agent đã tự mua 3 lần từ API quen, đồng hồ xăng tụt còn 0.000 USDC.
+      </span>
+    </div>
+  </section>
+
+  <!-- MAIN APP PREVIEW FRAME -->
+  <main class="app-container">
+    <div class="app-frame">
+
+      <!-- VIEW 1: LOGIN SCREEN (STEP 1) -->
+      <div id="loginScreen" class="login-card-wrap" hidden>
+        <div class="login-card">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <div class="logo-mark" aria-hidden="true">AL</div>
+            <div>
+              <div style="font-weight:800; font-size:1.1rem;">AgentLeash</div>
+              <div style="font-size:0.78rem; color:var(--text-secondary);">Ví AI Agent có dây xích bảo vệ on-chain</div>
+            </div>
+          </div>
+          <p style="margin:0; font-size:0.86rem; color:var(--text-secondary);">
+            Đăng nhập bằng Email qua <strong>Privy</strong> để quản lý hạn mức chi tiêu của Agent trên mạng Avalanche Fuji — không cần cài ví phức tạp.
+          </p>
+          <div class="tier-box">
+            <div style="font-size:0.78rem; font-weight:700;">Cơ chế bảo vệ 2 tầng (1B):</div>
+            <div style="font-size:0.76rem; color:var(--text-secondary);">• Tầng 1 (Whitelist): API tin cậy dùng hạn mức chính.</div>
+            <div style="font-size:0.76rem; color:var(--text-secondary);">• Tầng 2 (Sandbox): API lạ giới hạn siêu nhỏ 0.001 USDC/lần.</div>
+          </div>
+          <button type="button" class="btn-primary" id="btnSimulateLogin" style="padding:0.65rem 1rem; font-size:0.88rem;">
+            Đăng nhập nhanh bằng Email (Demo Privy)
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW 2: DASHBOARD SHELL (STEPS 2-6) -->
+      <div id="dashboardShell">
+        <!-- SHARED APP HEADER -->
+        <div class="app-header">
+          <div class="brand-cluster">
+            <div class="logo-mark" aria-hidden="true">AL</div>
+            <div>
+              <div class="brand-title">
+                <span>AgentLeash</span>
+                <span class="pill pill-safe" id="agentStatusBadge">● Đang hoạt động</span>
+              </div>
+              <div style="font-size:0.74rem; color:var(--text-secondary);">
+                Contract: <span class="mono">0x7A9e...41B2</span> · Số dư: <strong class="mono" id="contractBalance">0.047 USDC</strong>
+              </div>
+            </div>
+
+            <div class="agent-picker">
+              <span style="color:var(--text-secondary); font-weight:600;">Agent:</span>
+              <strong>Bot Du lịch Đà Lạt</strong>
+              <button type="button" class="btn-ghost" id="btnOpenCreateAgent">+ Tạo Agent</button>
+            </div>
+          </div>
+
+          <div class="header-meta">
+            <span class="pill">Avalanche Fuji (43113)</span>
+            <span class="pill">Email: giang@team1.vn</span>
+
+            <!-- Highlighted Demo Control (Gợi ý Mục 2) -->
+            <div class="demo-toolbar" title="Công tắc giả lập Agent bị chiếm quyền cho Bước 5 Demo">
+              <span>Công cụ Demo:</span>
+              <button type="button" class="switch-btn" id="btnBypassToggle" aria-pressed="false">
+                Bỏ qua kiểm tra mềm: TẮT
+              </button>
+            </div>
+
+            <!-- Big Red Kill Switch -->
+            <button type="button" class="kill-switch-btn" id="btnKillSwitch" aria-pressed="false">
+              <span aria-hidden="true">⛔</span>
+              <span id="killSwitchLabel">KHÓA KHẨN CẤP (KILL SWITCH)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- LAW 6 SIMULATION NOTICE -->
+        <div class="law6-banner">
+          <span><strong>Thông báo minh bạch (Luật 6):</strong> Chế độ Demo đang đặt chu kỳ hạn mức = <strong>2 phút</strong> (thực tế vận hành là 24 giờ).</span>
+          <span class="mono" id="cycleTimer">Chu kỳ còn lại: 01:18</span>
+        </div>
+
+        <!-- EMERGENCY PAUSED BANNER -->
+        <div class="paused-banner" id="pausedBanner" hidden>
+          <span>⛔ HỆ THỐNG ĐÃ KHÓA KHẨN CẤP: Toàn bộ khoản chi (kể cả khoản đã duyệt trước đó) đều bị từ chối on-chain.</span>
+          <button type="button" class="btn-ghost" id="btnBannerUnpause">Mở khóa lại</button>
+        </div>
+
+        <!-- WORKSPACE CONTENT -->
+        <div class="workspace-body">
+
+          <!-- ==================== BẢN A: 1 TRANG TỔNG HỢP ==================== -->
+          <div id="layoutAContainer" class="grid-layout-a">
+
+            <!-- Card 1: Tổng quan & Đồng hồ xăng 2 tầng -->
+            <section class="card" aria-label="Tổng quan hạn mức 2 tầng">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">1. Tổng quan — Đồng hồ xăng 2 tầng</h2>
+                  <p class="card-subtitle">Theo dõi hạn mức chu kỳ 2 phút theo mô hình 1B (Tiered Sandbox)</p>
+                </div>
+                <span class="pill pill-sandbox">Chế độ 2 tầng (1B)</span>
+              </div>
+
+              <div class="tier-box">
+                <div class="tier-row">
+                  <strong>Tầng 1 — Whitelist (API tin cậy)</strong>
+                  <span class="mono" id="aTier1Text">0.003 / 0.003 USDC</span>
+                </div>
+                <div class="gauge-track" role="progressbar" aria-label="Hạn mức Tầng 1 Whitelist" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                  <div class="gauge-fill tier1" id="aTier1Bar" style="width:100%;"></div>
+                </div>
+                <div style="font-size:0.74rem; color:var(--text-secondary);" id="aTier1Note">
+                  Đã dùng 3/3 lượt (0.001 USDC/lượt) cho Thời tiết &amp; Tỷ giá.
+                </div>
+              </div>
+
+              <div class="tier-box">
+                <div class="tier-row">
+                  <strong>Tầng 2 — Sandbox (API lạ ngoài Whitelist)</strong>
+                  <span class="mono" id="aTier2Text">0.000 / 0.002 USDC</span>
+                </div>
+                <div class="gauge-track" role="progressbar" aria-label="Hạn mức Tầng 2 Sandbox" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <div class="gauge-fill tier2" id="aTier2Bar" style="width:0%;"></div>
+                </div>
+                <div style="font-size:0.74rem; color:var(--text-secondary);">
+                  Trần vi mô: tối đa <strong>0.001 USDC / lần</strong> · Tối đa <strong>0.002 USDC / chu kỳ</strong>.
+                </div>
+              </div>
+
+              <div class="sim-actions">
+                <button type="button" class="btn-primary" data-action="buy-whitelist">▶ Thử mua API quen (0.001 USDC)</button>
+                <button type="button" class="btn-ghost" data-action="buy-sandbox">🧪 Thử gọi API lạ (0.005 USDC)</button>
+              </div>
+            </section>
+
+            <!-- Card 2: Sơ đồ dòng tiền nối dây trực quan (Mục 5) -->
+            <section class="card" aria-label="Sơ đồ dòng tiền nối dây">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">2. Sơ đồ dòng tiền trực quan</h2>
+                  <p class="card-subtitle">Độ dày đường nối tỷ lệ theo số tiền USDC đã chi</p>
+                </div>
+              </div>
+              <div class="cashflow-stage" id="cashflowStageA"></div>
+              <div class="flow-legend">
+                <span><strong style="color:var(--safe-fg);">━━</strong> Đường dày: Chi qua Whitelist</span>
+                <span><strong style="color:var(--sandbox-fg);">━━</strong> Đường mảnh: Sandbox vi mô</span>
+                <span><strong style="color:var(--danger-fg);">┄✕</strong> Nét đứt: Bị hợp đồng chặn</span>
+              </div>
+            </section>
+
+            <!-- Card 3: Luật chi tiêu 2 tầng -->
+            <section class="card" aria-label="Luật chi tiêu 2 tầng">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">3. Luật chi tiêu 2 tầng (Guardrails)</h2>
+                  <p class="card-subtitle">Mỗi thay đổi luật cần chủ ví xác nhận ký một giao dịch</p>
+                </div>
+              </div>
+
+              <div class="rule-input-row">
+                <div class="field-box">
+                  <span class="field-label">Tầng 1 — Trần mỗi lần / chu kỳ</span>
+                  <span class="field-val mono">0.001 / 0.003 USDC</span>
+                </div>
+                <div class="field-box">
+                  <span class="field-label">Tầng 2 Sandbox — Trần lần / chu kỳ</span>
+                  <span class="field-val mono">0.001 / 0.002 USDC</span>
+                </div>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:0.45rem;">
+                <div class="rule-item">
+                  <div>
+                    <strong>API Thời tiết Đà Lạt</strong>
+                    <div class="mono" style="font-size:0.72rem; color:var(--text-secondary);">0x11aB...89C1</div>
+                  </div>
+                  <span class="pill pill-safe">✓ Trong Whitelist</span>
+                </div>
+                <div class="rule-item">
+                  <div>
+                    <strong>API Tỷ giá VND/USD</strong>
+                    <div class="mono" style="font-size:0.72rem; color:var(--text-secondary);">0x22cD...44E2</div>
+                  </div>
+                  <span class="pill pill-safe">✓ Trong Whitelist</span>
+                </div>
+                <div class="rule-item">
+                  <div>
+                    <strong>API lạ bất kỳ (Chưa duyệt)</strong>
+                    <div style="font-size:0.72rem; color:var(--text-secondary);">Chỉ chạy ở chế độ Sandbox ≤ 0.001 USDC</div>
+                  </div>
+                  <span class="pill pill-sandbox">⚠ Sandbox vi mô</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Card 4: Lịch sử giao dịch Snowtrace & Bị từ chối -->
+            <section class="card" aria-label="Lịch sử chi tiêu và Nhật ký bị từ chối">
+              <div class="card-header">
+                <h2 class="card-title">4. Lịch sử chi &amp; Bị từ chối</h2>
+                <div class="sub-tablist" role="tablist" aria-label="Lọc danh sách giao dịch Bản A">
+                  <button type="button" class="sub-tab" role="tab" id="subtab-tx" aria-selected="true" data-subtab="tx">Giao dịch x402</button>
+                  <button type="button" class="sub-tab" role="tab" id="subtab-rej" aria-selected="false" data-subtab="rej">Bị từ chối (<span id="rejCountBadgeA">0</span>)</button>
+                </div>
+              </div>
+
+              <div class="tabpanel-wrap" id="subpanel-tx" role="tabpanel" aria-labelledby="subtab-tx">
+                <div id="txTableSlotA"></div>
+              </div>
+              <div class="tabpanel-wrap" id="subpanel-rej" role="tabpanel" aria-labelledby="subtab-rej" hidden>
+                <div id="rejListSlotA"></div>
+              </div>
+            </section>
+          </div>
+
+          <!-- ==================== BẢN B: MENU 4 TAB ĐỘC LẬP ==================== -->
+          <div id="layoutBContainer" class="layout-b-shell" hidden>
+            <nav class="sidebar-nav" role="tablist" aria-label="Menu điều hướng 4 màn hình Bản B">
+              <button type="button" class="nav-tab" role="tab" id="btab-overview" aria-selected="true" data-btab="overview">
+                <span>1. Tổng quan 2 tầng</span>
+                <span class="pill" style="font-size:0.68rem;">Gas</span>
+              </button>
+              <button type="button" class="nav-tab" role="tab" id="btab-cashflow" aria-selected="false" data-btab="cashflow">
+                <span>2. Dòng tiền &amp; Lịch sử</span>
+                <span class="pill" style="font-size:0.68rem;" id="bTxCount">3</span>
+              </button>
+              <button type="button" class="nav-tab" role="tab" id="btab-rules" aria-selected="false" data-btab="rules">
+                <span>3. Luật chi tiêu 2 tầng</span>
+              </button>
+              <button type="button" class="nav-tab" role="tab" id="btab-rejected" aria-selected="false" data-btab="rejected">
+                <span>4. Nhật ký bị từ chối</span>
+                <span class="pill pill-danger" style="font-size:0.68rem;" id="rejCountBadgeB">0</span>
+              </button>
+            </nav>
+
+            <div>
+              <!-- Panel 1: Tổng quan -->
+              <div class="tabpanel-wrap" id="bpanel-overview" role="tabpanel" aria-labelledby="btab-overview">
+                <section class="card">
+                  <div class="card-header">
+                    <div>
+                      <h2 class="card-title">Tổng quan ví &amp; Đồng hồ xăng 2 tầng</h2>
+                      <p class="card-subtitle">Chế độ xem rộng rãi — dễ theo dõi khi vận hành nhiều Agent</p>
+                    </div>
+                  </div>
+                  <div class="rule-input-row">
+                    <div class="tier-box">
+                      <div class="tier-row">
+                        <strong>Tầng 1 — Whitelist (Tin cậy)</strong>
+                        <span class="mono" id="bTier1Text">0.003 / 0.003 USDC</span>
+                      </div>
+                      <div class="gauge-track"><div class="gauge-fill tier1" id="bTier1Bar" style="width:100%;"></div></div>
+                      <span style="font-size:0.75rem; color:var(--text-secondary);">Hạn mức chính cho các API đã duyệt.</span>
+                    </div>
+                    <div class="tier-box">
+                      <div class="tier-row">
+                        <strong>Tầng 2 — Sandbox (API lạ)</strong>
+                        <span class="mono" id="bTier2Text">0.000 / 0.002 USDC</span>
+                      </div>
+                      <div class="gauge-track"><div class="gauge-fill tier2" id="bTier2Bar" style="width:0%;"></div></div>
+                      <span style="font-size:0.75rem; color:var(--text-secondary);">Trần vi mô tối đa 0.001 USDC/lần.</span>
+                    </div>
+                  </div>
+                  <div class="sim-actions">
+                    <button type="button" class="btn-primary" data-action="buy-whitelist">▶ Thử mua API quen (0.001 USDC)</button>
+                    <button type="button" class="btn-ghost" data-action="buy-sandbox">🧪 Thử gọi API lạ (0.005 USDC)</button>
+                  </div>
+                </section>
+              </div>
+
+              <!-- Panel 2: Dòng tiền -->
+              <div class="tabpanel-wrap" id="bpanel-cashflow" role="tabpanel" aria-labelledby="btab-cashflow" hidden>
+                <section class="card">
+                  <div class="card-header">
+                    <div>
+                      <h2 class="card-title">Sơ đồ dòng tiền &amp; Lịch sử Snowtrace</h2>
+                      <p class="card-subtitle">Không gian rộng cho sơ đồ nối dây + bảng 3 trạng thái giao dịch</p>
+                    </div>
+                  </div>
+                  <div class="cashflow-stage" id="cashflowStageB"></div>
+                  <div id="txTableSlotB"></div>
+                </section>
+              </div>
+
+              <!-- Panel 3: Luật chi tiêu 2 tầng -->
+              <div class="tabpanel-wrap" id="bpanel-rules" role="tabpanel" aria-labelledby="btab-rules" hidden>
+                <section class="card">
+                  <div class="card-header">
+                    <div>
+                      <h2 class="card-title">Cấu hình Luật chi tiêu 2 tầng</h2>
+                      <p class="card-subtitle">Quản lý danh sách Whitelist &amp; ngưỡng Sandbox cho API lạ</p>
+                    </div>
+                  </div>
+                  <div class="rule-input-row">
+                    <div class="field-box">
+                      <span class="field-label">Tầng 1 — Trần mỗi lần / chu kỳ</span>
+                      <span class="field-val mono">0.001 / 0.003 USDC</span>
+                    </div>
+                    <div class="field-box">
+                      <span class="field-label">Tầng 2 — Trần Sandbox mỗi lần / chu kỳ</span>
+                      <span class="field-val mono">0.001 / 0.002 USDC</span>
+                    </div>
+                  </div>
+                  <div class="rule-item">
+                    <span><strong>API Thời tiết Đà Lạt</strong> · <span class="mono">0x11aB...89C1</span></span>
+                    <span class="pill pill-safe">✓ Đang bật Whitelist</span>
+                  </div>
+                  <div class="rule-item">
+                    <span><strong>API Tỷ giá VND/USD</strong> · <span class="mono">0x22cD...44E2</span></span>
+                    <span class="pill pill-safe">✓ Đang bật Whitelist</span>
+                  </div>
+                  <div class="rule-item">
+                    <span><strong>Chế độ Sandbox cho API ngoài Whitelist</strong></span>
+                    <span class="pill pill-sandbox">⚠ Cho phép tối đa 0.001 USDC/lần</span>
+                  </div>
+                </section>
+              </div>
+
+              <!-- Panel 4: Nhật ký bị từ chối -->
+              <div class="tabpanel-wrap" id="bpanel-rejected" role="tabpanel" aria-labelledby="btab-rejected" hidden>
+                <section class="card">
+                  <div class="card-header">
+                    <div>
+                      <h2 class="card-title">Nhật ký bị từ chối (Rule Engine &amp; Policy Contract)</h2>
+                      <p class="card-subtitle">Ghi nhận mọi lần Agent bị chặn kèm giải thích tiếng Việt</p>
+                    </div>
+                  </div>
+                  <div id="rejListSlotB"></div>
+                </section>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- NATIVE DIALOG FOR "+ TẠO AGENT" (Gợi ý Mục 2) -->
+  <dialog id="createAgentDialog" aria-labelledby="dlgTitle">
+    <h3 id="dlgTitle" style="margin:0 0 0.5rem; font-size:1rem;">Tạo Policy Contract mới cho Agent</h3>
+    <p style="margin:0 0 0.85rem; font-size:0.82rem; color:var(--text-secondary);">
+      Mỗi chủ ví sở hữu một hợp đồng riêng (không gom quỹ chung theo Luật 3). Trong thiết kế Figma, nút <strong>+ Tạo Agent</strong> đặt gọn ở Header để màn hình chính tập trung vào theo dõi dòng tiền.
+    </p>
+    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;">
+      <div class="field-box"><span class="field-label">Tên Agent</span><span class="field-val">Bot Nghiên cứu Thị trường</span></div>
+      <div class="field-box"><span class="field-label">Hạn mức Tầng 1 (Whitelist) / Tầng 2 (Sandbox)</span><span class="field-val mono">0.003 USDC / 0.001 USDC</span></div>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+      <button type="button" class="btn-ghost" id="btnCloseDialog">Đóng</button>
+      <button type="button" class="btn-primary" id="btnConfirmDialog">Mô phỏng Tạo (Đóng)</button>
+    </div>
+  </dialog>
+
+  <script>
+    const state = {
+      loggedIn: true,
+      layout: "A",
+      bTab: "overview",
+      aSubTab: "tx",
+      bypassSoftRules: false,
+      paused: false,
+      tier1Cap: 0.003,
+      tier1Spent: 0.003,
+      tier2Cap: 0.002,
+      tier2Spent: 0.000,
+      weatherSpent: 0.002,
+      fxSpent: 0.001,
+      sandboxBlockedCount: 0,
+      txs: [
+        { id: "#3", api: "API Tỷ giá VND/USD", tier: "Tầng 1 (Whitelist)", amount: "0.001 USDC", status: "Xong", tx: "0x91f8...3c1a" },
+        { id: "#2", api: "API Thời tiết Đà Lạt", tier: "Tầng 1 (Whitelist)", amount: "0.001 USDC", status: "Xong", tx: "0x42d0...8a7e" },
+        { id: "#1", api: "API Thời tiết Đà Lạt", tier: "Tầng 1 (Whitelist)", amount: "0.001 USDC", status: "Xong", tx: "0x18b3...9f02" }
+      ],
+      rejections: []
+    };
+
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
+    const themeBtns = [...document.querySelectorAll("[data-theme-choice]")];
+    const layoutBtns = [...document.querySelectorAll("[data-layout-choice]")];
+    const stepBtns = [...document.querySelectorAll("[data-demo-step]")];
+
+    function syncThemeButtons(choice) {
+      themeBtns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.themeChoice === choice)));
+    }
+
+    function setTheme(choice) {
+      try {
+        if (choice === "system") localStorage.removeItem("agentleash-preview-theme");
+        else localStorage.setItem("agentleash-preview-theme", choice);
+      } catch {}
+      metaScheme.content = choice === "system" ? "light dark" : choice;
+      syncThemeButtons(choice);
+    }
+
+    (function initThemeButtonState() {
+      let current = "system";
+      try {
+        const saved = localStorage.getItem("agentleash-preview-theme");
+        if (saved === "light" || saved === "dark") current = saved;
+      } catch {}
+      syncThemeButtons(current);
+    })();
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === "agentleash-preview-theme") {
+        const next = e.newValue === "light" || e.newValue === "dark" ? e.newValue : "system";
+        metaScheme.content = next === "system" ? "light dark" : next;
+        syncThemeButtons(next);
+      }
+    });
+
+    themeBtns.forEach((btn) => btn.addEventListener("click", () => setTheme(btn.dataset.themeChoice)));
+
+    function renderCashflowSvg() {
+      const wWidth = Math.min(10, 2 + state.weatherSpent * 2500);
+      const fxWidth = Math.min(10, 2 + state.fxSpent * 2500);
+      const sbWidth = state.tier2Spent > 0 ? 3 : 2;
+      const blocked = state.sandboxBlockedCount > 0 || state.paused;
+
+      return `
+        <svg class="cashflow-svg" viewBox="0 0 680 210" role="img" aria-label="Sơ đồ dòng tiền từ AI Agent qua Policy Contract tới các API">
+          <path d="M 140 105 L 250 105" stroke="var(--brand-accent)" stroke-width="5" fill="none" />
+          <path d="M 390 95 C 430 95, 430 42, 475 42" stroke="var(--safe-fg)" stroke-width="${wWidth}" fill="none" />
+          <path d="M 390 105 L 475 105" stroke="var(--safe-fg)" stroke-width="${fxWidth}" fill="none" />
+          <path d="M 390 118 C 430 118, 430 168, 475 168"
+                stroke="${blocked ? "var(--danger-solid)" : "var(--sandbox-fg)"}"
+                stroke-width="${sbWidth}"
+                stroke-dasharray="${blocked ? "6 4" : "none"}"
+                fill="none" />
+
+          <rect x="12" y="75" width="128" height="60" rx="10" class="flow-node-rect" />
+          <text x="26" y="100" class="flow-node-title">AI Agent (LLM)</text>
+          <text x="26" y="118" class="flow-node-sub">Chỉ đề xuất chi</text>
+
+          <rect x="250" y="65" width="140" height="80" rx="10" class="flow-node-rect" style="stroke:${state.paused ? "var(--danger-solid)" : "var(--brand-accent)"}; stroke-width:2;" />
+          <text x="265" y="95" class="flow-node-title">Policy Contract</text>
+          <text x="265" y="113" class="flow-node-sub">${state.paused ? "ĐANG KHÓA PAUSE" : "2 tầng + ERC-1271"}</text>
+          <text x="265" y="129" class="flow-node-sub">Giữ USDC trên Fuji</text>
+
+          <rect x="475" y="16" width="192" height="50" rx="8" class="flow-node-rect" style="stroke:var(--safe-border);" />
+          <text x="488" y="38" class="flow-node-title">API Thời tiết (Whitelist)</text>
+          <text x="488" y="54" class="flow-node-sub">Đã chi: ${state.weatherSpent.toFixed(3)} USDC</text>
+
+          <rect x="475" y="80" width="192" height="50" rx="8" class="flow-node-rect" style="stroke:var(--safe-border);" />
+          <text x="488" y="102" class="flow-node-title">API Tỷ giá (Whitelist)</text>
+          <text x="488" y="118" class="flow-node-sub">Đã chi: ${state.fxSpent.toFixed(3)} USDC</text>
+
+          <rect x="475" y="144" width="192" height="50" rx="8" class="flow-node-rect" style="stroke:${blocked ? "var(--danger-border)" : "var(--sandbox-border)"};" />
+          <text x="488" y="166" class="flow-node-title">API lạ (${blocked ? "✕ Bị chặn" : "Sandbox"})</text>
+          <text x="488" y="182" class="flow-node-sub">${blocked ? "Vượt trần / Đã khóa" : "Trần vi mô 0.001/tx"}</text>
+        </svg>
+      `;
+    }
+
+    function renderTxTable() {
+      const rows = state.txs.map((item) => `
+        <tr>
+          <th scope="row">${item.api}</th>
+          <td>${item.tier}</td>
+          <td class="mono">${item.amount}</td>
+          <td><span class="pill pill-safe">✓ ${item.status}</span></td>
+          <td><a class="tx-link mono" href="#snowtrace" onclick="return false;">${item.tx} ↗</a></td>
+        </tr>
+      `).join("");
+
+      return `
+        <div tabindex="0" role="region" aria-label="Bảng lịch sử khoản chi x402" class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Dịch vụ (API)</th>
+                <th scope="col">Tầng áp dụng</th>
+                <th scope="col">Số tiền</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col">Snowtrace</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderRejections() {
+      if (!state.rejections.length) {
+        return `<div class="tier-box" style="font-size:0.8rem; color:var(--text-secondary);">Chưa có khoản chi nào bị từ chối. Hãy thử nhấn <strong>"Thử mua API quen"</strong> (khi đã chạm hạn mức) hoặc bật <strong>"Bỏ qua kiểm tra mềm"</strong> rồi gọi API lạ!</div>`;
+      }
+      return `<div class="reject-list">${state.rejections.map((r) => `
+        <div class="reject-item">
+          <div class="reject-head">
+            <span>⛔ ${r.reason}</span>
+            <span class="mono">${r.layer}</span>
+          </div>
+          <div style="color:var(--text-secondary);">${r.detail}</div>
+        </div>
+      `).join("")}</div>`;
+    }
+
+    function updateUI() {
+      document.getElementById("loginScreen").hidden = state.loggedIn;
+      document.getElementById("dashboardShell").hidden = !state.loggedIn;
+
+      document.getElementById("layoutAContainer").hidden = state.layout !== "A";
+      document.getElementById("layoutBContainer").hidden = state.layout !== "B";
+      layoutBtns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.layoutChoice === state.layout)));
+
+      const statusBadge = document.getElementById("agentStatusBadge");
+      const killBtn = document.getElementById("btnKillSwitch");
+      const killLabel = document.getElementById("killSwitchLabel");
+      const pausedBanner = document.getElementById("pausedBanner");
+
+      if (state.paused) {
+        statusBadge.className = "pill pill-danger";
+        statusBadge.textContent = "⛔ Đã khóa khẩn cấp";
+        killBtn.setAttribute("aria-pressed", "true");
+        killLabel.textContent = "ĐANG KHÓA — BẤM ĐỂ MỞ";
+        pausedBanner.hidden = false;
+      } else {
+        statusBadge.className = "pill pill-safe";
+        statusBadge.textContent = "● Đang hoạt động";
+        killBtn.setAttribute("aria-pressed", "false");
+        killLabel.textContent = "KHÓA KHẨN CẤP (KILL SWITCH)";
+        pausedBanner.hidden = true;
+      }
+
+      const bypassBtn = document.getElementById("btnBypassToggle");
+      bypassBtn.setAttribute("aria-pressed", String(state.bypassSoftRules));
+      bypassBtn.textContent = `Bỏ qua kiểm tra mềm: ${state.bypassSoftRules ? "ĐANG BẬT" : "TẮT"}`;
+
+      const pct1 = Math.min(100, Math.round((state.tier1Spent / state.tier1Cap) * 100));
+      const pct2 = Math.min(100, Math.round((state.tier2Spent / state.tier2Cap) * 100));
+
+      ["a", "b"].forEach((prefix) => {
+        document.getElementById(`${prefix}Tier1Text`).textContent = `${state.tier1Spent.toFixed(3)} / ${state.tier1Cap.toFixed(3)} USDC`;
+        const bar1 = document.getElementById(`${prefix}Tier1Bar`);
+        bar1.style.width = `${pct1}%`;
+        bar1.classList.toggle("full", pct1 >= 100);
+
+        document.getElementById(`${prefix}Tier2Text`).textContent = `${state.tier2Spent.toFixed(3)} / ${state.tier2Cap.toFixed(3)} USDC`;
+        const bar2 = document.getElementById(`${prefix}Tier2Bar`);
+        bar2.style.width = `${pct2}%`;
+        bar2.classList.toggle("full", pct2 >= 100);
+      });
+
+      const remaining = (0.05 - state.tier1Spent - state.tier2Spent).toFixed(3);
+      document.getElementById("contractBalance").textContent = `${remaining} USDC`;
+
+      const svgHtml = renderCashflowSvg();
+      document.getElementById("cashflowStageA").innerHTML = svgHtml;
+      document.getElementById("cashflowStageB").innerHTML = svgHtml;
+
+      const tableHtml = renderTxTable();
+      document.getElementById("txTableSlotA").innerHTML = tableHtml;
+      document.getElementById("txTableSlotB").innerHTML = tableHtml;
+      document.getElementById("bTxCount").textContent = String(state.txs.length);
+
+      const rejHtml = renderRejections();
+      document.getElementById("rejListSlotA").innerHTML = rejHtml;
+      document.getElementById("rejListSlotB").innerHTML = rejHtml;
+      document.getElementById("rejCountBadgeA").textContent = String(state.rejections.length);
+      document.getElementById("rejCountBadgeB").textContent = String(state.rejections.length);
+    }
+
+    function applyDemoStep(step) {
+      stepBtns.forEach((b) => b.setAttribute("aria-current", b.dataset.demoStep === String(step) ? "step" : "false"));
+      const hint = document.getElementById("stepHintText");
+
+      if (step === 1) {
+        state.loggedIn = false;
+        hint.textContent = "Bước 1: Chủ agent thấy màn hình đăng nhập Email qua Privy (không cần ví ngoài).";
+      } else if (step === 2) {
+        state.loggedIn = true;
+        state.paused = false;
+        state.bypassSoftRules = false;
+        state.tier1Spent = 0.000;
+        state.tier2Spent = 0.000;
+        state.weatherSpent = 0.000;
+        state.fxSpent = 0.000;
+        state.sandboxBlockedCount = 0;
+        state.txs = [];
+        state.rejections = [];
+        hint.textContent = "Bước 2: Đã đặt hạn mức 2 tầng (Whitelist 0.003 USDC, Sandbox 0.001/lần) — Sẵn sàng chạy.";
+      } else if (step === 3) {
+        state.loggedIn = true;
+        state.paused = false;
+        state.bypassSoftRules = false;
+        state.tier1Spent = 0.003;
+        state.tier2Spent = 0.000;
+        state.weatherSpent = 0.002;
+        state.fxSpent = 0.001;
+        state.sandboxBlockedCount = 0;
+        state.txs = [
+          { id: "#3", api: "API Tỷ giá VND/USD", tier: "Tầng 1 (Whitelist)", amount: "0.001 USDC", status: "Xong", tx: "0x91f8...3c1a" },
+          { id: "#2", api: "API Thời tiết Đà Lạt", tier: "Tầng 1 (Whitelist)", amount: "0.001 USDC", status: "Xong", tx: "0x42d0...8a7e" },
+          { id: "#1", api: "API Thời tiết Đà Lạt", tier: "Tầng 1 (Whitelist)", amount: "0.001 USDC", status: "Xong", tx: "0x18b3...9f02" }
+        ];
+        state.rejections = [];
+        switchSubTab("tx");
+        switchBTab("overview");
+        hint.textContent = "Bước 3: Agent tự mua 3 lần API quen thành công, đồng hồ xăng chạm 0.003 / 0.003 USDC.";
+      } else if (step === 4) {
+        applyDemoStep(3);
+        state.rejections = [
+          { reason: "Vượt hạn mức chu kỳ (Tầng Whitelist)", layer: "Policy Contract", detail: "Yêu cầu lần #4 (0.001 USDC) vượt trần 0.003 USDC / 2 phút." }
+        ];
+        switchSubTab("rej");
+        switchBTab("rejected");
+        hint.textContent = "Bước 4: Lần mua thứ 4 vượt hạn mức ngày — Hợp đồng từ chối và báo đỏ.";
+      } else if (step === 5) {
+        applyDemoStep(4);
+        state.bypassSoftRules = true;
+        state.sandboxBlockedCount = 1;
+        state.rejections.unshift({
+          reason: "Vượt trần Sandbox cho API lạ",
+          layer: "Policy Contract (On-chain)",
+          detail: "Agent bỏ qua kiểm tra mềm đòi trả 0.005 USDC cho địa chỉ lạ 0xDead...9999 → bị chặn vì vượt trần 0.001 USDC/lần."
+        });
+        switchSubTab("rej");
+        hint.textContent = "Bước 5: Bật giả lập bị hack (Bỏ qua kiểm tra mềm) — Tầng Sandbox trên hợp đồng vẫn chặn được!";
+      } else if (step === 6) {
+        applyDemoStep(5);
+        state.paused = true;
+        state.rejections.unshift({
+          reason: "Hệ thống đang khóa khẩn cấp (Kill Switch)",
+          layer: "Policy Contract (paused = true)",
+          detail: "Chủ ví đã bấm Kill Switch — hủy hiệu lực mọi khoản chi, kể cả khoản đã duyệt trước đó."
+        });
+        hint.textContent = "Bước 6: Đã bấm nút đỏ Kill Switch — Toàn bộ Agent dừng ngay lập tức.";
+      }
+      updateUI();
+    }
+
+    function switchLayout(choice) {
+      state.layout = choice;
+      updateUI();
+    }
+
+    function switchSubTab(tabKey) {
+      state.aSubTab = tabKey;
+      document.querySelectorAll("[data-subtab]").forEach((btn) => {
+        const active = btn.dataset.subtab === tabKey;
+        btn.setAttribute("aria-selected", String(active));
+      });
+      document.getElementById("subpanel-tx").hidden = tabKey !== "tx";
+      document.getElementById("subpanel-rej").hidden = tabKey !== "rej";
+    }
+
+    function switchBTab(tabKey) {
+      state.bTab = tabKey;
+      document.querySelectorAll("[data-btab]").forEach((btn) => {
+        const active = btn.dataset.btab === tabKey;
+        btn.setAttribute("aria-selected", String(active));
+      });
+      ["overview", "cashflow", "rules", "rejected"].forEach((k) => {
+        document.getElementById(`bpanel-${k}`).hidden = k !== tabKey;
+      });
+    }
+
+    layoutBtns.forEach((b) => b.addEventListener("click", () => switchLayout(b.dataset.layoutChoice)));
+    stepBtns.forEach((b) => b.addEventListener("click", () => applyDemoStep(Number(b.dataset.demoStep))));
+    document.querySelectorAll("[data-subtab]").forEach((b) => b.addEventListener("click", () => switchSubTab(b.dataset.subtab)));
+    document.querySelectorAll("[data-btab]").forEach((b) => b.addEventListener("click", () => switchBTab(b.dataset.btab)));
+
+    document.getElementById("btnSimulateLogin").addEventListener("click", () => applyDemoStep(2));
+    document.getElementById("btnBypassToggle").addEventListener("click", () => {
+      state.bypassSoftRules = !state.bypassSoftRules;
+      updateUI();
+    });
+    document.getElementById("btnKillSwitch").addEventListener("click", () => {
+      state.paused = !state.paused;
+      updateUI();
+    });
+    document.getElementById("btnBannerUnpause").addEventListener("click", () => {
+      state.paused = false;
+      updateUI();
+    });
+
+    document.querySelectorAll('[data-action="buy-whitelist"]').forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (state.paused) {
+          state.rejections.unshift({ reason: "Hệ thống đang khóa khẩn cấp (Kill Switch)", layer: "Policy Contract", detail: "Không thể duyệt giao dịch khi trạng thái paused = true." });
+          switchSubTab("rej");
+        } else if (state.tier1Spent + 0.001 > state.tier1Cap + 1e-9) {
+          state.rejections.unshift({ reason: "Vượt hạn mức chu kỳ (Tầng Whitelist)", layer: "Policy Contract", detail: "Không thể chi thêm 0.001 USDC vì đã chạm trần 0.003 USDC." });
+          switchSubTab("rej");
+        } else {
+          state.tier1Spent = Number((state.tier1Spent + 0.001).toFixed(3));
+          state.weatherSpent = Number((state.weatherSpent + 0.001).toFixed(3));
+          state.txs.unshift({ id: `#${state.txs.length + 1}`, api: "API Thời tiết Đà Lạt", tier: "Tầng 1 (Whitelist)", amount: "0.001 USDC", status: "Xong", tx: "0x7c12...e409" });
+          switchSubTab("tx");
+        }
+        updateUI();
+      });
+    });
+
+    document.querySelectorAll('[data-action="buy-sandbox"]').forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.sandboxBlockedCount += 1;
+        state.rejections.unshift({
+          reason: state.paused ? "Hệ thống đang khóa khẩn cấp (Kill Switch)" : "Vượt trần Sandbox cho API lạ",
+          layer: state.bypassSoftRules ? "Policy Contract (On-chain)" : "Rule Engine (Off-chain)",
+          detail: "Yêu cầu trả 0.005 USDC cho địa chỉ lạ bị chặn do vượt ngưỡng tối đa 0.001 USDC / lần."
+        });
+        switchSubTab("rej");
+        updateUI();
+      });
+    });
+
+    const dialog = document.getElementById("createAgentDialog");
+    document.getElementById("btnOpenCreateAgent").addEventListener("click", () => dialog.showModal());
+    document.getElementById("btnCloseDialog").addEventListener("click", () => dialog.close());
+    document.getElementById("btnConfirmDialog").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+
+    document.querySelectorAll('[role="tablist"]').forEach((tablist) => {
+      const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+      tablist.addEventListener("keydown", (e) => {
+        const idx = tabs.indexOf(document.activeElement);
+        if (idx === -1) return;
+        let nextIdx = idx;
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") nextIdx = (idx + 1) % tabs.length;
+        else if (e.key === "ArrowLeft" || e.key === "ArrowUp") nextIdx = (idx - 1 + tabs.length) % tabs.length;
+        else if (e.key === "Home") nextIdx = 0;
+        else if (e.key === "End") nextIdx = tabs.length - 1;
+        else return;
+        e.preventDefault();
+        tabs[nextIdx].focus();
+        tabs[nextIdx].click();
+      });
+    });
+
+    applyDemoStep(3);
+  </script>
+</body>
+</html>
