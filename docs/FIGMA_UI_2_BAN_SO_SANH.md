@@ -90,9 +90,9 @@ Dùng bố cục **Sidebar bên trái + Vùng nội dung rộng bên phải**. T
 
 ---
 
-## 4. Phần chờ Nguyên chốt (Mục 4: Màu sắc & Nhận diện)
+## 4. Tông màu & Nhận diện (Đã chốt: Dark Mode)
 
-Nguyên xem 2 gợi ý phong cách màu sắc dưới đây để chốt tông màu chung cho cả Bản A hoặc Bản B:
+Nguyên đã chốt dùng **Dark Mode (Nền tối)** cho bản thiết kế Figma. Bảng dưới giữ lại để đối chiếu thông số màu chuẩn khi dựng Tokens trên Figma:
 
 | Tiêu chí | Phương án Dark Mode (Nền tối) | Phương án Light Mode (Nền sáng) |
 |---|---|---|
@@ -103,5 +103,5 @@ Nguyên xem 2 gợi ý phong cách màu sắc dưới đây để chốt tông m
 
 ### Bảng chốt nhanh dành cho Nguyên
 - [ ] **Chọn bố cục chính:** `[ ] Bản A (1 trang tổng hợp)` · `[ ] Bản B (Menu 4 tab)` · `[ ] Dùng Bản A cho màn hình Demo, Bản B để tham khảo mở rộng`
-- [ ] **Chọn tông màu (Mục 4):** `[ ] Dark Mode` · `[ ] Light Mode`
+- [x] **Chọn tông màu (Mục 4):** `[x] Dark Mode (Đã chốt)` · `[ ] Light Mode`
 - [ ] **Ý tưởng Logo / Icon AgentLeash (Mục 4):** *(ví dụ: Khiên + Dây xích, hoặc Chú chó robot có vòng cổ phát sáng, hoặc chữ đơn giản)* → `...`
