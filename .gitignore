@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+contracts/.env
+contracts/.env.*
 
 # Foundry
 contracts/out/

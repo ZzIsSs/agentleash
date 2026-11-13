@@ -1,0 +1,13 @@
+{
+  "name": "agentleash-sellers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@x402/core": "~2.28.0",
+    "@x402/evm": "~2.28.0",
+    "@x402/express": "~2.28.0",
+    "express": "^5.3.0",
+    "viem": "^2.57.4"
+  }
+}

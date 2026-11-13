@@ -1,0 +1,36 @@
+name: AgentLeash CI
+
+on:
+  push:
+    branches: [main, master, "docs-*", "feat-*", "fix-*"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  contracts:
+    name: Foundry Test Suite
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Check Foundry version
+        run: forge --version
+
+      - name: Run Unit & Invariant Tests
+        run: forge test --no-match-test "Fork" -vvv
+
+      - name: Run Fuji Fork Integration Tests
+        env:
+          FUJI_RPC_URL: https://api.avax-test.network/ext/bc/C/rpc
+        run: forge test --match-test "Fork" -vvv

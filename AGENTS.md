@@ -85,3 +85,11 @@ Còn vướng / cần Nguyên xem: <nếu có>
 - Sửa xong mà trang bị trắng, hiện lỗi đỏ, và một lần hoàn tác không khắc phục được.
 - `git pull` hoặc `git push` báo xung đột (conflict). **Không tự giải quyết xung đột.**
 - Người dùng yêu cầu điều trái với mục 4, 5 hoặc 6.
+
+## 9. Nhật ký phiên
+
+Nguyên và Giang làm xen kẽ, nên mỗi phiên để lại một ghi chú bàn giao trong `docs/sessions/`. Cách làm chi tiết nằm ở [.claude/skills/session-log/SKILL.md](.claude/skills/session-log/SKILL.md): đọc file đó và làm theo, kể cả khi bạn không phải Claude Code.
+
+- **Đầu phiên:** chạy `node .claude/skills/session-log/scripts/thu-thap.mjs doc` rồi tóm tắt cho người dùng trong tối đa 5 dòng: phiên trước để lại gì, có việc gì đang dở liên quan tới họ.
+- **Cuối phiên** (hoặc khi người dùng nói "xong rồi", "ghi log"): chạy `node .claude/skills/session-log/scripts/thu-thap.mjs ghi`, viết log theo mẫu `.claude/skills/session-log/assets/template.md` vào `docs/sessions/<YYYY-MM-DD-HHmm>-giang.md`, rồi chạy `... thu-thap.mjs kiem-tra <file>`. Đưa file log vào commit của nhánh đang làm và nhắc tới nó trong mô tả PR.
+- Hai lệnh `node` trên chỉ đọc git, được chạy mà không cần hỏi. Không sửa gì trong `.claude/`.
