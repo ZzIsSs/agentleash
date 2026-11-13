@@ -2,6 +2,8 @@
 
 Kế hoạch chia giai đoạn cho phần kỹ thuật (Nguyên). Đặc tả đầy đủ ở [SPEC.md](SPEC.md); file này chỉ nói **làm gì, theo thứ tự nào, khi nào coi là xong**.
 
+> **Từ 13/11:** lịch theo ngày đến lúc nộp (gồm cả slide, video, form, quyền repo cho giám khảo) nằm ở [KE_HOACH_VE_DICH.md](KE_HOACH_VE_DICH.md). Ngày ở các GĐ bên dưới đã được dời theo file đó.
+
 - Lập ngày 09/11/2026. Hạn nộp 23:59 ngày 21/11/2026, mục tiêu nộp **trước trưa 21/11**.
 - Quỹ giờ code ước 65–85 giờ.
 - Mỗi giai đoạn có mốc **"Xong khi"** kiểm được bằng lệnh hoặc bằng mắt. Chưa đạt mốc thì chưa sang giai đoạn sau, trừ khi ghi rõ phương án B.
@@ -52,7 +54,7 @@ Tổng: 64–84 giờ.
 
 **Quyết định đã chốt:**
 - **Chính sách chi tiêu phân tầng:** Trusted (whitelist) dùng `perTxCap` và `dailyCap`; ngoài whitelist dùng ngưỡng Sandbox thấp hơn (`sandboxPerTxCap`, `sandboxDailyCap`), vẫn tính chung vào `dailyCap`.
-- **Chu kỳ hạn mức:** cấu hình qua constructor: `1 days` khi chạy thật; `30s` (`DEMO_PERIOD_SECONDS=30`) khi demo.
+- **Chu kỳ hạn mức:** cấu hình qua constructor: `1 days` khi chạy thật; `120s` (`DEMO_PERIOD_SECONDS=120`) khi demo (đổi từ 30s ngày 13/11).
 - **Hoàn hạn mức `release(nonce)`:** làm ngay trong GĐ 1.
 
 | Việc | File | Giờ |
@@ -119,7 +121,7 @@ Không làm bản chạy trên L1 riêng.
 - README: sơ đồ kiến trúc, địa chỉ contract, cách chạy trong 3 lệnh.
 - Script nạp dữ liệu mẫu cho demo (`scripts/seed-demo`).
 - Deploy web (ví dụ Vercel), ghi tài khoản test cho giám khảo.
-- Quay video cùng Giang theo kịch bản trong SPEC, có câu khai chu kỳ 30 giây (`DEMO_PERIOD_SECONDS=30`) ngay đầu (luật 6).
+- Quay video cùng Giang theo kịch bản trong SPEC, có câu khai chu kỳ 120 giây (`DEMO_PERIOD_SECONDS=120`) ngay đầu (luật 6).
 - Nộp trước trưa 21/11, để nửa ngày còn lại dự phòng.
 
 ## Rủi ro và cách cắt
@@ -141,9 +143,9 @@ Giang đánh dấu ở đây hoặc trên trang Notion theo dõi tiến độ.
 - [x] 10/11: GĐ 0 xong, đã chốt facilitator (Facilitator tự host & PayAI; loại Ultravioleta DAO) — xem [SPIKE.md](SPIKE.md)
 - [x] 11/11: đã chốt hạn mức phân tầng (Trusted vs Sandbox)
 - [x] 13/11: GĐ 1 xong: CI xanh, `AgentPolicy` & `AgentPolicyFactory` verified trên Fuji
-- [ ] 15/11: agent tự mua 3 lần, lần 4 bị chặn
+- [x] 13/11 (dời từ 15/11): agent tự mua 3 lần, lần 4 bị chặn (`ExceedsDailyCap`, policy demo 120s, chạy bằng `demo:mock`)
 - [x] 15/11: đã chốt thư viện web (Privy `@privy-io/react-auth` + `viem` thuần, bỏ `wagmi`)
-- [ ] 18/11: chạy trọn kịch bản demo trên dashboard
-- [ ] 19/11: xong phần nên có (hoặc đã quyết bỏ)
-- [ ] 20/11: README, web deploy, video
+- [ ] 16/11 (dời từ 18/11): chạy trọn kịch bản demo trên dashboard
+- [ ] 18/11 (dời từ 19/11): xong phần nên có (hoặc đã quyết bỏ)
+- [ ] 19/11: README, web deploy · 20/11: video
 - [ ] 21/11 trước trưa: đã nộp

@@ -3,9 +3,16 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "run:agent": "node --env-file=../.env src/run.ts",
+    "demo:gd2": "node --env-file=../.env src/run.ts --prompt \"Tổng hợp thời tiết và tỷ giá cho chuyến đi Đà Lạt\"",
+    "demo:mock": "node --env-file=../.env src/run.ts --mock-llm --prompt \"Tổng hợp thời tiết và tỷ giá cho chuyến đi Đà Lạt\"",
+    "demo:bypass": "node --env-file=../.env src/run.ts --bypass-rules --rogue-pay-to 0x1111111111111111111111111111111111111111",
     "test-spike": "node --env-file=../.env src/spikePay.ts"
   },
   "dependencies": {
+    "@google/genai": "^3.3.0",
     "@x402/core": "~2.28.0",
     "@x402/evm": "~2.28.0",
     "@x402/fetch": "~2.28.0",
@@ -13,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^5.1.0"
   }
 }

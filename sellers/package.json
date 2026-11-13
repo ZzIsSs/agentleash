@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "start:weather": "node --env-file=../.env weather.mjs",
+    "start:rates": "node --env-file=../.env rates.mjs",
+    "start:spike": "node --env-file=../.env spike-server.mjs"
+  },
   "dependencies": {
     "@x402/core": "~2.28.0",
     "@x402/evm": "~2.28.0",
