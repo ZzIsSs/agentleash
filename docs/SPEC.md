@@ -106,7 +106,7 @@ contract AgentPolicy {
     uint256 public dailyCap;           // tổng trần mỗi chu kỳ (gồm cả Trusted và Sandbox)
     uint256 public sandboxPerTxCap;    // trần mỗi khoản cho địa chỉ ngoài whitelist
     uint256 public sandboxDailyCap;    // trần mỗi chu kỳ riêng cho ngoài whitelist
-    uint256 public period;             // cấu hình qua constructor: 1 days khi chạy thật; 30s (DEMO_PERIOD_SECONDS=30) khi demo
+    uint256 public period;             // cấu hình qua constructor: 1 days khi chạy thật; 120s (DEMO_PERIOD_SECONDS=120) khi demo
     uint256 public spentInPeriod;
     uint256 public sandboxSpentInPeriod;
     uint256 public periodStart;
@@ -136,7 +136,7 @@ Sáu quyết định thiết kế:
 2. **Trừ hạn mức ngay khi duyệt**, không chờ tiền chuyển xong. Hàm `release(nonce)` (làm ở GĐ 1): khi `validBefore` đã qua mà USDC báo nonce chưa dùng (`authorizationState`), hoàn lại hạn mức (và hoàn phần sandbox nếu khoản đó là sandbox).
 3. **Kill switch chặn cả khoản đã duyệt.** Khi `paused = true`, `isValidSignature` trả thất bại, nên khoản đã duyệt mà facilitator chưa gửi lên chuỗi cũng bị chặn.
 4. **Mỗi chủ agent một contract**, tạo qua factory. Chỉ chủ rút được tiền, không có quỹ chung (luật 3).
-5. **Chu kỳ hạn mức cấu hình qua constructor:** `1 days` khi chạy thật, `30s` (`DEMO_PERIOD_SECONDS=30`) khi demo. Đây là giả lập thời gian nên phải khai đầu pitch (luật 6).
+5. **Chu kỳ hạn mức cấu hình qua constructor:** `1 days` khi chạy thật, `120s` (`DEMO_PERIOD_SECONDS=120`; 30s quá ngắn so với tốc độ Fuji) khi demo. Đây là giả lập thời gian nên phải khai đầu pitch (luật 6).
 6. **Chính sách chi tiêu phân tầng (Trusted vs Sandbox):** Địa chỉ trong whitelist dùng `perTxCap` và `dailyCap`; địa chỉ ngoài whitelist dùng ngưỡng Sandbox thấp hơn là `sandboxPerTxCap` và `sandboxDailyCap`, và mọi khoản chi Sandbox vẫn tính chung vào `dailyCap` (`spentInPeriod`).
 
 **Test Foundry bắt buộc** (ban tổ chức ghi "tests are mandatory on the money paths"):
@@ -175,7 +175,7 @@ Rule engine chặn sớm và rẻ. Policy contract là lớp cuối, không ai v
 
 ## Kịch bản demo khoảng 2 phút
 
-1. **Mở đầu (luật 6):** "Trong demo, chu kỳ hạn mức đặt 30 giây (`DEMO_PERIOD_SECONDS=30`) thay vì 1 ngày."
+1. **Mở đầu (luật 6):** "Trong demo, chu kỳ hạn mức đặt 120 giây (`DEMO_PERIOD_SECONDS=120`) thay vì 1 ngày."
 2. **Thiết lập:** chủ đăng nhập email, tạo agent với hạn mức Trusted (ví dụ 0.003 USDC mỗi chu kỳ) và ngưỡng Sandbox thấp hơn (ví dụ 0.0005 USDC mỗi lần / 0.001 USDC mỗi chu kỳ), whitelist hai API dữ liệu mock (Thời tiết & Tỷ giá).
 3. **Agent làm việc:** nhiệm vụ "tổng hợp thời tiết và tỷ giá cho chuyến đi Đà Lạt". Agent mua dữ liệu 3 lần, đồng hồ hạ dần, mỗi khoản có link Snowtrace.
 4. **Bị chặn lần 1:** lần mua thứ 4 vượt hạn mức, contract revert, dashboard báo đỏ.
@@ -190,7 +190,8 @@ Rule engine chặn sớm và rẻ. Policy contract là lớp cuối, không ai v
 | Fuji C-Chain | chainId 43113, RPC `https://api.avax-test.network/ext/bc/C/rpc` |
 | USDC Fuji (`FiatTokenV2_2`, hỗ trợ ERC-1271) | `0x5425890298aed601595a70AB815c96711a31Bc65` |
 | AgentPolicyFactory (Fuji) | [`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`](https://testnet.snowscan.xyz/address/0x369251fc256d8ae3b25f66fe1c4b3114a06ba864) |
-| AgentPolicy mẫu (Fuji) | [`0x7D49667A308161DD4810E6DDBEE5CBd67F4328AC`](https://testnet.snowscan.xyz/address/0x7d49667a308161dd4810e6ddbee5cbd67f4328ac) |
+| AgentPolicy demo (Fuji, chu kỳ 120s, từ 13/11) | [`0x2acc0af39b9892529c052d7192ac03664f079671`](https://testnet.snowscan.xyz/address/0x2acc0af39b9892529c052d7192ac03664f079671) |
+| AgentPolicy mẫu cũ (Fuji, chu kỳ 30s, không dùng cho demo) | [`0x7D49667A308161DD4810E6DDBEE5CBd67F4328AC`](https://testnet.snowscan.xyz/address/0x7d49667a308161dd4810e6ddbee5cbd67f4328ac) |
 | ERC-8004 Identity Registry trên Fuji | `0x8004A818BFB912233c491871b3d84c89A494BD9e` |
 | Facilitator tương thích | Facilitator tự host (`http://localhost:4022`, mặc định); PayAI công khai (`https://facilitator.payai.network`, dự phòng) |
 
@@ -206,7 +207,7 @@ Rule engine chặn sớm và rẻ. Policy contract là lớp cuối, không ai v
 - **Luật 3:** non-custodial, không gom quỹ. Mỗi chủ một contract, chỉ chủ rút.
 - **Luật 4:** LLM không bao giờ là bên quyết chuyển tiền; agent phải có policy contract với hạn mức, whitelist, kill switch.
 - **Luật 5:** trên chuỗi chỉ có địa chỉ, số tiền và trạng thái. Nội dung truy vấn của agent không lên chuỗi.
-- **Luật 6:** dữ liệu hay thời gian giả lập (chu kỳ `30s` theo `DEMO_PERIOD_SECONDS=30`, dữ liệu Thời tiết & Tỷ giá mock) phải khai ngay đầu pitch.
+- **Luật 6:** dữ liệu hay thời gian giả lập (chu kỳ `120s` theo `DEMO_PERIOD_SECONDS=120`, dữ liệu Thời tiết & Tỷ giá mock) phải khai ngay đầu pitch.
 - **Luật 2 và 8:** crypto không phải phương tiện thanh toán ở Việt Nam. Chỉ dùng USDC test cho dịch vụ máy với máy, không trả lương, không thu tiền thật của người dùng, không tư vấn tài chính.
 - **Luật 9**, ba câu phải trả lời được:
   - *Vì sao on-chain:* luật chi tiêu phải nằm ở nơi agent không sửa được và mọi bên kiểm tra được.

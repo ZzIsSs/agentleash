@@ -13,7 +13,8 @@ Kể cả khi agent bị chiếm, thiệt hại tối đa chỉ là phần hạn
 | Mục | Địa chỉ On-Chain | Trạng thái Snowscan / Routescan |
 |---|---|---|
 | **AgentPolicyFactory** | [`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`](https://testnet.snowscan.xyz/address/0x369251fc256d8ae3b25f66fe1c4b3114a06ba864) | ✅ **Verified** |
-| **AgentPolicy (Mẫu Demo)** | [`0x7D49667A308161DD4810E6DDBEE5CBd67F4328AC`](https://testnet.snowscan.xyz/address/0x7d49667a308161dd4810e6ddbee5cbd67f4328ac) | ✅ **Verified** (Đã nạp 0.01 USDC) |
+| **AgentPolicy (Demo, chu kỳ 120s)** | [`0x2acc0af39b9892529c052d7192ac03664f079671`](https://testnet.snowscan.xyz/address/0x2acc0af39b9892529c052d7192ac03664f079671) | Tạo qua Factory đã verified; whitelist 2 API, hạn mức theo kịch bản demo, nạp 0.01 USDC |
+| AgentPolicy (mẫu cũ, chu kỳ 30s) | [`0x7D49667A308161DD4810E6DDBEE5CBd67F4328AC`](https://testnet.snowscan.xyz/address/0x7d49667a308161dd4810e6ddbee5cbd67f4328ac) | ✅ Verified, không dùng cho demo nữa |
 | **USDC Testnet (`FiatTokenV2_2`)** | [`0x5425890298aed601595a70AB815c96711a31Bc65`](https://testnet.snowscan.xyz/address/0x5425890298aed601595a70AB815c96711a31Bc65) | Circle Official (Hỗ trợ ERC-1271 & EIP-3009) |
 | **SpikePolicy (Spike GĐ 0)** | [`0x38706AFC0f92b6908389ebF377aab688a2BDe951`](https://testnet.snowscan.xyz/address/0x38706AFC0f92b6908389ebF377aab688a2BDe951) | ✅ Đã kiểm chứng trọn vòng x402 |
 | **Ví Deployer / Owner mẫu** | `0xd30CcDd472372f92f9DeDFaafDeD9615136b75CB` | Đã nạp gas Fuji AVAX |
