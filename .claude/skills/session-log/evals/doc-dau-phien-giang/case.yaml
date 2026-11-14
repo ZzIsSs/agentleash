@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: doc-dau-phien-giang
+expected_outcome: |
+  Tóm tắt ngắn bằng lời thường cho Giang: việc được giao cho Giang (dòng Đã dùng X / Y USDC), lời dặn không sửa web/src/lib, PR #3 của Giang trên nhánh ui-trang-gioi-thieu đang chờ Nguyên duyệt và nguy cơ xung đột page.tsx. Không sửa file nào.
+context:
+  scaffold_script: place-files.sh

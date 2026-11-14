@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: ghi-log-cuoi-phien
+expected_outcome: |
+  Một file log mới docs/sessions/2026-..-nguyen.md ghi đúng file đã đổi kể từ log trước, quyết định USDC kèm lý do, phương án mapping đã bỏ, việc còn dở (fuzz test, nối số liệu trang Tổng quan), lưu ý page.tsx chưa commit; không tự commit.
+context:
+  scaffold_script: place-files.sh

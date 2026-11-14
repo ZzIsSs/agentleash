@@ -8,3 +8,4 @@ Phạm vi và quyết định đã chốt: [docs/SPEC.md](docs/SPEC.md). Lý do 
 - Contract: Foundry trong `contracts/`. Mọi đường tiền phải có test (`forge test`), kèm fuzz cho hạn mức.
 - Web: Next.js 15 + wagmi 2 + viem 2 trong `web/`, chưa có Privy. Cấu hình chuỗi ở `web/src/lib/`.
 - Mạng: Fuji C-Chain (43113). Không commit `.env`.
+- Nhật ký phiên: đầu phiên đọc log gần nhất (`/session-log` chế độ đọc), cuối phiên ghi log vào `docs/sessions/` (`/session-log`). Hook Stop trong `.claude/settings.json` nhắc nếu quên.
