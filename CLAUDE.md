@@ -6,6 +6,6 @@ Phạm vi và quyết định đã chốt: [docs/SPEC.md](docs/SPEC.md). Lý do 
 
 - Starter kit của ban tổ chức nằm **ngoài repo**, ở `../x402-pay-per-request/` và `../privy-agent-wallet/`. Không chép nguyên thư mục vào repo, chỉ chép phần cần dùng.
 - Contract: Foundry trong `contracts/`. Mọi đường tiền phải có test (`forge test`), kèm fuzz cho hạn mức.
-- Web: Next.js 15 + wagmi 2 + viem 2 trong `web/`, chưa có Privy. Cấu hình chuỗi ở `web/src/lib/`.
+- Web: Next.js 15 + Privy (`@privy-io/react-auth`, đăng nhập email) + viem 2 thuần trong `web/`, đã bỏ wagmi. Cấu hình chuỗi và đọc contract ở `web/src/lib/` (`chain.ts`, `policy.ts`); test `npm test` (vitest). `web/.npmrc` bật `legacy-peer-deps` vì peer tùy chọn của Privy xung đột với viem.
 - Mạng: Fuji C-Chain (43113). Không commit `.env`.
 - Nhật ký phiên: đầu phiên đọc log gần nhất (`/session-log` chế độ đọc), cuối phiên ghi log vào `docs/sessions/` (`/session-log`). Hook Stop trong `.claude/settings.json` nhắc nếu quên.

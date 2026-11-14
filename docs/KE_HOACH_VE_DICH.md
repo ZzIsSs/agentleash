@@ -82,8 +82,8 @@ Rút từ [doc/07](../../doc/07-yeu-cau-nop-bai.md) và [doc/06](../../doc/06-ti
 Tick ở đây khi xong mốc của từng ngày.
 
 - [x] 13/11: GĐ 2 nghiệm thu (3 lần mua + lần 4 bị chặn `ExceedsDailyCap`, policy `0x2acc…9671`)
-- [ ] 13/11: mời `tuantqse90`; commit + PR GĐ 2; merge PR #2
-- [ ] 14/11: đăng nhập Privy + màn Tổng quan
+- [ ] 13/11: ~~commit + PR GĐ 2~~ ✅ PR #3 (nhánh `gd2-agent-sellers`); merge PR #2 → #3 (Nguyên); **mời `tuantqse90`: Nguyên chưa cho phép** (13/11 tối)
+- [ ] 14/11: đăng nhập Privy + màn Tổng quan (code xong tối 13/11 trên `gd3a-dashboard`, build sạch, số khớp `cast call`; còn: Nguyên đăng nhập email thật để nghiệm thu, commit + PR)
 - [ ] 15/11: dòng tiền, kill switch, màn bị từ chối
 - [ ] 16/11: chạy trọn 7 bước demo
 - [ ] 17/11: slide nháp, dự Workshop 3
