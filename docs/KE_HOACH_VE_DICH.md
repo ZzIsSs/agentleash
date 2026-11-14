@@ -62,7 +62,7 @@ Rút từ [doc/07](../../doc/07-yeu-cau-nop-bai.md) và [doc/06](../../doc/06-ti
 
 | Mục | Ngày |
 |---|---|
-| `tuantqse90` đã **chấp nhận** lời mời collaborator (hoặc repo để public) | Mời 13/11, kiểm lại 19/11 |
+| `tuantqse90` đã **chấp nhận** lời mời collaborator (hoặc repo để public) | ✅ Repo public từ 14/11; 21/11 mở bằng tab ẩn danh để kiểm lại |
 | README nêu cách chạy, kiến trúc, địa chỉ contract và mạng | 19/11 |
 | Test cho các đường tiền (Foundry đã có) | ✅ |
 | Link Snowscan cho trường "Contract address" | ✅ (factory `0x369251fC…A864`) |
@@ -82,8 +82,8 @@ Rút từ [doc/07](../../doc/07-yeu-cau-nop-bai.md) và [doc/06](../../doc/06-ti
 Tick ở đây khi xong mốc của từng ngày.
 
 - [x] 13/11: GĐ 2 nghiệm thu (3 lần mua + lần 4 bị chặn `ExceedsDailyCap`, policy `0x2acc…9671`)
-- [ ] 13/11: ~~commit + PR GĐ 2~~ ✅ PR #3 (nhánh `gd2-agent-sellers`); merge PR #2 → #3 (Nguyên); **mời `tuantqse90`: Nguyên chưa cho phép** (13/11 tối)
-- [ ] 14/11: đăng nhập Privy + màn Tổng quan (code xong tối 13/11 trên `gd3a-dashboard`, build sạch, số khớp `cast call`; còn: Nguyên đăng nhập email thật để nghiệm thu, commit + PR)
+- [x] 13/11: PR #2, #3 đã merge vào main (14/11). Quyền xem cho giám khảo: repo đã chuyển **public** (14/11). Đã quét lịch sử git, không có `.env` hay khóa thật (chỉ có khóa mẫu công khai của web3.js trong test-fixture)
+- [x] 14/11: đăng nhập Privy + màn Tổng quan. PR #4 đã merge vào main, build sạch, vitest 11/11, số khớp `cast call`. Nguyên đăng nhập email thật và xác nhận nghiệm thu (14/11)
 - [ ] 15/11: dòng tiền, kill switch, màn bị từ chối
 - [ ] 16/11: chạy trọn 7 bước demo
 - [ ] 17/11: slide nháp, dự Workshop 3

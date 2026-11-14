@@ -93,8 +93,8 @@ Tổng: 64–84 giờ.
 
 | Việc | Nội dung | Giờ | Trạng thái |
 |---|---|---|---|
-| Đăng nhập | Privy bằng email (`@privy-io/react-auth` + viem), chép `providers.tsx` từ `privy-agent-wallet`. Tài trợ gas nếu Privy cho phép trên Fuji | 3 | 🟡 code xong 13/11, chờ nghiệm thu đăng nhập |
-| Tổng quan | Đồng hồ hạn mức còn lại trong chu kỳ (Trusted & Sandbox), số dư USDC của contract, trạng thái agent (đang chạy hoặc đã khóa) | 3 | 🟡 code xong 13/11, số khớp on-chain |
+| Đăng nhập | Privy bằng email (`@privy-io/react-auth` + viem), chép `providers.tsx` từ `privy-agent-wallet`. Tài trợ gas nếu Privy cho phép trên Fuji | 3 | ✅ nghiệm thu 14/11 |
+| Tổng quan | Đồng hồ hạn mức còn lại trong chu kỳ (Trusted & Sandbox), số dư USDC của contract, trạng thái agent (đang chạy hoặc đã khóa) | 3 | ✅ nghiệm thu 14/11, số khớp on-chain |
 | Dòng tiền | Danh sách khoản chi từ event `Authorized` kèm link Snowtrace; sơ đồ agent → các API, đường dày theo số tiền | 4–5 |  |
 | Luật chi tiêu | Sửa hạn mức phân tầng, thêm hoặc bớt whitelist; mỗi thay đổi là một giao dịch do chủ ký | 2–3 |  |
 | Kill switch | Nút đỏ to, luôn hiện, gọi `pause()` | 1 |  |
