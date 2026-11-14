@@ -1,26 +1,36 @@
 @import "tailwindcss";
 
+/* Dark Mode đã chốt (docs/HUONG_DAN_CHUAN_BI_FIGMA.md mục 4): nền #020617, thẻ #0F172A.
+   Màu trạng thái: xanh lá = Whitelist, vàng = Sandbox, cyan = dòng tiền, đỏ = Kill switch / bị chặn. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #020617;
+  --card: #0f172a;
+  --border: #1e293b;
+  --foreground: #e2e8f0;
+  --muted: #94a3b8;
+  --trusted: #22c55e;
+  --sandbox: #eab308;
+  --flow: #22d3ee;
+  --danger: #ef4444;
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-card: var(--card);
+  --color-border: var(--border);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-trusted: var(--trusted);
+  --color-sandbox: var(--sandbox);
+  --color-flow: var(--flow);
+  --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }

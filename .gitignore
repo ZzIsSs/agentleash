@@ -24,3 +24,6 @@ web/next-env.d.ts
 Thumbs.db
 .vscode/
 .idea/
+
+# Log chạy agent (audit.json chứa dữ liệu mỗi lần demo)
+agent/logs/
