@@ -1,20 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { POLICY_ADDRESS, USDC_ADDRESS, publicClient } from "./chain";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Address } from "viem";
+import { USDC_ADDRESS, publicClient } from "./chain";
 import { readPolicy, type PolicyRaw } from "./policy";
 
 const POLL_MS = 3_000;
 
-/** Đọc AgentPolicy định kỳ 3 giây (GĐ 3c sẽ thêm watchContractEvent). */
-export function usePolicy(enabled: boolean) {
+/** Đọc AgentPolicy định kỳ 3 giây (GĐ 3c sẽ thêm watchContractEvent). Đổi `policy` thì xóa số cũ. */
+export function usePolicy(enabled: boolean, policy: Address | null) {
   const [raw, setRaw] = useState<PolicyRaw | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
 
+  const current = useRef(policy);
+  useEffect(() => {
+    current.current = policy;
+  }, [policy]);
+
   const refresh = useCallback(async () => {
+    if (!policy) return;
     try {
-      const next = await readPolicy(publicClient, POLICY_ADDRESS, USDC_ADDRESS);
+      const next = await readPolicy(publicClient, policy, USDC_ADDRESS);
+      if (current.current !== policy) return; // kết quả của policy cũ về muộn
       setRaw(next);
       setUpdatedAt(Date.now());
       setError(null);
@@ -22,14 +30,19 @@ export function usePolicy(enabled: boolean) {
       // Giữ số cũ trên màn hình, chỉ báo lỗi kết nối.
       setError(e instanceof Error ? e.message.split("\n")[0] : String(e));
     }
-  }, []);
+  }, [policy]);
 
   useEffect(() => {
-    if (!enabled) return;
+    setRaw(null);
+    setUpdatedAt(null);
+  }, [policy]);
+
+  useEffect(() => {
+    if (!enabled || !policy) return;
     void refresh();
     const id = setInterval(() => void refresh(), POLL_MS);
     return () => clearInterval(id);
-  }, [enabled, refresh]);
+  }, [enabled, policy, refresh]);
 
   return { raw, error, updatedAt, refresh };
 }

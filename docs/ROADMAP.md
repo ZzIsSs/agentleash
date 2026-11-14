@@ -93,14 +93,14 @@ Tổng: 64–84 giờ.
 
 | Việc | Nội dung | Giờ | Trạng thái |
 |---|---|---|---|
-| Đăng nhập | Privy bằng email (`@privy-io/react-auth` + viem), chép `providers.tsx` từ `privy-agent-wallet`. Tài trợ gas nếu Privy cho phép trên Fuji | 3 | 🟡 code xong 13/11, chờ nghiệm thu đăng nhập |
-| Tổng quan | Đồng hồ hạn mức còn lại trong chu kỳ (Trusted & Sandbox), số dư USDC của contract, trạng thái agent (đang chạy hoặc đã khóa) | 3 | 🟡 code xong 13/11, số khớp on-chain |
-| Dòng tiền | Danh sách khoản chi từ event `Authorized` kèm link Snowtrace; sơ đồ agent → các API, đường dày theo số tiền | 4–5 |  |
-| Luật chi tiêu | Sửa hạn mức phân tầng, thêm hoặc bớt whitelist; mỗi thay đổi là một giao dịch do chủ ký | 2–3 |  |
-| Kill switch | Nút đỏ to, luôn hiện, gọi `pause()` | 1 |  |
-| Bị từ chối | Gộp revert trên chuỗi (vượt trần Sandbox, vượt hạn mức) và log của rule engine, lý do tiếng Việt | 2–3 |  |
-| Trạng thái giao dịch | Ba bước rõ ràng: đang ký, đang chờ, xong (kèm link) | 1–2 |  |
-| Cập nhật thời gian thực | Theo dõi event (`watchContractEvent` hoặc hỏi định kỳ vài giây một lần) | 1–2 |  |
+| Đăng nhập | Privy bằng email (`@privy-io/react-auth` + viem), chép `providers.tsx` từ `privy-agent-wallet`. Tài trợ gas nếu Privy cho phép trên Fuji | 3 | ✅ nghiệm thu 14/11 |
+| Tổng quan | Đồng hồ hạn mức còn lại trong chu kỳ (Trusted & Sandbox), số dư USDC của contract, trạng thái agent (đang chạy hoặc đã khóa) | 3 | ✅ nghiệm thu 14/11, số khớp on-chain |
+| Dòng tiền | Danh sách khoản chi từ event `Authorized` kèm link Snowtrace; sơ đồ agent → các API, đường dày theo số tiền | 4–5 | ✅ danh sách 14/11 (Routescan + RPC 3 giây). Sơ đồ chưa làm |
+| Luật chi tiêu | Sửa hạn mức phân tầng, thêm hoặc bớt whitelist; mỗi thay đổi là một giao dịch do chủ ký | 2–3 | 🟡 whitelist 2 API demo và tạo policy từ ví Privy xong 14/11; sửa hạn mức (`setCaps`) ở GĐ 3c |
+| Kill switch | Nút đỏ to, luôn hiện, gọi `pause()` | 1 | ✅ nghiệm thu 14/11: pause/unpause trên Fuji, agent bị `PausedError` |
+| Bị từ chối | Gộp revert trên chuỗi (vượt trần Sandbox, vượt hạn mức) và log của rule engine, lý do tiếng Việt | 2–3 | ✅ 14/11, đọc `agent/logs/audit.json` qua `/api/rejections` |
+| Trạng thái giao dịch | Ba bước rõ ràng: đang ký, đang chờ, xong (kèm link) | 1–2 | ✅ 14/11 |
+| Cập nhật thời gian thực | Theo dõi event (`watchContractEvent` hoặc hỏi định kỳ vài giây một lần) | 1–2 | ✅ hỏi định kỳ 3 giây (14/11) |
 
 Phần giao diện tĩnh có thể giao Giang theo [AGENTS.md](../AGENTS.md), chỗ cần dữ liệu đánh dấu `{/* TODO Nguyên: nối dữ liệu */}`.
 
