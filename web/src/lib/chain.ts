@@ -13,10 +13,11 @@ export const USDC_ADDRESS = envAddress(
   "0x5425890298aed601595a70AB815c96711a31Bc65",
 );
 
-// Policy demo chu kỳ 120 giây, deploy 13/11 qua factory 0x369251fC…A864 (docs/SPEC.md).
+// Policy demo chu kỳ 120 giây, tạo 14/11 từ ví Privy của Nguyên qua factory 0x369251fC…A864 (docs/SPEC.md).
+// Policy 13/11 (0x2acc…9671, chủ là ví deploy) chỉ còn giữ lịch sử, không dùng cho demo.
 export const POLICY_ADDRESS = envAddress(
   process.env.NEXT_PUBLIC_AGENT_POLICY_ADDRESS,
-  "0x2acc0af39b9892529c052d7192ac03664f079671",
+  "0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177",
 );
 
 // Factory deploy GĐ 1 (verified). Chủ agent tạo policy riêng qua đây, owner = ví gửi giao dịch.
