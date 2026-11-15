@@ -40,7 +40,11 @@ describe("txReducer", () => {
   });
 });
 
-function revert(errorName: "Unauthorized" | "PausedError" | "NotPausedError", functionName = "pause") {
+function revert(
+  errorName: "Unauthorized" | "PausedError" | "NotPausedError" | "InvalidCaps",
+  functionName = "pause",
+  args?: readonly unknown[],
+) {
   const cause = new ContractFunctionRevertedError({
     abi: policyOwnerAbi,
     data: encodeErrorResult({ abi: policyOwnerAbi, errorName }),
@@ -49,6 +53,7 @@ function revert(errorName: "Unauthorized" | "PausedError" | "NotPausedError", fu
   return new ContractFunctionExecutionError(cause, {
     abi: policyOwnerAbi,
     functionName,
+    args,
     contractAddress: "0x2acc0af39b9892529c052d7192ac03664f079671",
   });
 }
@@ -61,6 +66,12 @@ describe("describeTxError", () => {
   it("khóa khi đã khóa, mở khi đang mở", () => {
     expect(describeTxError(revert("PausedError"))).toBe("Policy đã ở trạng thái khóa.");
     expect(describeTxError(revert("NotPausedError", "unpause"))).toBe("Policy đang không khóa, không cần mở.");
+  });
+
+  it("hạn mức không hợp lệ (InvalidCaps)", () => {
+    expect(describeTxError(revert("InvalidCaps", "setCaps", [3000n, 2000n, 500n, 1000n]))).toContain(
+      "Hạn mức không hợp lệ",
+    );
   });
 
   it("người dùng hủy ký", () => {

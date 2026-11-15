@@ -91,6 +91,18 @@ export const policyOwnerAbi = [
   },
   {
     type: "function",
+    name: "setCaps",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "_perTxCap", type: "uint256" },
+      { name: "_dailyCap", type: "uint256" },
+      { name: "_sandboxPerTxCap", type: "uint256" },
+      { name: "_sandboxDailyCap", type: "uint256" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
     name: "whitelist",
     stateMutability: "view",
     inputs: [{ name: "", type: "address" }],

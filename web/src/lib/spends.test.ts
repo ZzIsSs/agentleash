@@ -3,11 +3,14 @@ import { describe, expect, it } from "vitest";
 import { policyEventsAbi } from "./abi";
 import {
   AUTHORIZED_TOPIC,
+  RATES_SELLER_ADDRESS,
+  WEATHER_SELLER_ADDRESS,
   blockRanges,
   decodePolicyLog,
   fromRoutescan,
   mergeSpends,
   sellerName,
+  summarizeSpendFlows,
   totalSpent,
   type RawLog,
   type RoutescanLog,
@@ -176,5 +179,83 @@ describe("blockRanges", () => {
       [9801n, 9900n],
       [9901n, 10_000n],
     ]);
+  });
+});
+
+describe("summarizeSpendFlows", () => {
+  it("trả về 3 nhánh idle khi chưa có khoản chi hoặc tất cả đã released", () => {
+    const releasedOnly = mergeSpends(
+      [],
+      [authorizedLog({ block: 5n, index: 0, amount: 1000n, payTo: WEATHER_SELLER_ADDRESS })],
+    );
+    const afterRelease = mergeSpends(releasedOnly, [releasedLog(NONCE, 6n)]);
+
+    const summary = summarizeSpendFlows(afterRelease);
+    expect(summary.totalAmount).toBe(0n);
+    expect(summary.totalCount).toBe(0);
+    expect(summary.nodes.map((n) => [n.id, n.tier, n.strokeWidth, n.amount])).toEqual([
+      ["weather", "idle", 1.5, 0n],
+      ["rates", "idle", 1.5, 0n],
+      ["unknown", "idle", 1.5, 0n],
+    ]);
+  });
+
+  it("gom tổng USDC theo Thời tiết, Tỷ giá, Địa chỉ lạ, loại khoản released và chỉnh độ dày tỷ lệ", () => {
+    const n1 = ("0x" + "11".repeat(32)) as Hex;
+    const n2 = ("0x" + "22".repeat(32)) as Hex;
+    const n3 = ("0x" + "33".repeat(32)) as Hex;
+    const n4 = ("0x" + "44".repeat(32)) as Hex;
+
+    const spends = mergeSpends(
+      [],
+      [
+        authorizedLog({ block: 1n, index: 0, amount: 1000n, payTo: WEATHER_SELLER_ADDRESS, nonce: n1 }),
+        authorizedLog({ block: 2n, index: 0, amount: 1000n, payTo: RATES_SELLER_ADDRESS, nonce: n2 }),
+        authorizedLog({ block: 3n, index: 0, amount: 1000n, payTo: RATES_SELLER_ADDRESS, nonce: n3 }),
+        authorizedLog({ block: 4n, index: 0, amount: 500n, payTo: STRANGER, sandbox: true, nonce: n4 }),
+      ],
+    );
+    const withReleased = mergeSpends(spends, [releasedLog(n4, 5n)]);
+
+    const summary = summarizeSpendFlows(withReleased);
+    expect(summary.totalAmount).toBe(3000n);
+    expect(summary.totalCount).toBe(3);
+
+    const [weather, rates, unknown] = summary.nodes;
+    expect(weather).toMatchObject({ id: "weather", amount: 1000n, count: 1, tier: "trusted" });
+    expect(rates).toMatchObject({ id: "rates", amount: 2000n, count: 2, tier: "trusted" });
+    expect(unknown).toMatchObject({ id: "unknown", amount: 0n, count: 0, tier: "idle" });
+    expect(rates.strokeWidth).toBeGreaterThan(weather.strokeWidth);
+    expect(weather.strokeWidth).toBeGreaterThan(unknown.strokeWidth);
+  });
+
+  it("phân biệt đúng Whitelist, Sandbox và hỗn hợp (mixed)", () => {
+    const n1 = ("0x" + "01".repeat(32)) as Hex;
+    const n2 = ("0x" + "02".repeat(32)) as Hex;
+    const n3 = ("0x" + "03".repeat(32)) as Hex;
+
+    const spends = mergeSpends(
+      [],
+      [
+        authorizedLog({ block: 1n, index: 0, amount: 1000n, payTo: WEATHER_SELLER_ADDRESS, sandbox: false, nonce: n1 }),
+        authorizedLog({ block: 2n, index: 0, amount: 500n, payTo: WEATHER_SELLER_ADDRESS, sandbox: true, nonce: n2 }),
+        authorizedLog({ block: 3n, index: 0, amount: 500n, payTo: STRANGER, sandbox: true, nonce: n3 }),
+      ],
+    );
+
+    const [weather, rates, unknown] = summarizeSpendFlows(spends).nodes;
+    expect(weather).toMatchObject({
+      tier: "mixed",
+      amount: 1500n,
+      trustedAmount: 1000n,
+      sandboxAmount: 500n,
+    });
+    expect(rates.tier).toBe("idle");
+    expect(unknown).toMatchObject({
+      tier: "sandbox",
+      amount: 500n,
+      trustedAmount: 0n,
+      sandboxAmount: 500n,
+    });
   });
 });

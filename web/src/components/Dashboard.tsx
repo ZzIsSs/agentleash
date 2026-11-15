@@ -4,6 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useCallback, useState } from "react";
 import type { Address } from "viem";
 import { factoryAbi, policyOwnerAbi } from "@/lib/abi";
+import type { ParsedCaps } from "@/lib/caps";
 import {
   DEMO_AGENT_ADDRESS,
   DEMO_POLICY_PARAMS,
@@ -83,6 +84,21 @@ export function Dashboard() {
       return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
     });
 
+  const sendSetCaps = async (caps: ParsedCaps): Promise<boolean> => {
+    const receipt = await tx.run("Cập nhật hạn mức 2 tầng", async () => {
+      const wallet = await owner.getWalletClient();
+      const { request } = await publicClient.simulateContract({
+        address: policy,
+        abi: policyOwnerAbi,
+        functionName: "setCaps",
+        args: [caps.perTxCap, caps.dailyCap, caps.sandboxPerTxCap, caps.sandboxDailyCap],
+        account: wallet.account.address,
+      });
+      return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
+    });
+    return receipt !== null;
+  };
+
   const sendCreate = () =>
     tx.run("Tạo policy của tôi", async () => {
       const wallet = await owner.getWalletClient();
@@ -158,6 +174,7 @@ export function Dashboard() {
         <OverviewCard overview={overview} raw={raw} updatedAt={updatedAt} />
         <SpendsCard spends={flow.spends} loaded={flow.loaded} error={flow.error} />
         <SetupCard
+          policy={policy}
           owner={owner.address}
           avax={account.avax}
           myPolicy={myPolicy}
@@ -167,6 +184,7 @@ export function Dashboard() {
           busy={busy}
           onCreate={() => void sendCreate()}
           onToggle={(payTo, allowed) => void sendWhitelist(payTo, allowed)}
+          onSetCaps={sendSetCaps}
         />
         <RejectionsCard items={rejections.items} available={rejections.available} />
       </main>

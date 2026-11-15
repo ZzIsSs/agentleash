@@ -85,7 +85,7 @@ Tick ở đây khi xong mốc của từng ngày.
 - [x] 13/11: PR #2, #3 đã merge vào main (14/11). Quyền xem cho giám khảo: repo đã chuyển **public** (14/11). Đã quét lịch sử git, không có `.env` hay khóa thật (chỉ có khóa mẫu công khai của web3.js trong test-fixture)
 - [x] 14/11: đăng nhập Privy + màn Tổng quan. PR #4 đã merge vào main, build sạch, vitest 11/11, số khớp `cast call`. Nguyên đăng nhập email thật và xác nhận nghiệm thu (14/11)
 - [x] 15/11 (làm sớm, 14/11): dòng tiền, kill switch, màn bị từ chối. Policy demo chuyển sang `0x62Ea…4177`, chủ là ví Privy, tạo từ web. Nguyên bấm Khóa trên web (tx `0x35a5…a6fe`), agent chạy 4 lần đều bị `PausedError` và hiện ở ô Bị từ chối, rồi Mở khóa (tx `0xe448…5db5`). Build sạch, vitest 40/40. Phần sơ đồ agent → API trong ô Dòng tiền chưa làm, dời sang GĐ 3c
-- [ ] 16/11: chạy trọn 7 bước demo
+- [x] 16/11: xong GĐ 3c (`setCaps` 2 tầng + kiểm tra ràng buộc trên web, sơ đồ SVG `Agent → Policy → API` ở ô Dòng tiền) và chạy trọn 7 bước demo thật trên Fuji (policy `0x62Ea…4177`: `demo:mock` 3 khoản + lần 4 `ExceedsDailyCap`, `demo:bypass` `ExceedsSandboxPerTxCap`, `pause` `0x75db…fe3f` → 4 lần `PausedError` → `unpause` `0xa1f9…c883`, `setCaps` `0x949a…04c7` → khôi phục mặc định `0xb31b…c5b2`). Vitest 54/54, agent tests 18/18, build web sạch
 - [ ] 17/11: slide nháp, dự Workshop 3
 - [ ] 18/11: GĐ 4 xong hoặc đã ghi "bỏ"
 - [ ] 19/11: README, web deploy, slide xong, Office Hours 1

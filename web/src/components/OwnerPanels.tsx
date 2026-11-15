@@ -1,7 +1,18 @@
 "use client";
 
+import { useEffect, useId, useRef, useState } from "react";
 import type { Address } from "viem";
 import { formatEther } from "viem";
+import {
+  CAPS_FIELD_LABELS,
+  DEMO_CAPS_INPUT,
+  capsEqual,
+  capsFromRaw,
+  validateCaps,
+  type CapsField,
+  type CapsInput,
+  type ParsedCaps,
+} from "@/lib/caps";
 import { DEMO_AGENT_ADDRESS, DEMO_POLICY_PARAMS, addressUrl, shortAddress, txUrl } from "@/lib/chain";
 import type { TxState } from "@/lib/ownerTx";
 import { formatPeriod, formatUsdc, type PolicyRaw } from "@/lib/policy";
@@ -166,8 +177,9 @@ export function TxBanner({ state, onClose }: { state: TxState; onClose: () => vo
   );
 }
 
-/** Ô [3]: tạo policy của chủ (qua factory) và bật/tắt whitelist 2 API demo. Sửa hạn mức để GĐ 3c. */
+/** Ô [3]: tạo policy của chủ (qua factory), bật/tắt whitelist 2 API demo và chỉnh 4 hạn mức (setCaps). */
 export function SetupCard({
+  policy,
   owner,
   avax,
   myPolicy,
@@ -177,7 +189,9 @@ export function SetupCard({
   busy,
   onCreate,
   onToggle,
+  onSetCaps,
 }: {
+  policy: Address;
   owner: Address | null;
   avax: bigint | null;
   myPolicy: Address | null;
@@ -187,6 +201,7 @@ export function SetupCard({
   busy: boolean;
   onCreate: () => void;
   onToggle: (payTo: Address, allowed: boolean) => void;
+  onSetCaps: (caps: ParsedCaps) => Promise<boolean>;
 }) {
   const noGas = avax !== null && avax === 0n;
   return (
@@ -242,6 +257,7 @@ export function SetupCard({
             <dd className="font-mono">{formatPeriod(Number(DEMO_POLICY_PARAMS.period))}</dd>
           </dl>
           <button
+            type="button"
             onClick={onCreate}
             disabled={busy || !owner || noGas}
             className="self-start rounded-lg bg-flow px-4 py-2 font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
@@ -250,7 +266,7 @@ export function SetupCard({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <p className="text-sm">
             Policy của bạn:{" "}
             <a href={addressUrl(myPolicy)} target="_blank" rel="noreferrer" className="font-mono text-flow hover:underline">
@@ -277,6 +293,7 @@ export function SetupCard({
                       {allowed === null ? "…" : allowed ? "Whitelist" : "Sandbox"}
                     </span>
                     <button
+                      type="button"
                       disabled={busy || !isOwner || allowed === null}
                       onClick={() => onToggle(addr as Address, !allowed)}
                       className="rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
@@ -288,9 +305,258 @@ export function SetupCard({
               );
             })}
           </div>
-          <p className="text-xs text-muted">Sửa hạn mức trên giao diện: GĐ 3c (16/11).</p>
+          <CapsForm policy={policy} raw={raw} isOwner={isOwner} busy={busy} onSetCaps={onSetCaps} />
         </div>
       )}
     </section>
+  );
+}
+
+const CAPS_GROUPS: ReadonlyArray<{
+  legend: string;
+  accent: string;
+  fields: ReadonlyArray<{ key: CapsField; label: string }>;
+}> = [
+  {
+    legend: "Tầng 1: Whitelist (tin cậy)",
+    accent: "text-trusted",
+    fields: [
+      { key: "perTxCap", label: "Mỗi lần (USDC)" },
+      { key: "dailyCap", label: "Chu kỳ (chung cả 2 tầng)" },
+    ],
+  },
+  {
+    legend: "Tầng 2: Sandbox (địa chỉ lạ)",
+    accent: "text-sandbox",
+    fields: [
+      { key: "sandboxPerTxCap", label: "Mỗi lần (USDC)" },
+      { key: "sandboxDailyCap", label: "Chu kỳ (USDC)" },
+    ],
+  },
+];
+
+const FIELD_ORDER: CapsField[] = ["perTxCap", "dailyCap", "sandboxPerTxCap", "sandboxDailyCap"];
+
+function CapsForm({
+  policy,
+  raw,
+  isOwner,
+  busy,
+  onSetCaps,
+}: {
+  policy: Address;
+  raw: PolicyRaw | null;
+  isOwner: boolean;
+  busy: boolean;
+  onSetCaps: (caps: ParsedCaps) => Promise<boolean>;
+}) {
+  const baseId = useId();
+  const headingId = `${baseId}-caps-heading`;
+  const hintId = `${baseId}-caps-hint`;
+
+  const [inputs, setInputs] = useState<CapsInput>(() => (raw ? capsFromRaw(raw) : DEMO_CAPS_INPUT));
+  const [dirty, setDirty] = useState(false);
+  const [interacted, setInteracted] = useState<Partial<Record<CapsField, boolean>>>({});
+  const [touched, setTouched] = useState<Partial<Record<CapsField, boolean>>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const inputRefs = useRef<Partial<Record<CapsField, HTMLInputElement | null>>>({});
+
+  const chainCapsKey = raw
+    ? `${policy}:${raw.perTxCap}:${raw.dailyCap}:${raw.sandboxPerTxCap}:${raw.sandboxDailyCap}`
+    : `${policy}:none`;
+
+  useEffect(() => {
+    setDirty(false);
+    setInteracted({});
+    setTouched({});
+    setSubmitted(false);
+    setAnnouncement("");
+  }, [policy]);
+
+  useEffect(() => {
+    if (!dirty && raw) {
+      setInputs(capsFromRaw(raw));
+    }
+  }, [chainCapsKey, dirty, raw]);
+
+  const validation = validateCaps(inputs);
+  const sameAsChain = !!raw && validation.ok && capsEqual(validation.caps, raw);
+
+  const visibleError = (field: CapsField): string | undefined =>
+    touched[field] || submitted ? validation.fieldErrors[field] : undefined;
+
+  const handleChange = (field: CapsField, value: string) => {
+    setInputs((prev) => ({ ...prev, [field]: value }));
+    setDirty(true);
+    setInteracted((prev) => ({ ...prev, [field]: true }));
+    setAnnouncement("");
+  };
+
+  const handleBlur = (field: CapsField) => {
+    if (!interacted[field]) return;
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const err = validation.fieldErrors[field];
+    if (err) {
+      setAnnouncement(`${CAPS_FIELD_LABELS[field]}: ${err}`);
+    }
+  };
+
+  const handleFillDemo = () => {
+    setInputs(DEMO_CAPS_INPUT);
+    setDirty(true);
+    setInteracted({});
+    setTouched({});
+    setSubmitted(false);
+    setAnnouncement("Đã điền 4 hạn mức mặc định demo: 0.002 / 0.003 / 0.0005 / 0.001 USDC.");
+  };
+
+  const handleRevert = () => {
+    if (!raw) return;
+    setInputs(capsFromRaw(raw));
+    setDirty(false);
+    setInteracted({});
+    setTouched({});
+    setSubmitted(false);
+    setAnnouncement("Đã khôi phục theo giá trị hiện tại trên chuỗi.");
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitted(true);
+    if (!validation.ok) {
+      const firstInvalid = FIELD_ORDER.find((f) => validation.fieldErrors[f]);
+      if (firstInvalid) {
+        inputRefs.current[firstInvalid]?.focus();
+      }
+      return;
+    }
+    if (!isOwner || busy) return;
+    const confirmed = await onSetCaps(validation.caps);
+    if (confirmed) {
+      setDirty(false);
+      setInteracted({});
+      setTouched({});
+      setSubmitted(false);
+    }
+  };
+
+  const controlsDisabled = busy || !isOwner || !raw;
+
+  return (
+    <form
+      aria-labelledby={headingId}
+      onSubmit={handleSubmit}
+      noValidate
+      className="flex flex-col gap-3 border-t border-border pt-3"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 id={headingId} className="text-sm font-medium">
+          Hạn mức 2 tầng (<code>setCaps</code>)
+        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          {dirty && raw && (
+            <button
+              type="button"
+              onClick={handleRevert}
+              disabled={busy}
+              className="rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Khớp chuỗi
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleFillDemo}
+            disabled={controlsDisabled}
+            className="rounded-md border border-flow/40 bg-flow/10 px-2.5 py-1 text-xs font-medium text-flow transition hover:bg-flow/20 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Mặc định demo (0.002 / 0.003 / 0.0005 / 0.001)
+          </button>
+        </div>
+      </div>
+
+      <p id={hintId} className="text-xs text-muted">
+        Đơn vị USDC (tối đa 6 số thập phân). Ràng buộc: mỗi lần ≤ chu kỳ (cả 2 tầng) và Sandbox chu kỳ ≤ Whitelist chu kỳ.
+      </p>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {CAPS_GROUPS.map((group) => (
+          <fieldset key={group.legend} className="flex flex-col gap-2.5 rounded-xl bg-background p-3">
+            <legend className={`px-1 text-xs font-semibold ${group.accent}`}>{group.legend}</legend>
+            {group.fields.map(({ key, label }) => {
+              const inputId = `${baseId}-${key}`;
+              const errorId = `${baseId}-${key}-error`;
+              const err = visibleError(key);
+              const describedBy = err ? `${hintId} ${errorId}` : hintId;
+              return (
+                <div key={key} className="flex flex-col gap-1">
+                  <label htmlFor={inputId} className="text-xs text-muted">
+                    {label}
+                  </label>
+                  <input
+                    ref={(el) => {
+                      inputRefs.current[key] = el;
+                    }}
+                    id={inputId}
+                    name={key}
+                    type="text"
+                    inputMode="decimal"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    required
+                    disabled={controlsDisabled}
+                    value={inputs[key]}
+                    placeholder={DEMO_CAPS_INPUT[key]}
+                    aria-invalid={err ? "true" : "false"}
+                    aria-describedby={describedBy}
+                    onChange={(e) => handleChange(key, e.target.value)}
+                    onBlur={() => handleBlur(key)}
+                    className={`min-h-11 rounded-lg border bg-card px-3 py-1.5 font-mono text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-flow disabled:cursor-not-allowed disabled:opacity-50 ${
+                      err ? "border-danger bg-danger/5" : "border-border"
+                    }`}
+                  />
+                  {err && (
+                    <p id={errorId} className="text-xs text-danger">
+                      Lỗi: {err}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </fieldset>
+        ))}
+      </div>
+
+      {submitted && !validation.ok && (
+        <div className="rounded-lg border border-danger/50 bg-danger/10 px-3 py-2 text-xs text-danger">
+          Chưa thể gửi giao dịch: {validation.errors[0]}
+        </div>
+      )}
+
+      <div aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-xs text-muted">
+          {!raw
+            ? "Đang đọc hạn mức từ Fuji…"
+            : !isOwner
+              ? "Chỉ ví chủ policy mới chỉnh được hạn mức."
+              : sameAsChain
+                ? "Đang khớp với hạn mức trên chuỗi."
+                : "Thay đổi sẽ cần ví Privy ký giao dịch setCaps trên Fuji."}
+        </span>
+        <button
+          type="submit"
+          disabled={controlsDisabled}
+          className="rounded-lg bg-flow px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Lưu hạn mức
+        </button>
+      </div>
+    </form>
   );
 }
