@@ -1,7 +1,19 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { POLICY_ADDRESS, addressUrl, shortAddress } from "@/lib/chain";
+import { useCallback, useState } from "react";
+import type { Address } from "viem";
+import { factoryAbi, policyOwnerAbi } from "@/lib/abi";
+import {
+  DEMO_AGENT_ADDRESS,
+  DEMO_POLICY_PARAMS,
+  FACTORY_ADDRESS,
+  POLICY_ADDRESS,
+  addressUrl,
+  publicClient,
+  shortAddress,
+} from "@/lib/chain";
+import { isBusy } from "@/lib/ownerTx";
 import {
   deriveOverview,
   formatCountdown,
@@ -11,12 +23,79 @@ import {
   type PolicyOverview,
   type PolicyRaw,
 } from "@/lib/policy";
+import { useOwnerAccount, useOwnerTx, useOwnerWallet, useWhitelist } from "@/lib/useOwner";
 import { useNow, usePolicy } from "@/lib/usePolicy";
+import { useRejections } from "@/lib/useRejections";
+import { useSpends } from "@/lib/useSpends";
+import { RejectionsCard, SpendsCard } from "./ActivityCards";
+import { ConfirmDialog, KillSwitch, SetupCard, TxBanner } from "./OwnerPanels";
 
 export function Dashboard() {
   const { ready, authenticated, login, logout, user } = usePrivy();
-  const { raw, error, updatedAt } = usePolicy(authenticated);
+  const owner = useOwnerWallet();
+  const account = useOwnerAccount(authenticated ? owner.address : null);
+  // Ví đã có policy riêng (tạo qua factory) thì xem policy mới nhất của mình; chưa có thì xem policy demo.
+  const myPolicy = account.policies && account.policies.length > 0 ? account.policies[account.policies.length - 1] : null;
+  const policy: Address = myPolicy ?? POLICY_ADDRESS;
+
+  const { raw, error, updatedAt, refresh } = usePolicy(authenticated, policy);
+  const wl = useWhitelist(authenticated ? policy : null);
+  const flow = useSpends(authenticated, policy);
+  const rejections = useRejections(authenticated);
   const now = useNow();
+
+  const { refresh: refreshAccount } = account;
+  const { refresh: refreshWhitelist } = wl;
+  const onConfirmed = useCallback(() => {
+    void refresh();
+    void refreshAccount();
+    void refreshWhitelist();
+  }, [refresh, refreshAccount, refreshWhitelist]);
+  const tx = useOwnerTx(onConfirmed);
+  const busy = isBusy(tx.state);
+  const [confirm, setConfirm] = useState<"pause" | "unpause" | null>(null);
+
+  const isOwner = !!raw && !!owner.address && raw.owner.toLowerCase() === owner.address.toLowerCase();
+
+  // Mỗi lệnh chủ ký đều mô phỏng trước: lỗi như Unauthorized hiện ngay, không mở cửa sổ ký, không tốn gas.
+  const sendPause = (functionName: "pause" | "unpause") =>
+    tx.run(functionName === "pause" ? "Khóa khẩn cấp" : "Mở khóa", async () => {
+      const wallet = await owner.getWalletClient();
+      const { request } = await publicClient.simulateContract({
+        address: policy,
+        abi: policyOwnerAbi,
+        functionName,
+        account: wallet.account.address,
+      });
+      return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
+    });
+
+  const sendWhitelist = (payTo: Address, allowed: boolean) =>
+    tx.run(allowed ? "Thêm vào whitelist" : "Gỡ khỏi whitelist", async () => {
+      const wallet = await owner.getWalletClient();
+      const { request } = await publicClient.simulateContract({
+        address: policy,
+        abi: policyOwnerAbi,
+        functionName: "setWhitelist",
+        args: [payTo, allowed],
+        account: wallet.account.address,
+      });
+      return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
+    });
+
+  const sendCreate = () =>
+    tx.run("Tạo policy của tôi", async () => {
+      const wallet = await owner.getWalletClient();
+      const p = DEMO_POLICY_PARAMS;
+      const { request } = await publicClient.simulateContract({
+        address: FACTORY_ADDRESS,
+        abi: factoryAbi,
+        functionName: "createPolicy",
+        args: [DEMO_AGENT_ADDRESS, p.perTxCap, p.dailyCap, p.sandboxPerTxCap, p.sandboxDailyCap, p.period],
+        account: wallet.account.address,
+      });
+      return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
+    });
 
   if (!ready) {
     return <Centered>Đang tải Privy…</Centered>;
@@ -49,9 +128,25 @@ export function Dashboard() {
       <Header
         email={user?.email?.address ?? null}
         wallet={user?.wallet?.address ?? null}
+        policy={policy}
         overview={overview}
         onLogout={logout}
+        killSwitch={<KillSwitch raw={raw} isOwner={isOwner} busy={busy} onRequest={setConfirm} />}
       />
+
+      <TxBanner state={tx.state} onClose={tx.reset} />
+      {confirm && (
+        <ConfirmDialog
+          action={confirm}
+          policy={policy}
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => {
+            const action = confirm;
+            setConfirm(null);
+            void sendPause(action);
+          }}
+        />
+      )}
 
       {error && (
         <div className="rounded-lg border border-danger/50 bg-danger/10 px-4 py-2 text-sm text-danger">
@@ -61,9 +156,19 @@ export function Dashboard() {
 
       <main className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
         <OverviewCard overview={overview} raw={raw} updatedAt={updatedAt} />
-        <Placeholder index={2} title="Sơ đồ dòng tiền" note="GĐ 3b, ngày 15/11" />
-        <Placeholder index={3} title="Luật chi tiêu 2 tầng" note="GĐ 3c, ngày 16/11" />
-        <Placeholder index={4} title="Lịch sử chi & nhật ký bị từ chối" note="GĐ 3b, ngày 15/11" />
+        <SpendsCard spends={flow.spends} loaded={flow.loaded} error={flow.error} />
+        <SetupCard
+          owner={owner.address}
+          avax={account.avax}
+          myPolicy={myPolicy}
+          raw={raw}
+          isOwner={isOwner}
+          whitelist={wl.whitelist}
+          busy={busy}
+          onCreate={() => void sendCreate()}
+          onToggle={(payTo, allowed) => void sendWhitelist(payTo, allowed)}
+        />
+        <RejectionsCard items={rejections.items} available={rejections.available} />
       </main>
     </div>
   );
@@ -72,13 +177,17 @@ export function Dashboard() {
 function Header({
   email,
   wallet,
+  policy,
   overview,
   onLogout,
+  killSwitch,
 }: {
   email: string | null;
   wallet: string | null;
+  policy: Address;
   overview: PolicyOverview | null;
   onLogout: () => void;
+  killSwitch: React.ReactNode;
 }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4">
@@ -94,13 +203,13 @@ function Header({
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className="rounded-md bg-background px-2 py-1 text-muted">Fuji Testnet</span>
         <a
-          href={addressUrl(POLICY_ADDRESS)}
+          href={addressUrl(policy)}
           target="_blank"
           rel="noreferrer"
           className="font-mono text-flow hover:underline"
           title="Mở policy trên Snowscan"
         >
-          {shortAddress(POLICY_ADDRESS)}
+          {shortAddress(policy)}
         </a>
         {overview && <span className="font-mono">{formatUsdc(overview.balance)} USDC</span>}
         <span className="text-muted" title={wallet ?? undefined}>
@@ -109,14 +218,7 @@ function Header({
         <button onClick={onLogout} className="rounded-md border border-border px-3 py-1 text-muted hover:text-foreground">
           Đăng xuất
         </button>
-        {/* TODO Nguyên (GĐ 3b): gọi pause(). Cần ví chủ policy ký, ví Privy hiện chưa phải owner. */}
-        <button
-          disabled
-          className="cursor-not-allowed rounded-lg bg-danger/40 px-4 py-2 font-bold text-white/70"
-          title="Có ở GĐ 3b"
-        >
-          KHÓA KHẨN CẤP
-        </button>
+        {killSwitch}
       </div>
     </header>
   );
@@ -249,16 +351,6 @@ function Stat({ label, value, unit }: { label: string; value: string; unit: stri
   );
 }
 
-function Placeholder({ index, title, note }: { index: number; title: string; note: string }) {
-  return (
-    <section className="flex flex-col gap-2 rounded-2xl border border-dashed border-border bg-card/50 p-5">
-      <h2 className="text-lg font-semibold">
-        <span className="text-muted">[{index}]</span> {title}
-      </h2>
-      <p className="text-sm text-muted">Sắp có: {note}.</p>
-    </section>
-  );
-}
 
 function Logo() {
   return (
