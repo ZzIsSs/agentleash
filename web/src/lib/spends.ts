@@ -149,13 +149,103 @@ export function blockRanges(from: bigint, to: bigint, size = 100n, maxChunks = 5
   return ranges;
 }
 
+export const WEATHER_SELLER_ADDRESS = "0x9d014376c3296db41770015af074cf4d14c075e1";
+export const RATES_SELLER_ADDRESS = "0x8d299966b407e9f189c1920f5a7324f13a9a4110";
+
 /** Hai API bán dữ liệu của demo (sellers/weather.mjs, sellers/rates.mjs). */
 export const KNOWN_SELLERS: Record<string, string> = {
-  "0x9d014376c3296db41770015af074cf4d14c075e1": "API Thời tiết",
-  "0x8d299966b407e9f189c1920f5a7324f13a9a4110": "API Tỷ giá",
+  [WEATHER_SELLER_ADDRESS]: "API Thời tiết",
+  [RATES_SELLER_ADDRESS]: "API Tỷ giá",
 };
 
 export const sellerName = (payTo: string): string | null => KNOWN_SELLERS[payTo.toLowerCase()] ?? null;
 
 export const totalSpent = (spends: readonly Spend[]): bigint =>
   spends.reduce((sum, s) => (s.released ? sum : sum + s.amount), 0n);
+
+export type FlowTier = "trusted" | "sandbox" | "mixed" | "idle";
+
+export type FlowTargetId = "weather" | "rates" | "unknown";
+
+export type FlowNodeSummary = {
+  id: FlowTargetId;
+  label: string;
+  amount: bigint;
+  trustedAmount: bigint;
+  sandboxAmount: bigint;
+  count: number;
+  tier: FlowTier;
+  /** Tỷ trọng chi tiêu trên tổng đã chi (0..1). */
+  share: number;
+  /** Độ dày đường nối SVG (px): 1.5 khi chưa chi, 2.5..8.5 theo tỷ lệ USDC đã chi. */
+  strokeWidth: number;
+};
+
+export type SpendFlowSummary = {
+  totalAmount: bigint;
+  totalCount: number;
+  nodes: readonly [FlowNodeSummary, FlowNodeSummary, FlowNodeSummary];
+};
+
+/**
+ * Gom tổng USDC đã chi (loại khoản đã released) từ danh sách `spends` để vẽ sơ đồ Agent → Policy → API.
+ * Phân thành 3 nhánh: Thời tiết, Tỷ giá và Địa chỉ lạ; giữ rõ phần Whitelist vs Sandbox.
+ */
+export function summarizeSpendFlows(spends: readonly Spend[]): SpendFlowSummary {
+  const buckets: Record<
+    FlowTargetId,
+    { label: string; amount: bigint; trustedAmount: bigint; sandboxAmount: bigint; count: number }
+  > = {
+    weather: { label: "Thời tiết", amount: 0n, trustedAmount: 0n, sandboxAmount: 0n, count: 0 },
+    rates: { label: "Tỷ giá", amount: 0n, trustedAmount: 0n, sandboxAmount: 0n, count: 0 },
+    unknown: { label: "Địa chỉ lạ", amount: 0n, trustedAmount: 0n, sandboxAmount: 0n, count: 0 },
+  };
+
+  let totalAmount = 0n;
+  let totalCount = 0;
+
+  for (const s of spends) {
+    if (s.released) continue;
+    const addr = s.payTo.toLowerCase();
+    const key: FlowTargetId =
+      addr === WEATHER_SELLER_ADDRESS ? "weather" : addr === RATES_SELLER_ADDRESS ? "rates" : "unknown";
+    const b = buckets[key];
+    b.amount += s.amount;
+    b.count += 1;
+    if (s.isSandbox) b.sandboxAmount += s.amount;
+    else b.trustedAmount += s.amount;
+    totalAmount += s.amount;
+    totalCount += 1;
+  }
+
+  const buildNode = (id: FlowTargetId): FlowNodeSummary => {
+    const b = buckets[id];
+    const tier: FlowTier =
+      b.amount === 0n
+        ? "idle"
+        : b.sandboxAmount === 0n
+          ? "trusted"
+          : b.trustedAmount === 0n
+            ? "sandbox"
+            : "mixed";
+    const share = totalAmount === 0n || b.amount === 0n ? 0 : Number((b.amount * 10_000n) / totalAmount) / 10_000;
+    const strokeWidth = b.amount === 0n ? 1.5 : Number((2.5 + share * 6).toFixed(2));
+    return {
+      id,
+      label: b.label,
+      amount: b.amount,
+      trustedAmount: b.trustedAmount,
+      sandboxAmount: b.sandboxAmount,
+      count: b.count,
+      tier,
+      share,
+      strokeWidth,
+    };
+  };
+
+  return {
+    totalAmount,
+    totalCount,
+    nodes: [buildNode("weather"), buildNode("rates"), buildNode("unknown")],
+  };
+}

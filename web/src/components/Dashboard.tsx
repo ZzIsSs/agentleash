@@ -3,16 +3,18 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useCallback, useState } from "react";
 import type { Address } from "viem";
-import { factoryAbi, policyOwnerAbi } from "@/lib/abi";
+import { erc8004RegistryAbi, factoryAbi, policyOwnerAbi } from "@/lib/abi";
+import type { ParsedCaps } from "@/lib/caps";
 import {
-  DEMO_AGENT_ADDRESS,
   DEMO_POLICY_PARAMS,
+  ERC8004_IDENTITY_REGISTRY_ADDRESS,
   FACTORY_ADDRESS,
   POLICY_ADDRESS,
   addressUrl,
   publicClient,
   shortAddress,
 } from "@/lib/chain";
+import { buildAgentRegistrationPayload, encodeAgentRegistrationUri } from "@/lib/erc8004";
 import { isBusy } from "@/lib/ownerTx";
 import {
   deriveOverview,
@@ -23,6 +25,9 @@ import {
   type PolicyOverview,
   type PolicyRaw,
 } from "@/lib/policy";
+import { resolveActivePolicy } from "@/lib/policyCreate";
+import { useDemoRunner } from "@/lib/useDemoRunner";
+import { useErc8004Identities, type AgentIdentityRecord } from "@/lib/useErc8004";
 import { useOwnerAccount, useOwnerTx, useOwnerWallet, useWhitelist } from "@/lib/useOwner";
 import { useNow, usePolicy } from "@/lib/usePolicy";
 import { useRejections } from "@/lib/useRejections";
@@ -34,23 +39,38 @@ export function Dashboard() {
   const { ready, authenticated, login, logout, user } = usePrivy();
   const owner = useOwnerWallet();
   const account = useOwnerAccount(authenticated ? owner.address : null);
-  // Ví đã có policy riêng (tạo qua factory) thì xem policy mới nhất của mình; chưa có thì xem policy demo.
-  const myPolicy = account.policies && account.policies.length > 0 ? account.policies[account.policies.length - 1] : null;
-  const policy: Address = myPolicy ?? POLICY_ADDRESS;
+  const ownerPolicies = account.policies ?? [];
+  const myPolicy = ownerPolicies.length > 0 ? ownerPolicies[ownerPolicies.length - 1] : null;
+  const [selectedPolicy, setSelectedPolicy] = useState<Address | null>(null);
+  const policy: Address = resolveActivePolicy(selectedPolicy, ownerPolicies, POLICY_ADDRESS);
 
   const { raw, error, updatedAt, refresh } = usePolicy(authenticated, policy);
   const wl = useWhitelist(authenticated ? policy : null);
   const flow = useSpends(authenticated, policy);
   const rejections = useRejections(authenticated);
+  const erc8004 = useErc8004Identities(authenticated, raw?.owner ?? owner.address);
   const now = useNow();
 
   const { refresh: refreshAccount } = account;
   const { refresh: refreshWhitelist } = wl;
+  const { refresh: refreshSpends } = flow;
+  const { refresh: refreshRejections } = rejections;
+  const { refresh: refreshErc8004 } = erc8004;
+
+  const onDemoFinished = useCallback(() => {
+    void refresh();
+    void refreshSpends();
+    void refreshRejections();
+  }, [refresh, refreshSpends, refreshRejections]);
+
+  const demoRunner = useDemoRunner(authenticated, onDemoFinished);
+
   const onConfirmed = useCallback(() => {
     void refresh();
     void refreshAccount();
     void refreshWhitelist();
-  }, [refresh, refreshAccount, refreshWhitelist]);
+    void refreshErc8004();
+  }, [refresh, refreshAccount, refreshWhitelist, refreshErc8004]);
   const tx = useOwnerTx(onConfirmed);
   const busy = isBusy(tx.state);
   const [confirm, setConfirm] = useState<"pause" | "unpause" | null>(null);
@@ -83,19 +103,63 @@ export function Dashboard() {
       return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
     });
 
-  const sendCreate = () =>
-    tx.run("Tạo policy của tôi", async () => {
+  const sendSetCaps = async (caps: ParsedCaps): Promise<boolean> => {
+    const receipt = await tx.run("Cập nhật hạn mức 2 tầng", async () => {
+      const wallet = await owner.getWalletClient();
+      const { request } = await publicClient.simulateContract({
+        address: policy,
+        abi: policyOwnerAbi,
+        functionName: "setCaps",
+        args: [caps.perTxCap, caps.dailyCap, caps.sandboxPerTxCap, caps.sandboxDailyCap],
+        account: wallet.account.address,
+      });
+      return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
+    });
+    return receipt !== null;
+  };
+
+  const sendCreate = async (agent: Address, periodSeconds: bigint): Promise<boolean> => {
+    const receipt = await tx.run("Tạo policy mới qua Factory", async () => {
       const wallet = await owner.getWalletClient();
       const p = DEMO_POLICY_PARAMS;
       const { request } = await publicClient.simulateContract({
         address: FACTORY_ADDRESS,
         abi: factoryAbi,
         functionName: "createPolicy",
-        args: [DEMO_AGENT_ADDRESS, p.perTxCap, p.dailyCap, p.sandboxPerTxCap, p.sandboxDailyCap, p.period],
+        args: [agent, p.perTxCap, p.dailyCap, p.sandboxPerTxCap, p.sandboxDailyCap, periodSeconds],
         account: wallet.account.address,
       });
       return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
     });
+    if (receipt) {
+      // Bỏ ghim policy cũ để tự chuyển sang policy mới nhất vừa tạo qua Factory.
+      setSelectedPolicy(null);
+      return true;
+    }
+    return false;
+  };
+
+  const sendRegisterErc8004 = async (agentName: string): Promise<boolean> => {
+    if (!raw) return false;
+    const payload = buildAgentRegistrationPayload({
+      name: agentName,
+      agentAddress: raw.agent,
+      policyAddress: policy,
+    });
+    const agentURI = encodeAgentRegistrationUri(payload);
+    const receipt = await tx.run("Đăng ký danh tính ERC-8004", async () => {
+      const wallet = await owner.getWalletClient();
+      const { request } = await publicClient.simulateContract({
+        address: ERC8004_IDENTITY_REGISTRY_ADDRESS,
+        abi: erc8004RegistryAbi,
+        functionName: "register",
+        args: [agentURI],
+        account: wallet.account.address,
+      });
+      return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
+    });
+    return receipt !== null;
+  };
 
   if (!ready) {
     return <Centered>Đang tải Privy…</Centered>;
@@ -155,20 +219,40 @@ export function Dashboard() {
       )}
 
       <main className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
-        <OverviewCard overview={overview} raw={raw} updatedAt={updatedAt} />
+        <OverviewCard
+          overview={overview}
+          raw={raw}
+          updatedAt={updatedAt}
+          identities={erc8004.identities}
+        />
         <SpendsCard spends={flow.spends} loaded={flow.loaded} error={flow.error} />
         <SetupCard
+          policy={policy}
+          defaultPolicy={POLICY_ADDRESS}
           owner={owner.address}
           avax={account.avax}
+          policies={ownerPolicies}
           myPolicy={myPolicy}
           raw={raw}
           isOwner={isOwner}
           whitelist={wl.whitelist}
+          identities={erc8004.identities}
+          erc8004Error={erc8004.error}
           busy={busy}
-          onCreate={() => void sendCreate()}
+          onSelectPolicy={setSelectedPolicy}
+          onCreate={sendCreate}
           onToggle={(payTo, allowed) => void sendWhitelist(payTo, allowed)}
+          onSetCaps={sendSetCaps}
+          onRegisterErc8004={sendRegisterErc8004}
         />
-        <RejectionsCard items={rejections.items} available={rejections.available} />
+        <RejectionsCard
+          policy={policy}
+          items={rejections.items}
+          available={rejections.available}
+          demoAvailability={demoRunner.availability}
+          demoRunState={demoRunner.runState}
+          onRunDemo={(bypassRules) => void demoRunner.runDemo(bypassRules, policy)}
+        />
       </main>
     </div>
   );
@@ -228,11 +312,14 @@ function OverviewCard({
   overview,
   raw,
   updatedAt,
+  identities,
 }: {
   overview: PolicyOverview | null;
   raw: PolicyRaw | null;
   updatedAt: number | null;
+  identities: readonly AgentIdentityRecord[] | null;
 }) {
+  const latestIdentity = identities && identities.length > 0 ? identities[0] : null;
   return (
     <section className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -282,6 +369,19 @@ function OverviewCard({
             </div>
             <div>Block: {raw.blockNumber.toString()}</div>
             <div>Cập nhật: {updatedAt ? new Date(updatedAt).toLocaleTimeString("vi-VN") : "—"} (3 giây/lần)</div>
+            {latestIdentity && (
+              <div className="sm:col-span-2">
+                Hộ chiếu ERC-8004:{" "}
+                <a
+                  href={addressUrl(ERC8004_IDENTITY_REGISTRY_ADDRESS)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono text-trusted hover:underline"
+                >
+                  ID #{latestIdentity.agentId.toString()} ({latestIdentity.decoded.name ?? "AgentIdentity"}) ↗
+                </a>
+              </div>
+            )}
           </dl>
         </>
       )}

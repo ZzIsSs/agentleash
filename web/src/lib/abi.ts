@@ -91,6 +91,18 @@ export const policyOwnerAbi = [
   },
   {
     type: "function",
+    name: "setCaps",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "_perTxCap", type: "uint256" },
+      { name: "_dailyCap", type: "uint256" },
+      { name: "_sandboxPerTxCap", type: "uint256" },
+      { name: "_sandboxDailyCap", type: "uint256" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
     name: "whitelist",
     stateMutability: "view",
     inputs: [{ name: "", type: "address" }],
@@ -123,4 +135,62 @@ export const factoryAbi = [
   },
   { type: "error", name: "ZeroAddress", inputs: [] },
   ...policyErrorsAbi.filter((e) => e.name === "InvalidCaps" || e.name === "InvalidPeriod"),
+] as const;
+
+/** ERC-8004 IdentityRegistry (AgentIdentity / AGENT) trên Avalanche Fuji. */
+export const erc8004RegistryAbi = [
+  {
+    type: "function",
+    name: "register",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "agentURI", type: "string" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "setAgentURI",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "agentId", type: "uint256" },
+      { name: "newURI", type: "string" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "ownerOf",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ type: "address" }],
+  },
+  {
+    type: "function",
+    name: "tokenURI",
+    stateMutability: "view",
+    inputs: [{ name: "tokenId", type: "uint256" }],
+    outputs: [{ type: "string" }],
+  },
+  {
+    type: "function",
+    name: "getAgentWallet",
+    stateMutability: "view",
+    inputs: [{ name: "agentId", type: "uint256" }],
+    outputs: [{ type: "address" }],
+  },
+  {
+    type: "event",
+    name: "Registered",
+    inputs: [
+      { name: "agentId", type: "uint256", indexed: true },
+      { name: "agentURI", type: "string", indexed: false },
+      { name: "owner", type: "address", indexed: true },
+    ],
+  },
 ] as const;

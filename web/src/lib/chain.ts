@@ -32,6 +32,12 @@ export const DEMO_AGENT_ADDRESS = envAddress(
   "0x0F8de357042E53bF0E647066F0Bb1a446133ef9D",
 );
 
+// ERC-8004 IdentityRegistry trên Avalanche Fuji (proxy EIP-1967, implementation 0x7274e874ca62410a93bd8bf61c69d8045e399c02).
+export const ERC8004_IDENTITY_REGISTRY_ADDRESS = envAddress(
+  process.env.NEXT_PUBLIC_ERC8004_REGISTRY_ADDRESS,
+  "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+);
+
 /** Tham số policy demo (docs/SPEC.md): Trusted 0.002/lần, 0.003/chu kỳ; Sandbox 0.0005/lần, 0.001/chu kỳ; chu kỳ 120 giây. */
 export const DEMO_POLICY_PARAMS = {
   perTxCap: 2000n,

@@ -95,8 +95,8 @@ Tổng: 64–84 giờ.
 |---|---|---|---|
 | Đăng nhập | Privy bằng email (`@privy-io/react-auth` + viem), chép `providers.tsx` từ `privy-agent-wallet`. Tài trợ gas nếu Privy cho phép trên Fuji | 3 | ✅ nghiệm thu 14/11 |
 | Tổng quan | Đồng hồ hạn mức còn lại trong chu kỳ (Trusted & Sandbox), số dư USDC của contract, trạng thái agent (đang chạy hoặc đã khóa) | 3 | ✅ nghiệm thu 14/11, số khớp on-chain |
-| Dòng tiền | Danh sách khoản chi từ event `Authorized` kèm link Snowtrace; sơ đồ agent → các API, đường dày theo số tiền | 4–5 | ✅ danh sách 14/11 (Routescan + RPC 3 giây). Sơ đồ chưa làm |
-| Luật chi tiêu | Sửa hạn mức phân tầng, thêm hoặc bớt whitelist; mỗi thay đổi là một giao dịch do chủ ký | 2–3 | 🟡 whitelist 2 API demo và tạo policy từ ví Privy xong 14/11; sửa hạn mức (`setCaps`) ở GĐ 3c |
+| Dòng tiền | Danh sách khoản chi từ event `Authorized` kèm link Snowtrace; sơ đồ agent → các API, đường dày theo số tiền | 4–5 | ✅ nghiệm thu 16/11 (danh sách Routescan + RPC 3 giây, sơ đồ SVG thuần `Agent → Policy → API` dày theo tỷ lệ USDC) |
+| Luật chi tiêu | Sửa hạn mức phân tầng, thêm hoặc bớt whitelist; mỗi thay đổi là một giao dịch do chủ ký | 2–3 | ✅ nghiệm thu 16/11 (whitelist + tạo policy từ ví Privy + sửa 4 hạn mức `setCaps` khớp ràng buộc on-chain) |
 | Kill switch | Nút đỏ to, luôn hiện, gọi `pause()` | 1 | ✅ nghiệm thu 14/11: pause/unpause trên Fuji, agent bị `PausedError` |
 | Bị từ chối | Gộp revert trên chuỗi (vượt trần Sandbox, vượt hạn mức) và log của rule engine, lý do tiếng Việt | 2–3 | ✅ 14/11, đọc `agent/logs/audit.json` qua `/api/rejections` |
 | Trạng thái giao dịch | Ba bước rõ ràng: đang ký, đang chờ, xong (kèm link) | 1–2 | ✅ 14/11 |
@@ -110,16 +110,16 @@ Phần giao diện tĩnh có thể giao Giang theo [AGENTS.md](../AGENTS.md), ch
 
 Làm theo thứ tự, hết giờ thì dừng:
 
-1. Nút "tạo agent" trên giao diện, gọi factory.
-2. Công tắc chế độ demo "bỏ qua rule engine" trên giao diện.
-3. Danh tính agent theo ERC-8004 (khoảng 3–5 giờ).
+1. ✅ Nút "tạo agent" trên giao diện, gọi factory (`+ Tạo agent / policy mới` + bộ chuyển policy trong `SetupCard`).
+2. ✅ Công tắc chế độ demo "bỏ qua rule engine" trên giao diện (`--bypass-rules` + `POST /api/demo-run`, đã test thật bị `ExceedsSandboxPerTxCap` trên Fuji).
+3. 🟡 Danh tính agent theo ERC-8004 (`0x8004…BD9e`): xong đọc/mã hóa/hiển thị + form `Đăng ký ERC-8004` trên web; còn 1 bước bấm ký giao dịch mint NFT từ ví Privy khi phiên đăng nhập mới.
 
 Không làm bản chạy trên L1 riêng.
 
 ## GĐ 5: Đóng gói (19–21/11)
 
-- README: sơ đồ kiến trúc, địa chỉ contract, cách chạy trong 3 lệnh.
-- Script nạp dữ liệu mẫu cho demo (`scripts/seed-demo`).
+- ✅ README: sơ đồ kiến trúc, địa chỉ contract, cách chạy trong 3 lệnh (`README.md`).
+- ✅ Script nạp dữ liệu mẫu cho demo (`scripts/seed-demo.mjs`, đã chạy kiểm tra Fuji & 4 dịch vụ local).
 - Deploy web (ví dụ Vercel), ghi tài khoản test cho giám khảo.
 - Quay video cùng Giang theo kịch bản trong SPEC, có câu khai chu kỳ 120 giây (`DEMO_PERIOD_SECONDS=120`) ngay đầu (luật 6).
 - Nộp trước trưa 21/11, để nửa ngày còn lại dự phòng.
@@ -145,7 +145,7 @@ Giang đánh dấu ở đây hoặc trên trang Notion theo dõi tiến độ.
 - [x] 13/11: GĐ 1 xong: CI xanh, `AgentPolicy` & `AgentPolicyFactory` verified trên Fuji
 - [x] 13/11 (dời từ 15/11): agent tự mua 3 lần, lần 4 bị chặn (`ExceedsDailyCap`, policy demo 120s, chạy bằng `demo:mock`)
 - [x] 15/11: đã chốt thư viện web (Privy `@privy-io/react-auth` + `viem` thuần, bỏ `wagmi`)
-- [ ] 16/11 (dời từ 18/11): chạy trọn kịch bản demo trên dashboard
+- [x] 16/11 (dời từ 18/11): xong GĐ 3c (`setCaps`, sơ đồ dòng tiền SVG) và chạy trọn 7 bước kịch bản demo thật trên Fuji
 - [ ] 18/11 (dời từ 19/11): xong phần nên có (hoặc đã quyết bỏ)
 - [ ] 19/11: README, web deploy · 20/11: video
 - [ ] 21/11 trước trưa: đã nộp

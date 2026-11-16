@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { rejectionFromJson, type Rejection, type RejectionJson } from "./rejections";
 
 export type RejectionsResponse = {
@@ -13,8 +13,10 @@ export type RejectionsResponse = {
 export function useRejections(enabled: boolean) {
   const [items, setItems] = useState<Rejection[]>([]);
   const [available, setAvailable] = useState<boolean | null>(null);
+  const loadRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
+    loadRef.current = null;
     if (!enabled) return;
     let cancelled = false;
     const load = async () => {
@@ -29,13 +31,19 @@ export function useRejections(enabled: boolean) {
         // Giữ danh sách cũ.
       }
     };
+    loadRef.current = load;
     void load();
     const id = setInterval(() => void load(), 3_000);
     return () => {
       cancelled = true;
+      loadRef.current = null;
       clearInterval(id);
     };
   }, [enabled]);
 
-  return { items, available };
+  const refresh = useCallback(() => {
+    void loadRef.current?.();
+  }, []);
+
+  return { items, available, refresh };
 }

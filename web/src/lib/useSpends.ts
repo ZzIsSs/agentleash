@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Address } from "viem";
 import { ROUTESCAN_API, publicClient } from "./chain";
 import { blockRanges, fromRoutescan, mergeSpends, type RawLog, type RoutescanLog, type Spend } from "./spends";
@@ -51,11 +51,13 @@ export function useSpends(enabled: boolean, policy: Address | null) {
   const [spends, setSpends] = useState<Spend[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const stepRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     setSpends([]);
     setLoaded(false);
     setError(null);
+    stepRef.current = null;
     if (!enabled || !policy) return;
 
     let cancelled = false;
@@ -88,13 +90,19 @@ export function useSpends(enabled: boolean, policy: Address | null) {
       }
     };
 
+    stepRef.current = step;
     void step();
     const id = setInterval(() => void step(), POLL_MS);
     return () => {
       cancelled = true;
+      stepRef.current = null;
       clearInterval(id);
     };
   }, [enabled, policy]);
 
-  return { spends, loaded, error };
+  const refresh = useCallback(() => {
+    void stepRef.current?.();
+  }, []);
+
+  return { spends, loaded, error, refresh };
 }
