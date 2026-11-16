@@ -110,16 +110,16 @@ Phần giao diện tĩnh có thể giao Giang theo [AGENTS.md](../AGENTS.md), ch
 
 Làm theo thứ tự, hết giờ thì dừng:
 
-1. Nút "tạo agent" trên giao diện, gọi factory.
-2. Công tắc chế độ demo "bỏ qua rule engine" trên giao diện.
-3. Danh tính agent theo ERC-8004 (khoảng 3–5 giờ).
+1. ✅ Nút "tạo agent" trên giao diện, gọi factory (`+ Tạo agent / policy mới` + bộ chuyển policy trong `SetupCard`).
+2. ✅ Công tắc chế độ demo "bỏ qua rule engine" trên giao diện (`--bypass-rules` + `POST /api/demo-run`, đã test thật bị `ExceedsSandboxPerTxCap` trên Fuji).
+3. 🟡 Danh tính agent theo ERC-8004 (`0x8004…BD9e`): xong đọc/mã hóa/hiển thị + form `Đăng ký ERC-8004` trên web; còn 1 bước bấm ký giao dịch mint NFT từ ví Privy khi phiên đăng nhập mới.
 
 Không làm bản chạy trên L1 riêng.
 
 ## GĐ 5: Đóng gói (19–21/11)
 
-- README: sơ đồ kiến trúc, địa chỉ contract, cách chạy trong 3 lệnh.
-- Script nạp dữ liệu mẫu cho demo (`scripts/seed-demo`).
+- ✅ README: sơ đồ kiến trúc, địa chỉ contract, cách chạy trong 3 lệnh (`README.md`).
+- ✅ Script nạp dữ liệu mẫu cho demo (`scripts/seed-demo.mjs`, đã chạy kiểm tra Fuji & 4 dịch vụ local).
 - Deploy web (ví dụ Vercel), ghi tài khoản test cho giám khảo.
 - Quay video cùng Giang theo kịch bản trong SPEC, có câu khai chu kỳ 120 giây (`DEMO_PERIOD_SECONDS=120`) ngay đầu (luật 6).
 - Nộp trước trưa 21/11, để nửa ngày còn lại dự phòng.

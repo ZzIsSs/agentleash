@@ -1,7 +1,9 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
+import type { Address } from "viem";
 import { addressUrl, shortAddress, txUrl } from "@/lib/chain";
+import { buildDemoCliCommand } from "@/lib/demoRun";
 import { formatUsdc } from "@/lib/policy";
 import type { Rejection } from "@/lib/rejections";
 import {
@@ -12,6 +14,7 @@ import {
   type Spend,
   type SpendFlowSummary,
 } from "@/lib/spends";
+import type { DemoRunState, DemoRunnerAvailability } from "@/lib/useDemoRunner";
 
 /** Hôm nay thì chỉ giờ, ngày khác thì kèm ngày/tháng. */
 function formatTime(ms: number | null): string {
@@ -276,8 +279,22 @@ export function SpendsCard({ spends, loaded, error }: { spends: Spend[]; loaded:
   );
 }
 
-/** Ô [4]: các lần agent bị chặn, gộp rule engine (ngoài chuỗi) và contract (trên chuỗi). */
-export function RejectionsCard({ items, available }: { items: Rejection[]; available: boolean | null }) {
+/** Ô [4]: công tắc chế độ demo "bỏ qua rule engine" + các lần agent bị chặn từ rule engine và contract. */
+export function RejectionsCard({
+  policy,
+  items,
+  available,
+  demoAvailability,
+  demoRunState,
+  onRunDemo,
+}: {
+  policy: Address;
+  items: Rejection[];
+  available: boolean | null;
+  demoAvailability: DemoRunnerAvailability | null;
+  demoRunState: DemoRunState;
+  onRunDemo: (bypassRules: boolean) => void;
+}) {
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -286,6 +303,14 @@ export function RejectionsCard({ items, available }: { items: Rejection[]; avail
         </h2>
         {items.length > 0 && <span className="text-sm text-danger">{items.length} lần bị chặn</span>}
       </div>
+
+      <DemoBypassControl
+        policy={policy}
+        availability={demoAvailability}
+        runState={demoRunState}
+        onRunDemo={onRunDemo}
+      />
+
       {available === false ? (
         <p className="text-sm text-muted">
           Không thấy nhật ký agent (<code>agent/logs/audit.json</code>). Mục này chỉ có khi agent chạy cùng máy với
@@ -323,5 +348,150 @@ export function RejectionsCard({ items, available }: { items: Rejection[]; avail
         </ul>
       )}
     </section>
+  );
+}
+
+function DemoBypassControl({
+  policy,
+  availability,
+  runState,
+  onRunDemo,
+}: {
+  policy: Address;
+  availability: DemoRunnerAvailability | null;
+  runState: DemoRunState;
+  onRunDemo: (bypassRules: boolean) => void;
+}) {
+  const switchId = useId();
+  const hintId = `${switchId}-hint`;
+  const [bypassRules, setBypassRules] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const running = runState.phase === "running";
+  const canRunLocal = !!availability?.available && !running;
+  const cliCommand = buildDemoCliCommand(bypassRules, policy);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(cliCommand);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Trình duyệt không cấp clipboard; người dùng vẫn copy trực tiếp từ thẻ code.
+    }
+  };
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (canRunLocal) onRunDemo(bypassRules);
+      }}
+      className={`flex flex-col gap-2.5 rounded-xl border p-3 ${
+        bypassRules ? "border-danger/60 bg-danger/5" : "border-border bg-background/80"
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <input
+            id={switchId}
+            name="bypassRules"
+            type="checkbox"
+            role="switch"
+            aria-checked={bypassRules}
+            aria-describedby={hintId}
+            checked={bypassRules}
+            onChange={(e) => setBypassRules(e.target.checked)}
+            {...({ switch: "" } as Record<string, string>)}
+            className="h-5 w-5 cursor-pointer accent-[#ef4444] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22d3ee]"
+          />
+          <label htmlFor={switchId} className="cursor-pointer text-xs font-semibold text-foreground">
+            Chế độ demo: Bỏ qua Rule Engine (<code>--bypass-rules</code>)
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          disabled={!canRunLocal}
+          className={`min-h-9 rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+            bypassRules
+              ? "bg-danger text-white hover:bg-danger/90"
+              : "bg-flow text-background hover:opacity-90"
+          }`}
+        >
+          {running
+            ? "Đang chạy agent trên Fuji…"
+            : bypassRules
+              ? "Thử tấn công địa chỉ lạ"
+              : "Chạy Agent Đà Lạt (mock)"}
+        </button>
+      </div>
+
+      <p id={hintId} className="text-[11px] text-muted">
+        {bypassRules
+          ? "BẬT: Tắt kiểm tra off-chain, giả lập agent bị chiếm gọi địa chỉ lạ 0x1111…1111 (0.001 USDC) để AgentPolicy chặn tại Sandbox."
+          : "TẮT: Agent dùng Rule Engine + Gemini giả lập (--mock-llm) thực hiện 4 lệnh mua Thời tiết & Tỷ giá."}
+      </p>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-card px-2.5 py-1.5 text-[11px] text-muted">
+        <code className="truncate font-mono text-foreground">{cliCommand}</code>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="shrink-0 rounded border border-border px-2 py-0.5 text-[11px] text-muted hover:text-foreground"
+        >
+          {copied ? "Đã chép ✓" : "Chép CLI"}
+        </button>
+      </div>
+
+      {availability && !availability.available && (
+        <p className="text-[11px] text-sandbox">
+          {availability.reason ?? "Nút chạy trực tiếp chỉ khả dụng trên máy local; dùng lệnh CLI ở trên để test."}
+        </p>
+      )}
+
+      {runState.phase === "done" && (
+        <div role="status" aria-live="polite" className="flex flex-col gap-1 rounded-lg bg-card px-3 py-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-trusted">
+              Kết quả ({runState.bypassRules ? "Bỏ qua Rule Engine" : "Có Rule Engine"}):
+            </span>
+            <span>
+              Thành công: <strong>{runState.summary.successCount ?? 0}</strong> · Bị chặn:{" "}
+              <strong className="text-danger">{runState.summary.blockedCount ?? 0}</strong>
+            </span>
+            {runState.summary.balanceUsdc && (
+              <span className="font-mono text-muted">· Số dư: {runState.summary.balanceUsdc} USDC</span>
+            )}
+          </div>
+          {runState.summary.blockedLines.map((line, idx) => (
+            <p key={idx} className="font-mono text-[11px] text-danger">
+              {line}
+            </p>
+          ))}
+          {runState.summary.txHashes.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {runState.summary.txHashes.slice(0, 3).map((hash) => (
+                <a
+                  key={hash}
+                  href={txUrl(hash)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono text-[11px] text-flow hover:underline"
+                >
+                  {shortAddress(hash)} ↗
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {runState.phase === "error" && (
+        <p role="status" aria-live="polite" className="text-xs text-danger">
+          Lỗi chạy agent: {runState.message}
+        </p>
+      )}
+    </form>
   );
 }
