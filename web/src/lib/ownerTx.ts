@@ -1,7 +1,7 @@
 import { BaseError, ContractFunctionRevertedError, type Hex } from "viem";
 
 /**
- * Trạng thái một lệnh chủ ký (pause, unpause, setWhitelist, setCaps, createPolicy):
+ * Trạng thái một lệnh chủ ký (pause, unpause, setWhitelist, setCaps, createPolicy, ERC-8004 register):
  * idle → signing (chờ ví ký) → pending (đã gửi, chờ xác nhận) → done | error.
  */
 export type TxState =
