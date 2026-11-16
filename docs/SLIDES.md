@@ -2,7 +2,11 @@
 
 > **Mục tiêu:** 12 trang rõ ràng cho vòng Online (chọn Top 10) & Final Demo Day trên **Team1 Vietnam UniHack 2026**, đáp ứng đủ 3 câu hỏi bắt buộc (Luật 9), Luật Việt Nam (Luật 8), tiêu chí **Avalanche Integration (25/100 điểm)** và khai báo giả lập ngay đầu pitch (Luật 6).
 >
-> **Khi đưa lên Canva / Google Slides:** Nhớ bật **"Anyone with the link can view"** và kiểm tra lại link bằng tab ẩn danh (luật loại bài).
+> **Bản Canva đã dựng (12 trang, `1920×1080`, Design ID `DAHbCvD2kR8`):**
+> - Xem slide: https://www.canva.com/d/w1E_z_mwcHMPnWc
+> - Chỉnh sửa: https://www.canva.com/d/0fPNoGpvq1yz7L7
+>
+> **Khi nộp bài:** Mở nút Share trên Canva bật **"Anyone with the link can view"** và kiểm tra lại link bằng tab ẩn danh (luật loại bài).
 
 ---
 
