@@ -1,10 +1,37 @@
 # AgentLeash
 
-Ví cho AI agent có **"dây xích" on-chain**, dự thi **Team1 Vietnam UniHack 2026** trên Avalanche (Track *AI Agents & Security / Agent Economy on x402*).
+Ví cho AI agent có **"dây xích" on-chain** và **cổng kiểm thử & bảo vệ API** cho người dùng dùng công cụ lập trình tự động, dự thi **Team1 Vietnam UniHack 2026** trên Avalanche (Track *AI Agents & Security / Agent Economy on x402*).
 
-**Một câu:** AI agent tự thanh toán API qua chuẩn HTTP **x402**, nhưng USDC nằm trong `AgentPolicy` contract của chủ sở hữu; agent chỉ được xin duyệt chi (`authorize`), smart contract mới là chốt chặn cuối theo hạn mức 2 tầng, whitelist và Kill Switch.
+**Một câu:** AI agent tự thanh toán API qua chuẩn HTTP **x402**, nhưng USDC nằm trong `AgentPolicy` contract của chủ sở hữu; agent chỉ được xin duyệt chi (`authorize`), smart contract mới là chốt chặn cuối theo hạn mức 2 tầng (Trusted / Sandbox), whitelist và Kill Switch — làm nền tảng phát triển thành cổng bảo vệ giúp người dùng không rành kỹ thuật (non-tech) cho phép AI coding agent tự test API lạ an toàn rồi duyệt thành API quen.
 
 > **Khai báo mô phỏng (Luật 6):** Bản demo rút ngắn chu kỳ hạn mức xuống **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và hai API Thời tiết / Tỷ giá trả dữ liệu mock; toàn bộ giao dịch `authorize`, chữ ký **ERC-1271**, chuyển khoản **EIP-3009** USDC, **ERC-8004** và quản trị policy đều chạy thật trên **Avalanche Fuji**.
+
+---
+
+## Tầm nhìn & Hướng phát triển: Cổng bảo vệ API cho người dùng Non-Tech (Bên A – Bên B)
+
+Người dùng không rành code (non-tech / vibe coders) khi dùng các công cụ lập trình tự động (**Bên A**: Antigravity, Claude Code, ...) thường gặp 4 nỗi sợ lớn khi AI tự kết nối API ngoài: **lộ API Key / cháy tiền thẻ tín dụng**, **gọi nhầm API giả mạo/độc hại**, **AI bị kẹt vòng lặp đốt hết ngân sách**, và **không biết dữ liệu API trả về có đúng ý mình hay không**.
+
+**AgentLeash (Bên B)** tích hợp trực tiếp vào **Bên A** (dưới dạng MCP Gateway / Proxy) để giải quyết bài toán này qua cơ chế **"Thử API lạ an toàn → Duyệt thành API quen"**:
+
+```mermaid
+flowchart LR
+  User["Người dùng Non-tech"] -->|"1. Ra lệnh làm tính năng"| A["Bên A: Antigravity / Claude Code"]
+  A -->|"2. Gọi qua MCP / Proxy"| B["Bên B: AgentLeash Gateway"]
+  B -->|"API lạ: Test qua 4 lớp bảo vệ"| Sandbox["Sandbox (hạn mức siêu nhỏ, lọc URL, chặn loop, chấm output)"]
+  B -->|"API quen: Thực thi bình thường"| Trusted["Trusted / Whitelist (hạn mức cao hơn, Vault giữ key)"]
+  User -->|"3. Chọn API đã thử để chuyển thành Quen"| B
+```
+
+1. **Tự động test API lạ (4 lớp bảo vệ):**
+   - **Trần ngân sách Sandbox siêu nhỏ:** Cho phép Bên A gọi thử API có phí trong hạn mức an toàn tuyệt đối.
+   - **Kiểm tra an toàn & uy tín:** Lọc URL giả mạo, domain độc hại, chống rò rỉ dữ liệu hoặc tấn công SSRF.
+   - **Chặn vòng lặp & Rate limit:** Tự động ngắt khi Bên A gọi lặp bất thường, thông báo nguyên nhân bằng tiếng Việt dễ hiểu.
+   - **Đánh giá chất lượng đầu ra:** Kiểm tra dữ liệu API trả về có hợp lệ và đáp ứng đúng mục tiêu ban đầu của người dùng không.
+2. **Sử dụng API quen & chuyển đổi 1-click:** Người dùng xem danh sách các API mà Bên A đã thử truy cập ngay trên Dashboard và bấm chọn chuyển thành **API quen (Whitelist)** để dùng lâu dài.
+3. **Kết hợp cả API truyền thống & API x402:** Hỗ trợ đồng thời **API chuẩn x402** (thanh toán vi mô minh bạch bằng `AgentPolicy` trên Avalanche) và định hướng mở rộng sang **API truyền thống** (dùng API Key/thẻ qua két bảo mật Vault & Quota Proxy, không đưa key thật cho Bên A).
+
+> **Ranh giới bản nộp UniHack (21/11/2026):** Toàn bộ kiến trúc ví chính sách 2 tầng (`AgentPolicy`), Rule Engine, 2 API x402, CLI agent và Dashboard quản trị đang chạy thật trên Avalanche Fuji. Phần tích hợp sâu cho non-tech (MCP Gateway đa nền tảng, Proxy giữ API Key truyền thống và trải nghiệm ẩn hoàn toàn thao tác crypto) là **hướng phát triển tiếp theo** từ nền tảng Sandbox/Whitelist hiện có.
 
 ---
 

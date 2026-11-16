@@ -99,7 +99,10 @@
   - **Smart Contracts (Foundry):** **29/29 tests pass** (unit + invariant fuzz 128.000 calls + fork Fuji với Circle USDC thật); `AgentPolicyFactory` (`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`) & `AgentPolicy` đã deploy & verified trên Fuji.
   - **Web Dashboard:** **54/54 vitest tests pass**, `tsc --noEmit` & `eslint` sạch.
   - **Agent & Rule Engine:** **18/18 vitest tests pass**, `tsc --noEmit` sạch, chạy thông suốt với x402 Facilitator & 2 API Seller trên Fuji.
-- **Mở rộng sắp tới:** Tích hợp chuẩn danh tính agent **ERC-8004** (registry `0x8004A818BFB912233c491871b3d84c89A494BD9e` trên Fuji), công tắc test nâng cao trên web và đóng gói triển khai demo cho giám khảo.
+- **Mở rộng sắp tới (Tầm nhìn sản phẩm cho Non-tech — Mô hình Bên A & Bên B):**
+  - **Tích hợp chuẩn danh tính agent ERC-8004** (registry `0x8004A818BFB912233c491871b3d84c89A494BD9e` trên Fuji) để xây dựng điểm uy tín API/Agent dùng chung.
+  - **Cổng MCP Gateway cho AI Coding Tools (Bên A: Antigravity, Claude Code):** Biến AgentLeash (Bên B) thành người gác cổng giúp người dùng không rành kỹ thuật cho phép AI **tự động test API lạ** qua 4 lớp (trần Sandbox, lọc URL độc hại, chặn loop, chấm chất lượng đầu ra), sau đó bấm 1-click **chuyển API đã thử thành API quen (Whitelist)**.
+  - **Hỗ trợ song song API truyền thống (Vault giữ API Key + Quota Proxy) & API x402 (ẩn thao tác crypto):** Mở rộng tệp người dùng sang hàng triệu non-tech/vibe coders.
 
 ---
 

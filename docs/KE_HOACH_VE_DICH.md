@@ -1,5 +1,7 @@
 # Kế hoạch về đích AgentLeash (13/11 → 21/11/2026)
 
+> **Cập nhật mới nhất (từ 16/11/2026):** Lịch deadline chi tiết theo hướng phát triển **Bên A – Bên B cho người dùng non-tech** nằm tại [DEADLINE_BEN_A_B.md](DEADLINE_BEN_A_B.md). File này giữ lịch sử theo dõi từ 13/11 đến 16/11.
+
 Lập ngày 13/11/2026 cho Nguyên. File này gom **mọi việc còn lại** đến lúc nộp bài: code, slide, video, form và quyền truy cập cho giám khảo. Chi tiết kỹ thuật từng giai đoạn vẫn nằm ở [ROADMAP.md](ROADMAP.md) và [PHASE2_PLAN.md](PHASE2_PLAN.md); file này chỉ nói **ngày nào làm gì và thế nào là xong**.
 
 - Hạn nộp: **23:59 T7 21/11/2026** trên team1vn.xyz. Mục tiêu nộp **trước 12:00 ngày 21/11**.

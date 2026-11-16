@@ -6,7 +6,13 @@ Người phụ trách kỹ thuật: **Nguyên**. Mọi việc vượt ra ngoài 
 
 ## 1. Dự án
 
-AgentLeash là ví cho AI agent có "dây xích" on-chain: agent tự trả tiền API qua x402, nhưng mọi khoản chi phải qua policy contract có hạn mức, whitelist và nút tắt khẩn cấp. Dự án thi Avalanche Team1 Vietnam UniHack 2026 (hạn nộp 21/11/2026). Đọc [README.md](README.md) và [docs/SPEC.md](docs/SPEC.md).
+AgentLeash là **công cụ bảo vệ và kiểm soát chi tiêu cho AI agent**, dự thi **Avalanche Team1 Vietnam UniHack 2026** (hạn nộp **21/11/2026**). Đọc [README.md](README.md) và [docs/SPEC.md](docs/SPEC.md).
+
+- **Bản chạy thật đang thi UniHack:** AI agent tự trả tiền gọi API qua chuẩn x402, nhưng tiền (USDC) nằm trong hợp đồng thông minh có sẵn hạn mức 2 tầng (tin cậy vs. thử nghiệm), danh sách tin cậy (whitelist) và nút tắt khẩn cấp (Kill Switch) do chủ sở hữu giữ quyền.
+- **Định hướng phát triển tiếp theo (dành cho người không rành kỹ thuật / non-tech):**
+  - **Bên A** là các công cụ lập trình tự động (như Antigravity, Claude Code).
+  - **Bên B** là **AgentLeash** — tích hợp vào Bên A để giúp người không biết code **tự động kiểm thử các API lạ** (giới hạn ngân sách thử nghiệm siêu nhỏ tránh đốt tiền, kiểm tra an toàn chống lừa đảo/URL độc hại, chặn lỗi vòng lặp và đánh giá dữ liệu trả về có đúng ý người dùng không).
+  - Sau khi Bên A thử xong, người dùng chỉ cần xem danh sách các API mà Bên A đã thử truy cập rồi **bấm chọn để chuyển thành API quen** (đưa vào danh sách tin cậy với hạn mức cao hơn). Hệ thống hướng tới hỗ trợ cả **API truyền thống** (dùng API Key/thẻ) lẫn **API chuẩn x402** mà người dùng non-tech không cần thao tác phức tạp với ví crypto.
 
 ## 2. Người bạn đang hỗ trợ
 

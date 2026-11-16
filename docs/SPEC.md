@@ -217,3 +217,19 @@ Rule engine chặn sớm và rẻ. Policy contract là lớp cuối, không ai v
   - *Vì sao on-chain:* luật chi tiêu phải nằm ở nơi agent không sửa được và mọi bên kiểm tra được.
   - *Vì sao Avalanche:* có facilitator x402 chạy sẵn trên Fuji và C-Chain, USDC Fuji hỗ trợ ERC-1271, phí đủ thấp để khoản 0.001 USDC có ý nghĩa. Nói thật là x402 cũng có trên chuỗi khác.
   - *Tiền đến từ đâu:* phí SaaS theo số agent được quản lý, hoặc phí nhỏ trên mỗi giao dịch x402 đi qua policy.
+
+---
+
+## Định hướng phát triển tiếp theo (Mô hình Bên A – Bên B cho người dùng Non-tech)
+
+Sau khi hoàn thiện MVP bảo vệ chi tiêu x402 trên Avalanche Fuji, sản phẩm phát triển theo hướng trở thành **công cụ tích hợp cho người dùng không có nền tảng kỹ thuật (non-tech)** khi sử dụng các công cụ lập trình tự động:
+
+- **Vai trò hai bên:**
+  - **Bên A (AI Coding Agents):** Antigravity, Claude Code, Cursor, ...
+  - **Bên B (AgentLeash):** Đóng vai cổng kiểm thử & bảo vệ API (MCP Gateway + Proxy + Policy Dashboard) cắm vào Bên A.
+- **Luồng nghiệp vụ chính:**
+  1. **Tự động test API lạ (Sandbox):** Khi Bên A cần thử một API mới, Bên B áp dụng 4 lớp kiểm tra: (a) giới hạn ngân sách Sandbox siêu nhỏ, (b) kiểm tra uy tín/an toàn URL chống giả mạo và SSRF, (c) chặn vòng lặp / giới hạn tần suất (rate limit), (d) đánh giá kết quả trả về có khớp với mục tiêu người dùng không.
+  2. **Sử dụng API quen (Whitelist / Trusted):** Các API đã tin cậy được gọi với hạn mức cao hơn qua cấu hình ổn định.
+  3. **Chuyển "Lạ → Quen":** Trên giao diện của Bên B, người dùng non-tech xem lại danh sách các API mà Bên A đã thử truy cập (kèm kết quả đánh giá và chi phí) và bấm chọn để chuyển thành API quen (`setWhitelist`).
+- **Phạm vi API mục tiêu:** Hỗ trợ kết hợp cả **API chuẩn x402** (chính sách chi tiêu on-chain chạy ngầm trên Avalanche) và **API truyền thống** (API Key / thẻ tín dụng thông qua lớp Vault giữ khóa & Quota Proxy, không lộ khóa gốc cho Bên A).
+- **Nguyên tắc với bản nộp 21/11:** Không thay đổi hoặc làm mất ổn định Smart Contract (`AgentPolicy.sol`) và luồng demo 7 bước đã nghiệm thu; chỉ bổ sung lớp cầu nối mỏng (nếu kịp trước hạn) và đưa phần mở rộng toàn diện vào Roadmap/Pitch.
