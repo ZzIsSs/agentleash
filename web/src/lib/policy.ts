@@ -42,9 +42,14 @@ export type PolicyRaw = {
   blockNumber: bigint;
 };
 
-export async function readPolicy(client: PublicClient, policy: Address, usdc: Address): Promise<PolicyRaw> {
+export async function readPolicy(
+  client: PublicClient,
+  policy: Address,
+  usdc: Address,
+  knownBlockNumber?: bigint | null,
+): Promise<PolicyRaw> {
   // Ghim cùng một block để mọi số trên màn hình nhất quán với nhau.
-  const blockNumber = await client.getBlockNumber();
+  const blockNumber = knownBlockNumber ?? (await client.getBlockNumber());
   const read = <F extends (typeof agentPolicyAbi)[number]["name"]>(functionName: F) =>
     client.readContract({ address: policy, abi: agentPolicyAbi, functionName, blockNumber });
 

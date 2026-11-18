@@ -1,9 +1,11 @@
 // Source inspired by x402-pay-per-request and adapted for AgentLeash ERC-1271 policy authorization
+import { randomBytes } from "node:crypto";
 import {
   BaseError,
   ContractFunctionRevertedError,
   createPublicClient,
   createWalletClient,
+  decodeEventLog,
   formatUnits,
   http,
   isAddress,
@@ -96,6 +98,19 @@ export const agentPolicyAbi = [
     outputs: [{ name: "", type: "bool" }],
     stateMutability: "view",
   },
+  {
+    type: "event",
+    name: "Authorized",
+    inputs: [
+      { name: "digest", type: "bytes32", indexed: true },
+      { name: "payTo", type: "address", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "validAfter", type: "uint256", indexed: false },
+      { name: "validBefore", type: "uint256", indexed: false },
+      { name: "nonce", type: "bytes32", indexed: false },
+      { name: "isSandbox", type: "bool", indexed: false },
+    ],
+  },
   { type: "error", name: "Unauthorized", inputs: [] },
   { type: "error", name: "PausedError", inputs: [] },
   { type: "error", name: "NotPausedError", inputs: [] },
@@ -187,6 +202,7 @@ export interface PolicyAuthorizationEvent {
   validBefore: bigint;
   nonce: Hex;
   blockNumber: bigint;
+  isSandbox?: boolean;
 }
 
 export interface PolicySignerOptions {
@@ -433,6 +449,24 @@ export function createAgentPolicySigner(options: PolicySignerOptions) {
         `[PolicySigner] Authorized on-chain in block ${receipt.blockNumber} (tx: ${txHash})`,
       );
 
+      let isSandbox: boolean | undefined;
+      for (const log of receipt.logs) {
+        if (log.address.toLowerCase() !== policyAddress.toLowerCase()) continue;
+        try {
+          const decoded = decodeEventLog({
+            abi: agentPolicyAbi,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === "Authorized") {
+            isSandbox = decoded.args.isSandbox;
+            break;
+          }
+        } catch {
+          // Ignore unrelated logs in the receipt
+        }
+      }
+
       onAuthorized?.({
         txHash,
         payTo,
@@ -441,6 +475,7 @@ export function createAgentPolicySigner(options: PolicySignerOptions) {
         validBefore,
         nonce,
         blockNumber: receipt.blockNumber,
+        isSandbox,
       });
 
       // Return empty signature for ERC-1271 (USDC verifies via AgentPolicy.isValidSignature)
@@ -538,6 +573,82 @@ export async function readPolicyStatus(
     remainingSandboxDailyUnits: remainingTuple[1],
     currentPeriodStart: remainingTuple[2],
     paused,
+  };
+}
+
+/**
+ * Checks whether `payTo` is currently whitelisted (Trusted tier) on `AgentPolicy`.
+ */
+export async function isAddressWhitelisted(
+  policyAddress: Address,
+  payTo: Address,
+  rpcUrl: string = process.env.FUJI_RPC_URL || DEFAULT_FUJI_RPC,
+): Promise<boolean> {
+  const client = createPublicClient({
+    chain: avalancheFuji,
+    transport: http(rpcUrl),
+  });
+
+  return client.readContract({
+    address: policyAddress,
+    abi: agentPolicyAbi,
+    functionName: "whitelist",
+    args: [payTo],
+  });
+}
+
+export interface SimulateAuthorizeResult {
+  payTo: Address;
+  amountUnits: bigint;
+  isSandbox: boolean;
+}
+
+/**
+ * Dry-runs `AgentPolicy.authorize(...)` via `eth_call` (`simulateContract`) so Side A can probe
+ * whether a `payTo` + amount passes on-chain Sandbox/Trusted limits with 0 gas and without consuming caps.
+ */
+export async function simulatePolicyAuthorize(options: {
+  policyAddress: Address;
+  agentPrivateKey: Hex;
+  payTo: Address;
+  amountUnits: bigint;
+  rpcUrl?: string;
+}): Promise<SimulateAuthorizeResult> {
+  const rpcUrl = options.rpcUrl || process.env.FUJI_RPC_URL || DEFAULT_FUJI_RPC;
+  const agentAccount = privateKeyToAccount(options.agentPrivateKey);
+  const client = createPublicClient({
+    chain: avalancheFuji,
+    transport: http(rpcUrl),
+  });
+
+  const nowSec = BigInt(Math.floor(Date.now() / 1000));
+  const validAfter = 0n;
+  const validBefore = nowSec + 300n;
+  const nonce = `0x${randomBytes(32).toString("hex")}` as Hex;
+
+  try {
+    await client.simulateContract({
+      address: options.policyAddress,
+      abi: agentPolicyAbi,
+      functionName: "authorize",
+      args: [options.payTo, options.amountUnits, validAfter, validBefore, nonce],
+      account: agentAccount,
+    });
+  } catch (err) {
+    throw new PolicyOnChainRejectedError(formatPolicyRevertReason(err), err);
+  }
+
+  const whitelisted = await client.readContract({
+    address: options.policyAddress,
+    abi: agentPolicyAbi,
+    functionName: "whitelist",
+    args: [options.payTo],
+  });
+
+  return {
+    payTo: options.payTo,
+    amountUnits: options.amountUnits,
+    isSandbox: !whitelisted,
   };
 }
 

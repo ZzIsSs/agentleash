@@ -184,4 +184,91 @@ describe("RuleEngine & AuditLog", () => {
     expect(logs[1].status).toBe("REJECTED_OFFCHAIN");
     expect(logs[1].ruleCode).toBe("UNREGISTERED_API");
   });
+
+  it("8. Chống vòng lặp: tính cả lượt thất bại vào rate limit và ngắt LOOP_DETECTED sau 3 lần lỗi liên tiếp", () => {
+    let now = 1_700_000_000_000;
+    const engine = new RuleEngine({
+      maxRequestsPerMinute: 5,
+      maxConsecutiveFailures: 3,
+      nowFn: () => now,
+      auditLogPath: null,
+    });
+
+    // 3 lần lỗi liên tiếp với cùng loopKey -> lần 4 bị ngắt bởi LOOP_DETECTED
+    for (let i = 0; i < 3; i += 1) {
+      expect(engine.validateRateAndDedup("unknown_api", "same-query", "sandbox:0x1111").ok).toBe(true);
+      engine.recordFailure("unknown_api", "sandbox:0x1111");
+      now += 1_000;
+    }
+
+    const loopBlocked = engine.validateRateAndDedup("unknown_api", "same-query", "sandbox:0x1111");
+    expect(loopBlocked.ok).toBe(false);
+    expect(loopBlocked.code).toBe("LOOP_DETECTED");
+
+    // Một target khác vẫn tính chung rate limit của unknown_api; thêm 2 lần nữa là chạm ngưỡng 5/phút
+    expect(engine.validateRateAndDedup("unknown_api", "other", "sandbox:0x2222").ok).toBe(true);
+    engine.recordFailure("unknown_api", "sandbox:0x2222");
+    expect(engine.validateRateAndDedup("unknown_api", "other", "sandbox:0x3333").ok).toBe(true);
+    engine.recordFailure("unknown_api", "sandbox:0x3333");
+
+    const rateBlocked = engine.validateRateAndDedup("unknown_api", "other", "sandbox:0x4444");
+    expect(rateBlocked.ok).toBe(false);
+    expect(rateBlocked.code).toBe("RATE_LIMIT_EXCEEDED");
+  });
+
+  it("9. Bộ đếm LOOP_DETECTED hết hạn theo cửa sổ loopWindowMs và nêu đối tượng + thời gian chờ", () => {
+    let now = 1_700_000_000_000;
+    const engine = new RuleEngine({
+      maxRequestsPerMinute: 10,
+      maxConsecutiveFailures: 3,
+      loopWindowMs: 60_000,
+      nowFn: () => now,
+      auditLogPath: null,
+    });
+
+    for (let i = 0; i < 3; i += 1) {
+      expect(engine.validateRateAndDedup("unknown_api", "q", "sandbox:0x1111", "0x1111").ok).toBe(true);
+      engine.recordFailure("unknown_api", "sandbox:0x1111", "ExceedsSandboxPerTxCap");
+      now += 1_000;
+    }
+
+    const blocked = engine.validateRateAndDedup("unknown_api", "q", "sandbox:0x1111", "0x1111");
+    expect(blocked.ok).toBe(false);
+    expect(blocked.code).toBe("LOOP_DETECTED");
+    expect(blocked.reason).toContain("0x1111");
+    expect(blocked.reason).toContain("thử lại sau 57s");
+
+    // Chưa hết cửa sổ 60s tính từ lần lỗi đầu -> vẫn chặn
+    now += 56_000;
+    expect(engine.validateRateAndDedup("unknown_api", "q", "sandbox:0x1111", "0x1111").code).toBe("LOOP_DETECTED");
+
+    // Đủ 60s từ lần lỗi đầu -> lỗi cũ hết hạn, chỉ còn 2 lỗi (< 3) -> được gọi lại
+    now += 1_000;
+    expect(engine.validateRateAndDedup("unknown_api", "q", "sandbox:0x1111", "0x1111")).toEqual({ ok: true });
+  });
+
+  it("10. Khóa chống trùng (dedup) phân biệt theo đích payTo/endpoint (không phân biệt hoa/thường)", () => {
+    let now = 1_700_000_000_000;
+    const engine = new RuleEngine({
+      dedupWindowMs: 60_000,
+      nowFn: () => now,
+      auditLogPath: null,
+    });
+
+    const targetC = "0xcccccccccccccccccccccccccccccccccccccccc";
+    const targetD = "0xdddddddddddddddddddddddddddddddddddddddd";
+
+    expect(engine.validateRateAndDedup("unknown_api", "sandbox-test", `sandbox:${targetC}`, targetC).ok).toBe(true);
+    engine.recordExecution("unknown_api", "sandbox-test", `sandbox:${targetC}`, targetC);
+
+    // Đích khác + cùng query mặc định -> qua
+    expect(engine.validateRateAndDedup("unknown_api", "sandbox-test", `sandbox:${targetD}`, targetD).ok).toBe(true);
+    engine.recordExecution("unknown_api", "sandbox-test", `sandbox:${targetD}`, targetD);
+
+    // Cùng đích (khác chữ hoa/thường) + cùng query trong 60s -> DUPLICATE_QUERY
+    now += 10_000;
+    const dup = engine.validateRateAndDedup("unknown_api", "sandbox-test", `sandbox:${targetC}`, targetC.toUpperCase());
+    expect(dup.ok).toBe(false);
+    expect(dup.code).toBe("DUPLICATE_QUERY");
+  });
 });

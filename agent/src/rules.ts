@@ -6,7 +6,8 @@ export type RuleErrorCode =
   | "INVALID_PAY_TO"
   | "PRICE_MISMATCH"
   | "RATE_LIMIT_EXCEEDED"
-  | "DUPLICATE_QUERY";
+  | "DUPLICATE_QUERY"
+  | "LOOP_DETECTED";
 
 export interface ApiCatalogEntry {
   name: string;
@@ -36,8 +37,10 @@ export class RuleViolationError extends Error {
 export interface RuleEngineOptions {
   catalog?: Record<string, ApiCatalogEntry>;
   maxRequestsPerMinute?: number;
+  maxConsecutiveFailures?: number;
   rateWindowMs?: number;
   dedupWindowMs?: number;
+  loopWindowMs?: number;
   nowFn?: () => number;
   auditLogPath?: string | null;
 }
@@ -77,25 +80,35 @@ function normalizeQuery(query: string): string {
   return query.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+interface FailureRecord {
+  timestamp: number;
+  code?: string;
+}
+
 /**
  * Off-chain Rule Engine guarding agent spending before any on-chain transaction is submitted.
  */
 export class RuleEngine {
   private readonly catalog: Record<string, ApiCatalogEntry>;
   private readonly maxRequestsPerMinute: number;
+  private readonly maxConsecutiveFailures: number;
   private readonly rateWindowMs: number;
   private readonly dedupWindowMs: number;
+  private readonly loopWindowMs: number;
   private readonly nowFn: () => number;
   private readonly auditLogPath: string | null;
 
   private readonly apiCallTimestamps = new Map<string, number[]>();
   private readonly queryHistory = new Map<string, number>();
+  private readonly failureHistory = new Map<string, FailureRecord[]>();
 
   constructor(options: RuleEngineOptions = {}) {
     this.catalog = options.catalog ?? buildDefaultCatalog();
     this.maxRequestsPerMinute = options.maxRequestsPerMinute ?? 5;
+    this.maxConsecutiveFailures = options.maxConsecutiveFailures ?? 3;
     this.rateWindowMs = options.rateWindowMs ?? 60_000;
     this.dedupWindowMs = options.dedupWindowMs ?? 60_000;
+    this.loopWindowMs = options.loopWindowMs ?? 60_000;
     this.nowFn = options.nowFn ?? (() => Date.now());
     this.auditLogPath =
       options.auditLogPath === undefined
@@ -117,22 +130,45 @@ export class RuleEngine {
         this.queryHistory.delete(key);
       }
     }
+    for (const [key, records] of this.failureHistory.entries()) {
+      const fresh = records.filter((rec) => now - rec.timestamp < this.loopWindowMs);
+      if (fresh.length === 0) {
+        this.failureHistory.delete(key);
+      } else {
+        this.failureHistory.set(key, fresh);
+      }
+    }
+  }
+
+  private buildDedupKey(api: string, query: string, target?: string): string {
+    const resolvedTarget = (target ?? this.catalog[api]?.payTo ?? "").trim().toLowerCase();
+    const normalizedQuery = normalizeQuery(query);
+    return resolvedTarget
+      ? `${api}::${resolvedTarget}::${normalizedQuery}`
+      : `${api}::${normalizedQuery}`;
+  }
+
+  private resolveLoopTarget(api: string, loopKey?: string, target?: string): string {
+    const trimmedTarget = target?.trim();
+    if (trimmedTarget) return trimmedTarget;
+    const catalogPayTo = this.catalog[api]?.payTo;
+    if (catalogPayTo) return catalogPayTo;
+    if (loopKey) {
+      const stripped = loopKey.replace(/^(sandbox|trusted):/i, "").trim();
+      if (stripped) return stripped;
+    }
+    return api;
   }
 
   /**
-   * Validates request-level rules (API registration, rate limit, anti-spam deduplication)
-   * before calling the seller endpoint.
+   * Validates rate-limit, loop-protection, and anti-spam deduplication rules for any API key (catalog or sandbox).
    */
-  validatePreRequest(api: string, query: string): RuleValidationResult {
-    const entry = this.catalog[api];
-    if (!entry) {
-      return {
-        ok: false,
-        code: "UNREGISTERED_API",
-        reason: `API chưa được đăng ký trong danh mục cho phép: "${api}"`,
-      };
-    }
-
+  validateRateAndDedup(
+    api: string,
+    query: string,
+    loopKey?: string,
+    target?: string,
+  ): RuleValidationResult {
     const now = this.nowFn();
     this.pruneHistory(now);
 
@@ -145,7 +181,22 @@ export class RuleEngine {
       };
     }
 
-    const dedupKey = `${api}::${normalizeQuery(query)}`;
+    const effectiveLoopKey = (loopKey ?? api).toLowerCase();
+    const failures = this.failureHistory.get(effectiveLoopKey) ?? [];
+    if (this.maxConsecutiveFailures > 0 && failures.length >= this.maxConsecutiveFailures) {
+      const sorted = [...failures].sort((a, b) => a.timestamp - b.timestamp);
+      const expiringIndex = sorted.length - this.maxConsecutiveFailures;
+      const expiresAt = sorted[expiringIndex].timestamp + this.loopWindowMs;
+      const waitSeconds = Math.max(1, Math.ceil((expiresAt - now) / 1000));
+      const loopTarget = this.resolveLoopTarget(api, loopKey, target);
+      return {
+        ok: false,
+        code: "LOOP_DETECTED",
+        reason: `Phát hiện vòng lặp gọi "${loopTarget}" (thất bại liên tiếp ${failures.length} lần), tự động ngắt để tránh spam/cháy gas — vui lòng thử lại sau ${waitSeconds}s`,
+      };
+    }
+
+    const dedupKey = this.buildDedupKey(api, query, target);
     const lastExecutedAt = this.queryHistory.get(dedupKey);
     if (lastExecutedAt !== undefined && now - lastExecutedAt < this.dedupWindowMs) {
       const waitSeconds = Math.ceil((this.dedupWindowMs - (now - lastExecutedAt)) / 1000);
@@ -157,6 +208,28 @@ export class RuleEngine {
     }
 
     return { ok: true };
+  }
+
+  /**
+   * Validates request-level rules (API registration, rate limit, anti-spam deduplication)
+   * before calling the seller endpoint.
+   */
+  validatePreRequest(
+    api: string,
+    query: string,
+    loopKey?: string,
+    target?: string,
+  ): RuleValidationResult {
+    const entry = this.catalog[api];
+    if (!entry) {
+      return {
+        ok: false,
+        code: "UNREGISTERED_API",
+        reason: `API chưa được đăng ký trong danh mục cho phép: "${api}"`,
+      };
+    }
+
+    return this.validateRateAndDedup(api, query, loopKey, target ?? entry.payTo);
   }
 
   /**
@@ -210,9 +283,21 @@ export class RuleEngine {
   }
 
   /**
-   * Records a successful (or initiated) API call into rate-limit & deduplication windows.
+   * Records an API call attempt into rate-limit tracking without poisoning query deduplication.
    */
-  recordExecution(api: string, query: string): void {
+  recordAttempt(api: string): void {
+    const now = this.nowFn();
+    this.pruneHistory(now);
+
+    const calls = this.apiCallTimestamps.get(api) ?? [];
+    calls.push(now);
+    this.apiCallTimestamps.set(api, calls);
+  }
+
+  /**
+   * Records a failed/blocked attempt for loop detection without blocking future distinct promoted calls via dedup.
+   */
+  recordFailure(api: string, loopKey?: string, code?: string): number {
     const now = this.nowFn();
     this.pruneHistory(now);
 
@@ -220,15 +305,49 @@ export class RuleEngine {
     calls.push(now);
     this.apiCallTimestamps.set(api, calls);
 
-    const dedupKey = `${api}::${normalizeQuery(query)}`;
-    this.queryHistory.set(dedupKey, now);
+    const key = (loopKey ?? api).toLowerCase();
+    const records = this.failureHistory.get(key) ?? [];
+    records.push({ timestamp: now, ...(code ? { code } : {}) });
+    this.failureHistory.set(key, records);
+    return records.length;
   }
 
   /**
-   * Enforces pre-request rules, appending an audit log entry and throwing RuleViolationError if blocked.
+   * Checks whether an active (non-expired) failure with the given code exists for `loopKey`.
    */
-  enforcePreRequest(api: string, query: string, endpoint?: string): void {
-    const res = this.validatePreRequest(api, query);
+  hasFailureCode(loopKey: string, code: string): boolean {
+    const now = this.nowFn();
+    this.pruneHistory(now);
+    const records = this.failureHistory.get(loopKey.toLowerCase()) ?? [];
+    return records.some((rec) => rec.code === code);
+  }
+
+  /**
+   * Resets consecutive failure tracking after a successful call or policy update.
+   */
+  resetFailures(loopKey: string): void {
+    this.failureHistory.delete(loopKey.toLowerCase());
+  }
+
+  /**
+   * Records a successful (or initiated) API call into rate-limit & deduplication windows.
+   */
+  recordExecution(api: string, query: string, loopKey?: string, target?: string): void {
+    this.recordAttempt(api);
+    this.resetFailures(loopKey ?? api);
+
+    const now = this.nowFn();
+    const dedupKey = this.buildDedupKey(api, query, target);
+    this.queryHistory.set(dedupKey, now);
+  }
+
+  private failPreRequest(
+    res: RuleValidationResult,
+    api: string,
+    query: string,
+    endpoint?: string,
+    payTo?: string,
+  ): void {
     if (!res.ok && res.code && res.reason) {
       if (this.auditLogPath) {
         appendAuditLog(
@@ -237,6 +356,7 @@ export class RuleEngine {
             api,
             endpoint: endpoint ?? this.catalog[api]?.baseUrl ?? api,
             query,
+            ...(payTo ? { payTo } : {}),
             ruleCode: res.code,
             reason: res.reason,
           },
@@ -245,6 +365,43 @@ export class RuleEngine {
       }
       throw new RuleViolationError(res.code, res.reason);
     }
+  }
+
+  /**
+   * Enforces rate-limit, loop-protection and dedup rules for sandbox/unknown APIs without requiring catalog registration.
+   */
+  enforceRateAndDedup(
+    api: string,
+    query: string,
+    endpoint?: string,
+    loopKey?: string,
+    payTo?: string,
+  ): void {
+    const target = payTo?.trim() || endpoint?.trim();
+    this.failPreRequest(
+      this.validateRateAndDedup(api, query, loopKey, target),
+      api,
+      query,
+      endpoint,
+      payTo,
+    );
+  }
+
+  /**
+   * Enforces pre-request rules, appending an audit log entry and throwing RuleViolationError if blocked.
+   */
+  enforcePreRequest(
+    api: string,
+    query: string,
+    endpoint?: string,
+    loopKey?: string,
+  ): void {
+    this.failPreRequest(
+      this.validatePreRequest(api, query, loopKey),
+      api,
+      query,
+      endpoint,
+    );
   }
 
   /**

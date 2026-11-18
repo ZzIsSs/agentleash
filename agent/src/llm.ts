@@ -70,7 +70,10 @@ export interface ToolExecutionOutcome {
 
 export interface InteractionsClientLike {
   interactions: {
-    create(params: Record<string, unknown>): Promise<{
+    create(
+      params: Record<string, unknown>,
+      options?: Record<string, unknown>,
+    ): Promise<{
       id: string;
       steps?: Interactions.Step[];
       output_text?: string | null;
@@ -86,6 +89,7 @@ export interface LlmAgentLoopOptions {
   systemInstruction?: string;
   maxTurns?: number;
   maxRetries?: number;
+  requestTimeoutMs?: number;
   client?: InteractionsClientLike;
   onModelTurn?: (turn: number, calls: AgentToolCall[]) => void;
 }
@@ -107,7 +111,12 @@ export function createGeminiClient(apiKey?: string): GoogleGenAI {
       "Thiếu GEMINI_API_KEY trong biến môi trường. Vui lòng kiểm tra file .env.",
     );
   }
-  return new GoogleGenAI({ apiKey: key });
+  return new GoogleGenAI({
+    apiKey: key,
+    httpOptions: {
+      retryOptions: { attempts: 1 },
+    },
+  });
 }
 
 function extractFunctionCalls(
@@ -159,19 +168,81 @@ function isTransientGeminiError(err: unknown): {
   return { transient: false, delayMs: 0 };
 }
 
+function formatGeminiErrorMessage(err: unknown): string {
+  return String((err as { message?: string })?.message || err || "");
+}
+
+function isQuota429Error(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  const msg = formatGeminiErrorMessage(err);
+  return status === 429 || /\b429\b/.test(msg);
+}
+
+function withMockLlmHintIf429(err: unknown): Error {
+  const msg = formatGeminiErrorMessage(err);
+  if (!isQuota429Error(err) || msg.includes("--mock-llm")) {
+    return err instanceof Error ? err : new Error(msg);
+  }
+  const next = new Error(
+    `${msg} (Gợi ý: chạy lại với --mock-llm khi Gemini bị giới hạn 429)`,
+    { cause: err },
+  );
+  const status = (err as { status?: number })?.status;
+  if (status !== undefined) {
+    (next as { status?: number }).status = status;
+  }
+  return next;
+}
+
+export async function createInteractionWithTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  lastError?: unknown,
+): Promise<T> {
+  if (timeoutMs <= 0) return promise;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          const durationLabel =
+            timeoutMs >= 1000 ? `${Math.round(timeoutMs / 1000)}s` : `${timeoutMs}ms`;
+          const lastMsg = lastError ? formatGeminiErrorMessage(lastError) : "";
+          const detail = lastMsg ? ` — lỗi gần nhất: ${lastMsg}` : "";
+          const hint =
+            lastError && isQuota429Error(lastError) && !detail.includes("--mock-llm")
+              ? " (Gợi ý: chạy lại với --mock-llm khi Gemini bị giới hạn 429)"
+              : "";
+          reject(new Error(`Gemini API quá thời gian chờ (${durationLabel})${detail}${hint}.`));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
 async function createInteractionWithRetry(
   client: InteractionsClientLike,
   params: Record<string, unknown>,
   maxRetries: number,
+  requestTimeoutMs: number,
 ) {
   let attempt = 0;
+  let lastError: unknown;
   while (true) {
     try {
-      return await client.interactions.create(params);
+      return await createInteractionWithTimeout(
+        client.interactions.create(params, { retries: { strategy: "none" } }),
+        requestTimeoutMs,
+        lastError,
+      );
     } catch (err) {
+      lastError = err;
       const { transient, delayMs } = isTransientGeminiError(err);
       if (!transient || attempt >= maxRetries) {
-        throw err;
+        throw withMockLlmHintIf429(err);
       }
       attempt += 1;
       await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -194,6 +265,7 @@ export async function runLlmAgentLoop(
     systemInstruction = SYSTEM_INSTRUCTION,
     maxTurns = 6,
     maxRetries = 2,
+    requestTimeoutMs = 20_000,
     client: injectedClient,
     onModelTurn,
   } = options;
@@ -212,6 +284,7 @@ export async function runLlmAgentLoop(
       tools: AGENT_TOOLS,
     },
     maxRetries,
+    requestTimeoutMs,
   );
 
   while (true) {
@@ -267,6 +340,7 @@ export async function runLlmAgentLoop(
         previous_interaction_id: interaction.id,
       },
       maxRetries,
+      requestTimeoutMs,
     );
   }
 }

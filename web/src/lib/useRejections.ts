@@ -7,11 +7,14 @@ export type RejectionsResponse = {
   /** false khi không có agent/logs/audit.json (ví dụ bản deploy Vercel, agent không chạy cùng máy). */
   available: boolean;
   items: RejectionJson[];
+  /** Tổng số lượt bị chặn trước khi cắt limit (50); optional để tương thích payload cũ. */
+  total?: number;
 };
 
 /** Đọc /api/rejections 3 giây một lần. File đang được agent ghi dở thì giữ danh sách cũ. */
 export function useRejections(enabled: boolean) {
   const [items, setItems] = useState<Rejection[]>([]);
+  const [total, setTotal] = useState<number>(0);
   const [available, setAvailable] = useState<boolean | null>(null);
   const loadRef = useRef<(() => Promise<void>) | null>(null);
 
@@ -27,17 +30,33 @@ export function useRejections(enabled: boolean) {
         if (cancelled) return;
         setAvailable(body.available);
         setItems(body.items.map(rejectionFromJson));
+        setTotal(typeof body.total === "number" ? body.total : body.items.length);
       } catch {
         // Giữ danh sách cũ.
       }
     };
     loadRef.current = load;
     void load();
-    const id = setInterval(() => void load(), 3_000);
+    const id = setInterval(() => {
+      if (typeof document === "undefined" || !document.hidden) {
+        void load();
+      }
+    }, 3_000);
+    const onVisible = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        void load();
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisible);
+    }
     return () => {
       cancelled = true;
       loadRef.current = null;
       clearInterval(id);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisible);
+      }
     };
   }, [enabled]);
 
@@ -45,5 +64,5 @@ export function useRejections(enabled: boolean) {
     void loadRef.current?.();
   }, []);
 
-  return { items, available, refresh };
+  return { items, total, available, refresh };
 }

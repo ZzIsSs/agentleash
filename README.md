@@ -4,7 +4,7 @@ Ví cho AI agent có **"dây xích" on-chain** và **cổng kiểm thử & bảo
 
 **Một câu:** AI agent tự thanh toán API qua chuẩn HTTP **x402**, nhưng USDC nằm trong `AgentPolicy` contract của chủ sở hữu; agent chỉ được xin duyệt chi (`authorize`), smart contract mới là chốt chặn cuối theo hạn mức 2 tầng (Trusted / Sandbox), whitelist và Kill Switch — làm nền tảng phát triển thành cổng bảo vệ giúp người dùng không rành kỹ thuật (non-tech) cho phép AI coding agent tự test API lạ an toàn rồi duyệt thành API quen.
 
-> **Khai báo mô phỏng (Luật 6):** Bản demo rút ngắn chu kỳ hạn mức xuống **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và hai API Thời tiết / Tỷ giá trả dữ liệu mock; toàn bộ giao dịch `authorize`, chữ ký **ERC-1271**, chuyển khoản **EIP-3009** USDC, **ERC-8004** và quản trị policy đều chạy thật trên **Avalanche Fuji**.
+> **Khai báo mô phỏng (Luật 6):** Bản demo rút ngắn chu kỳ hạn mức xuống **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và hai API Thời tiết / Tỷ giá trả dữ liệu mock. Lượt chạy agent trong video dùng LLM giả lập (`--mock-llm`) theo kịch bản cố định; thanh toán x402, `AgentPolicy`, ERC-1271/EIP-3009 và quản trị policy vẫn chạy thật trên **Avalanche Fuji**. Tích hợp Gemini thật có sẵn qua `npm --prefix agent run demo:gd2`.
 
 ---
 
@@ -77,14 +77,16 @@ Yêu cầu: **Node.js ≥ 22** và bản sao `.env` từ `.env.example` (chỉ d
 # 1. Cài dependencies cho web, sellers và agent
 npm --prefix web install && npm --prefix sellers install && npm --prefix agent install
 
-# 2. Chạy Dashboard (3000) + 2 API Sellers (4021, 4023) ở các terminal (cùng facilitator 4022)
+# 2. Chạy Facilitator x402 (4022) + 2 API Sellers (4021, 4023) + Dashboard (3000) ở các terminal
+# Lưu ý: starter kit x402-pay-per-request dùng chung biến FACILITATOR_PRIVATE_KEY từ agentleash/.env:
+(cd ../x402-pay-per-request && node --env-file=../agentleash/.env src/facilitator.mjs) &
 npm --prefix sellers run start:weather & npm --prefix sellers run start:rates & npm --prefix web run dev
 
 # 3. Kiểm tra nhanh trạng thái Fuji và chạy kịch bản demo (hoặc bấm trực tiếp trên Dashboard)
 node --env-file=.env scripts/seed-demo.mjs && npm --prefix agent run demo:mock
 ```
 
-*(Kịch bản giả lập agent bị chiếm qua mặt Rule Engine: `npm --prefix agent run demo:bypass` hoặc bật công tắc **Bỏ qua Rule Engine** ngay ở ô `[4] Bị từ chối` trên Dashboard tại `http://localhost:3000`).*
+*(Kịch bản giả lập agent bị chiếm qua mặt Rule Engine: `npm --prefix agent run demo:bypass` hoặc bật công tắc **Bỏ qua Rule Engine** ngay ở ô `[4] Bị từ chối` trên Dashboard tại `http://localhost:3000`. Quay video: `npm --prefix web run build && npm --prefix web run start` để chạy bản production sạch cảnh báo dev.)*
 
 ---
 
@@ -93,11 +95,40 @@ node --env-file=.env scripts/seed-demo.mjs && npm --prefix agent run demo:mock
 | Thư mục / Tệp | Nội dung chính |
 |---|---|
 | `contracts/` | `AgentPolicy.sol`, `AgentPolicyFactory.sol` (Foundry: ERC-1271, EIP-3009, 2 tầng hạn mức, Kill Switch, `release(nonce)`). |
-| `agent/` | CLI agent (`gemini-3.8-flash` & `--mock-llm`), off-chain `RuleEngine`, `PolicySigner`, nhật ký `audit.json`. |
+| `agent/` | CLI agent (`gemini-3.8-flash` & `--mock-llm`), MCP Gateway (`src/mcp.ts`), off-chain `RuleEngine`, `PolicySigner`, nhật ký `audit.json`. |
 | `sellers/` | 2 API thu phí x402 (`4021` Thời tiết, `4023` Tỷ giá) giá `0.001 USDC/lượt`. |
-| `web/` | Dashboard Next.js 15 + Privy + viem thuần: 4 ô (Tổng quan, Sơ đồ SVG Dòng tiền, Whitelist + `setCaps` + Factory + ERC-8004, Công tắc `--bypass-rules` + Bị từ chối). |
+| `web/` | Dashboard Next.js 15 + Privy + viem thuần: 4 ô (Tổng quan, Sơ đồ SVG Dòng tiền, Whitelist + `setCaps` + Factory + ERC-8004 + nút 1-click **Chuyển thành API quen**, Công tắc `--bypass-rules` + Bị từ chối). |
 | `scripts/` | `seed-demo.mjs` kiểm tra on-chain policy, số dư, dịch vụ local và hỗ trợ khôi phục trạng thái demo. |
 | `docs/` | `SPEC.md`, `ROADMAP.md`, `KE_HOACH_VE_DICH.md`, `SLIDES.md`, `SPIKE.md`, `sessions/`. |
+
+---
+
+## Thử nghiệm MCP Server cho Bên A (Claude Code / Antigravity)
+
+`agent/src/mcp.ts` bọc `RuleEngine`, `PolicySigner`, x402 client và ghi `agent/logs/audit.json` qua giao thức **MCP stdio**, cung cấp 3 tool:
+- `test_unknown_api`: Thử nghiệm API lạ (URL hoặc `payTo`) qua lớp bảo vệ Sandbox + RuleEngine + `AgentPolicy`; trả dữ liệu nếu lọt ngưỡng Sandbox hoặc lý do bị chặn tiếng Việt (ví dụ `ExceedsSandboxPerTxCap`, `PausedError`) và ghi log cho Dashboard.
+- `call_trusted_api`: Gọi API trong danh mục Trusted (`weather`, `rates`) hoặc API vừa được chủ ví bấm **Chuyển thành API quen** (`setWhitelist`) trên Dashboard.
+- `get_policy_status`: Xem nhanh số dư USDC, hạn mức Trusted/Sandbox còn lại và trạng thái Kill Switch.
+
+Chạy thử trực tiếp:
+
+```bash
+npm --prefix agent run mcp
+```
+
+Cấu hình vào `.mcp.json` (Claude Code) hoặc cấu hình MCP của Antigravity (thay `<PATH_TO_AGENTLEASH>` bằng đường dẫn tuyệt đối tới thư mục `agentleash`):
+
+```json
+{
+  "mcpServers": {
+    "agentleash": {
+      "command": "node",
+      "args": ["--env-file=../.env", "src/mcp.ts"],
+      "cwd": "<PATH_TO_AGENTLEASH>/agent"
+    }
+  }
+}
+```
 
 ---
 

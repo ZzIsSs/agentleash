@@ -1,6 +1,7 @@
 # AgentLeash
 
-Quy tắc cho AI agent chạy trên máy thành viên khác nằm ở [AGENTS.md](AGENTS.md). Các phiên của Nguyên (người phụ trách kỹ thuật) không bị giới hạn bởi file đó.
+- **Phạm vi duy nhất (chốt 18/11/2026):** `agentleash/` (`https://github.com/ZzIsSs/agentleash.git`) là **repo duy nhất** của Nguyên, và **Avalanche Team1 Vietnam UniHack 2026** (hạn nộp `21/11/2026`) là **cuộc thi duy nhất** Nguyên tham gia. Không tham chiếu hay coi bất kỳ repo cũ hoặc cuộc thi nào khác (`archive/CareerHunter/`, `ZzIsSs/UniHack_avalanche`, TDTU InnoStartup, v.v.) là đang hoạt động.
+- Quy tắc cho AI agent chạy trên máy thành viên khác nằm ở [AGENTS.md](AGENTS.md). Các phiên của Nguyên (người phụ trách kỹ thuật) không bị giới hạn bởi file đó.
 
 ## Tổng quan & Định hướng phát triển (UniHack 2026 → Sản phẩm Non-tech)
 

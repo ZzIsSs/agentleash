@@ -1,12 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AGENT_TOOLS,
+  createInteractionWithTimeout,
   DEFAULT_GEMINI_MODEL,
   runLlmAgentLoop,
   type InteractionsClientLike,
 } from "../src/llm.ts";
 
 describe("LLM Tool Calling Loop (Gemini 3.8 Flash)", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   it("1. Thực hiện vòng lặp tool calling hoàn chỉnh và truyền lại tools/system_instruction mỗi lượt", async () => {
     const callsReceived: Array<Record<string, unknown>> = [];
 
@@ -213,5 +217,72 @@ describe("LLM Tool Calling Loop (Gemini 3.8 Flash)", () => {
         executeTool: async () => ({ ok: true, data: {} }),
       }),
     ).rejects.toThrow("per day");
+  });
+
+  it("5. NEW-03: Timeout reject đúng sau requestTimeoutMs, giữ nguyên mã 429 + gợi ý --mock-llm và tắt retry SDK", async () => {
+    vi.useFakeTimers();
+    const receivedOptions: Array<Record<string, unknown> | undefined> = [];
+
+    const hangingClient: InteractionsClientLike = {
+      interactions: {
+        create(_params, options) {
+          receivedOptions.push(options);
+          return new Promise(() => {});
+        },
+      },
+    };
+
+    const loopPromise = runLlmAgentLoop({
+      prompt: "Timeout test",
+      client: hangingClient,
+      requestTimeoutMs: 50,
+      executeTool: async () => ({ ok: true, data: {} }),
+    });
+    const assertion = expect(loopPromise).rejects.toThrow(/quá thời gian chờ \(50ms\)/);
+
+    await vi.advanceTimersByTimeAsync(49);
+    expect(receivedOptions[0]).toEqual({ retries: { strategy: "none" } });
+    await vi.advanceTimersByTimeAsync(1);
+    await assertion;
+
+    // Giữ mã lỗi 429 và gợi ý --mock-llm khi reject 429
+    const rate429Client: InteractionsClientLike = {
+      interactions: {
+        async create(_params, options) {
+          receivedOptions.push(options);
+          const err = new Error("429 Resource exhausted");
+          (err as { status?: number }).status = 429;
+          throw err;
+        },
+      },
+    };
+
+    await expect(
+      runLlmAgentLoop({
+        prompt: "429 test",
+        client: rate429Client,
+        maxRetries: 0,
+        executeTool: async () => ({ ok: true, data: {} }),
+      }),
+    ).rejects.toThrow(/429.*--mock-llm/s);
+
+    // requestTimeoutMs <= 0 thì không áp timeout
+    const delayedZero = createInteractionWithTimeout(
+      new Promise<string>((resolve) => {
+        setTimeout(() => resolve("done-zero"), 60_000);
+      }),
+      0,
+    );
+    await vi.advanceTimersByTimeAsync(60_000);
+    await expect(delayedZero).resolves.toBe("done-zero");
+
+    const delayedNeg = createInteractionWithTimeout(
+      new Promise<string>((resolve) => {
+        setTimeout(() => resolve("done-neg"), 60_000);
+      }),
+      -1,
+    );
+    await vi.advanceTimersByTimeAsync(60_000);
+    await expect(delayedNeg).resolves.toBe("done-neg");
   });
 });

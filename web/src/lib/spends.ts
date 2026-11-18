@@ -31,15 +31,17 @@ export type RawLog = {
 
 export const AUTHORIZED_TOPIC = toEventSelector(policyEventsAbi[0]);
 export const RELEASED_TOPIC = toEventSelector(policyEventsAbi[1]);
+export const WHITELIST_CHANGED_TOPIC = toEventSelector(policyEventsAbi[2]);
 
 type Decoded =
   | { kind: "authorized"; spend: Spend }
   | { kind: "released"; nonce: Hex }
+  | { kind: "whitelist"; target: Address; allowed: boolean }
   | null;
 
 export function decodePolicyLog(log: RawLog): Decoded {
   const topic0 = log.topics[0]?.toLowerCase();
-  if (topic0 !== AUTHORIZED_TOPIC && topic0 !== RELEASED_TOPIC) return null;
+  if (topic0 !== AUTHORIZED_TOPIC && topic0 !== RELEASED_TOPIC && topic0 !== WHITELIST_CHANGED_TOPIC) return null;
   if (!log.transactionHash || log.blockNumber === null || log.logIndex === null) return null;
 
   try {
@@ -50,6 +52,13 @@ export function decodePolicyLog(log: RawLog): Decoded {
     });
     if (decoded.eventName === "Released") {
       return { kind: "released", nonce: decoded.args.nonce };
+    }
+    if (decoded.eventName === "WhitelistChanged") {
+      return {
+        kind: "whitelist",
+        target: getAddress(decoded.args.target),
+        allowed: decoded.args.allowed,
+      };
     }
     const a = decoded.args;
     return {
@@ -122,6 +131,7 @@ export function mergeSpends(previous: readonly Spend[], logs: readonly RawLog[])
       released.add(d.nonce.toLowerCase());
       continue;
     }
+    if (d.kind !== "authorized") continue;
     const old = byKey.get(d.spend.key);
     byKey.set(d.spend.key, { ...d.spend, timestamp: d.spend.timestamp ?? old?.timestamp ?? null });
   }
@@ -131,6 +141,45 @@ export function mergeSpends(previous: readonly Spend[], logs: readonly RawLog[])
     .sort((a, b) =>
       a.blockNumber === b.blockNumber ? b.logIndex - a.logIndex : a.blockNumber > b.blockNumber ? -1 : 1,
     );
+}
+
+/** Trích các địa chỉ từng có sự kiện WhitelistChanged để bảng [3] luôn hiển thị và gỡ được cả địa chỉ ngoài KNOWN_SELLERS. */
+export function extractWhitelistTargets(previous: readonly Address[], logs: readonly RawLog[]): Address[] {
+  const unique = new Map<string, Address>();
+  for (const addr of previous) {
+    const norm = getAddress(addr);
+    unique.set(norm.toLowerCase(), norm);
+  }
+  for (const log of logs) {
+    const d = decodePolicyLog(log);
+    if (d?.kind === "whitelist") {
+      unique.set(d.target.toLowerCase(), d.target);
+    }
+  }
+  return [...unique.values()];
+}
+
+/**
+ * Chọn block bắt đầu quét RPC ở lần tải đầu tiên:
+ * nối tiếp ngay sau block cuối mà Routescan trả về (tối đa lùi 500 block theo giới hạn `blockRanges`).
+ */
+export function initialRpcScanFrom(
+  latest: bigint,
+  routescanLogs: readonly { blockNumber: bigint | null }[],
+  size = 100n,
+  maxChunks = 5,
+): bigint {
+  const span = size * BigInt(maxChunks);
+  const floor = latest >= span ? latest - span + 1n : 0n;
+  let maxRoutescanBlock: bigint | null = null;
+  for (const log of routescanLogs) {
+    if (log.blockNumber !== null && (maxRoutescanBlock === null || log.blockNumber > maxRoutescanBlock)) {
+      maxRoutescanBlock = log.blockNumber;
+    }
+  }
+  if (maxRoutescanBlock === null) return floor;
+  const afterRoutescan = maxRoutescanBlock + 1n;
+  return afterRoutescan > floor ? afterRoutescan : floor;
 }
 
 /**

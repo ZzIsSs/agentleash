@@ -5,9 +5,12 @@ import {
   AUTHORIZED_TOPIC,
   RATES_SELLER_ADDRESS,
   WEATHER_SELLER_ADDRESS,
+  WHITELIST_CHANGED_TOPIC,
   blockRanges,
   decodePolicyLog,
+  extractWhitelistTargets,
   fromRoutescan,
+  initialRpcScanFrom,
   mergeSpends,
   sellerName,
   summarizeSpendFlows,
@@ -257,5 +260,32 @@ describe("summarizeSpendFlows", () => {
       trustedAmount: 0n,
       sandboxAmount: 500n,
     });
+  });
+});
+
+describe("extractWhitelistTargets & initialRpcScanFrom", () => {
+  it("trích đúng địa chỉ từ sự kiện WhitelistChanged và khử trùng", () => {
+    const wlLog: RawLog = {
+      topics: encodeEventTopics({
+        abi: policyEventsAbi,
+        eventName: "WhitelistChanged",
+        args: { target: STRANGER },
+      }) as Hex[],
+      data: encodeAbiParameters([{ type: "bool" }], [true]),
+      transactionHash: ("0x" + "aa".repeat(32)) as Hex,
+      blockNumber: 100n,
+      logIndex: 1,
+    };
+
+    expect(wlLog.topics[0]?.toLowerCase()).toBe(WHITELIST_CHANGED_TOPIC);
+    const targets = extractWhitelistTargets([], [wlLog, wlLog]);
+    expect(targets).toEqual(["0x1111111111111111111111111111111111111111"]);
+  });
+
+  it("tính điểm bắt đầu quét RPC nối tiếp sau block cuối của Routescan (tối đa lùi 500 block)", () => {
+    expect(initialRpcScanFrom(1000n, [{ blockNumber: 920n }, { blockNumber: 950n }])).toBe(951n);
+    expect(initialRpcScanFrom(1000n, [{ blockNumber: 100n }])).toBe(501n);
+    expect(initialRpcScanFrom(1000n, [])).toBe(501n);
+    expect(initialRpcScanFrom(200n, [])).toBe(0n);
   });
 });

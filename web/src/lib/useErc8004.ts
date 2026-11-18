@@ -9,7 +9,9 @@ import {
   decodeAgentRegistrationUri,
   parseRegisteredLogs,
   type DecodedAgentUri,
+  type RawLogItem,
 } from "./erc8004";
+import { blockRanges, initialRpcScanFrom } from "./spends";
 
 export type AgentIdentityRecord = {
   agentId: bigint;
@@ -50,11 +52,12 @@ export function useErc8004Identities(enabled: boolean, owner: Address | null) {
         return;
       }
 
+      const head = await publicClient.getBlockNumber();
       const paddedOwner = `0x000000000000000000000000${owner.slice(2).toLowerCase()}`;
-      const url = `${ROUTESCAN_API}?module=logs&action=getLogs&address=${ERC8004_IDENTITY_REGISTRY_ADDRESS}&topic0=${REGISTERED_TOPIC}&topic0_2_opr=and&topic2=${paddedOwner}&fromBlock=58000000&toBlock=latest`;
+      const url = `${ROUTESCAN_API}?module=logs&action=getLogs&address=${ERC8004_IDENTITY_REGISTRY_ADDRESS}&topic0=${REGISTERED_TOPIC}&topic0_2_opr=and&topic2=${paddedOwner}&fromBlock=58000000&toBlock=${head.toString()}`;
 
       let logs: RoutescanLog[] = [];
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: "no-store" });
       if (res.ok) {
         const body = (await res.json()) as { status?: string; result?: RoutescanLog[] | string };
         if (Array.isArray(body.result)) {
@@ -62,23 +65,40 @@ export function useErc8004Identities(enabled: boolean, owner: Address | null) {
         }
       }
 
-      // Fallback RPC vài chục block gần nhất nếu Routescan chưa kịp index NFT vừa đăng ký.
-      const head = await publicClient.getBlockNumber();
-      const recentLogs = await publicClient.getLogs({
-        address: ERC8004_IDENTITY_REGISTRY_ADDRESS,
-        event: {
-          type: "event",
-          name: "Registered",
-          inputs: [
-            { name: "agentId", type: "uint256", indexed: true },
-            { name: "agentURI", type: "string", indexed: false },
-            { name: "owner", type: "address", indexed: true },
-          ],
-        },
-        args: { owner },
-        fromBlock: head > 90n ? head - 90n : 0n,
-        toBlock: head,
+      // Quét tiếp phần block sau Routescan (tối đa 500 block qua `blockRanges`) nếu Routescan chưa kịp index.
+      const routescanBlocks = logs.map((l) => {
+        try {
+          return { blockNumber: l.blockNumber ? BigInt(l.blockNumber) : null };
+        } catch {
+          return { blockNumber: null };
+        }
       });
+      const rpcFrom = initialRpcScanFrom(head, routescanBlocks);
+      const recentLogs: RawLogItem[] = [];
+      for (const [fromBlock, toBlock] of blockRanges(rpcFrom, head)) {
+        const chunk = await publicClient.getLogs({
+          address: ERC8004_IDENTITY_REGISTRY_ADDRESS,
+          event: {
+            type: "event",
+            name: "Registered",
+            inputs: [
+              { name: "agentId", type: "uint256", indexed: true },
+              { name: "agentURI", type: "string", indexed: false },
+              { name: "owner", type: "address", indexed: true },
+            ],
+          },
+          args: { owner },
+          fromBlock,
+          toBlock,
+        });
+        recentLogs.push(
+          ...chunk.map((l) => ({
+            topics: l.topics,
+            transactionHash: l.transactionHash,
+            blockNumber: l.blockNumber,
+          })),
+        );
+      }
 
       const merged = parseRegisteredLogs(
         [
@@ -87,11 +107,7 @@ export function useErc8004Identities(enabled: boolean, owner: Address | null) {
             transactionHash: l.transactionHash,
             blockNumber: l.blockNumber,
           })),
-          ...recentLogs.map((l) => ({
-            topics: l.topics,
-            transactionHash: l.transactionHash,
-            blockNumber: l.blockNumber,
-          })),
+          ...recentLogs,
         ],
         owner,
       );
