@@ -15,6 +15,11 @@ const ROOT_ENV = path.join(REPO_ROOT, ".env");
 
 let running = false;
 
+/** Bản Vercel không chạy agent: ai mở link cũng bấm được nút, và khóa agent không được đưa lên cloud (Luật 3 & 4). */
+const IS_HOSTED = process.env.VERCEL === "1";
+const HOSTED_REASON =
+  "Bản online chỉ xem: nút chạy agent chỉ hoạt động khi mở Dashboard trên máy local (localhost:3000). Muốn chạy agent, dùng lệnh CLI bên dưới trên máy có agent/ và .env.";
+
 async function fileExists(target: string): Promise<boolean> {
   try {
     await access(target);
@@ -34,6 +39,15 @@ async function probeService(url: string): Promise<boolean> {
 }
 
 export async function GET() {
+  if (IS_HOSTED) {
+    return Response.json({
+      available: false,
+      running: false,
+      services: { weather: false, facilitator: false, rates: false },
+      reason: HOSTED_REASON,
+    });
+  }
+
   const [hasAgent, hasEnv, weather, facilitator, rates] = await Promise.all([
     fileExists(AGENT_ENTRY),
     fileExists(ROOT_ENV),
@@ -61,6 +75,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (IS_HOSTED) {
+    return Response.json({ error: HOSTED_REASON }, { status: 503 });
+  }
+
   const reqCheck = validateDemoRunRequest(req.headers);
   if (!reqCheck.ok) {
     return Response.json({ error: reqCheck.error }, { status: reqCheck.status });

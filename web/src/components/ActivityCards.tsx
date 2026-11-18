@@ -433,8 +433,8 @@ export function RejectionsCard({
 
       {available === false ? (
         <p className="text-sm text-muted">
-          Không thấy nhật ký agent (<code>agent/logs/audit.json</code>). Mục này chỉ có khi agent chạy cùng máy với
-          dashboard.
+          Không thấy nhật ký agent (<code>agent/logs/audit.json</code>). Mục này có khi agent chạy cùng máy với
+          dashboard, hoặc khi bật đồng bộ Upstash cho bản online (xem README).
         </p>
       ) : available === null ? (
         <p className="text-muted">Đang đọc nhật ký agent…</p>

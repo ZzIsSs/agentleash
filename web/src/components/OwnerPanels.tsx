@@ -32,7 +32,7 @@ import {
 } from "@/lib/policyCreate";
 import { KNOWN_SELLERS } from "@/lib/spends";
 import type { AgentIdentityRecord } from "@/lib/useErc8004";
-import { getExtraWhitelistedAddresses } from "@/lib/whitelistPromote";
+import { getExtraWhitelistedAddresses, parseWhitelistInput } from "@/lib/whitelistPromote";
 
 const FAUCET_URL = "https://core.app/tools/testnet-faucet/?subnet=c&token=c";
 
@@ -190,6 +190,79 @@ export function TxBanner({ state, onClose }: { state: TxState; onClose: () => vo
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Ô nhập địa chỉ `payTo` để "Chuyển thành API quen" không cần dòng trong Dòng tiền / Bị từ chối
+ * (ví dụ địa chỉ lấy từ gợi ý MCP khi mở bản Vercel). Ký bằng đúng luồng `setWhitelist` của bảng [3].
+ */
+function AddWhitelistForm({
+  policy,
+  whitelist,
+  isOwner,
+  busy,
+  onAdd,
+}: {
+  policy: Address;
+  whitelist: Record<string, boolean> | null;
+  isOwner: boolean;
+  busy: boolean;
+  onAdd: (payTo: Address) => void;
+}) {
+  const inputId = useId();
+  const hintId = useId();
+  const [value, setValue] = useState("");
+  const check = parseWhitelistInput(value, whitelist, policy);
+  const disabled = busy || !isOwner || !check.ok;
+
+  return (
+    <form
+      className="flex flex-col gap-1.5 rounded-xl bg-background px-3 py-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (disabled || !check.ok) return;
+        onAdd(check.address);
+        setValue("");
+      }}
+    >
+      <label htmlFor={inputId} className="text-xs text-muted">
+        Thêm API quen bằng địa chỉ nhận tiền (payTo)
+      </label>
+      <div className="flex min-w-0 gap-2">
+        <input
+          id={inputId}
+          type="text"
+          autoCorrect="off"
+          autoCapitalize="none"
+          autoComplete="off"
+          spellCheck={false}
+          disabled={!isOwner}
+          value={value}
+          placeholder="0x… (ví dụ địa chỉ trong gợi ý MCP)"
+          aria-invalid={check.error ? "true" : "false"}
+          aria-describedby={hintId}
+          onChange={(e) => setValue(e.target.value)}
+          className={`min-h-11 min-w-0 flex-1 rounded-lg border bg-card px-3 py-1.5 font-mono text-xs text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-flow disabled:cursor-not-allowed disabled:opacity-50 ${
+            check.error ? "border-danger bg-danger/5" : "border-border"
+          }`}
+        />
+        <button
+          type="submit"
+          disabled={disabled}
+          className="min-h-11 shrink-0 rounded-lg border border-border px-3 text-xs text-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Thêm
+        </button>
+      </div>
+      <p id={hintId} className={`text-xs ${check.error ? "text-danger" : "text-muted"}`}>
+        {check.error
+          ? `Lỗi: ${check.error}`
+          : isOwner
+            ? "Ký setWhitelist bằng ví chủ Privy; địa chỉ sẽ hiện ở danh sách trên sau khi giao dịch xong."
+            : "Chỉ ví chủ policy mới thêm được."}
+      </p>
+    </form>
   );
 }
 
@@ -423,6 +496,13 @@ export function SetupCard({
               </div>
             </div>
           ))}
+          <AddWhitelistForm
+            policy={policy}
+            whitelist={whitelist}
+            isOwner={isOwner}
+            busy={busy}
+            onAdd={(addr) => onToggle(addr, true)}
+          />
         </div>
         <CapsForm policy={policy} raw={raw} isOwner={isOwner} busy={busy} onSetCaps={onSetCaps} />
         <Erc8004Section

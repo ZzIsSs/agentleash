@@ -134,6 +134,20 @@ Cấu hình vào `.mcp.json` (Claude Code) hoặc cấu hình MCP của Antigrav
 
 ---
 
+## Bản online trên Vercel
+
+Dashboard Production: **`https://agentleash-two.vercel.app`** (tự deploy mỗi khi merge vào `main`). Khách chưa đăng nhập vẫn xem được dữ liệu on-chain trên Fuji. Chủ ví đăng nhập Privy để ký Khóa/Mở khóa, `setCaps` và whitelist, kể cả ô **Thêm API quen bằng địa chỉ** để dán địa chỉ `payTo` lấy từ gợi ý MCP.
+
+**Đồng bộ mục Bị từ chối (tùy chọn):** agent chạy trên máy vẫn ghi `agent/logs/audit.json`. Khi có biến Upstash, agent đẩy thêm các lượt bị chặn lên Upstash Redis để bản Vercel hiển thị. Chỉ gồm tên API, `payTo`, số tiền, mã lỗi và lý do; không có nội dung truy vấn, không có khóa.
+
+1. Trên Vercel, vào project `agentleash` → **Storage** → thêm **Upstash for Redis** (Marketplace) và kết nối với project, rồi **Redeploy**. Vercel tự đặt `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`; Dashboard dùng token chỉ-đọc.
+2. Trong `.env` của máy chạy agent, điền `UPSTASH_REDIS_REST_URL` và `UPSTASH_REDIS_REST_TOKEN` (REST URL và token quyền ghi của cùng database). Code nhận cả hai kiểu tên biến `UPSTASH_REDIS_REST_*` và `KV_REST_API_*`.
+3. Chạy agent hoặc MCP như bình thường; lượt bị chặn hiện trên Vercel sau vài giây. Không đặt biến thì mọi thứ chạy như bản local.
+
+Nút **Chạy Agent Đà Lạt** chỉ chạy trên `localhost:3000`, vì bản online không giữ khóa agent và ai mở link cũng bấm được (Luật 3 & 4). Khi quay demo bằng bản Vercel, chạy agent bằng lệnh CLI trên máy.
+
+---
+
 ## Kiểm thử tự động
 
 ```bash
