@@ -6,6 +6,7 @@ import { decodePaymentRequiredHeader } from "@x402/core/http";
 import { decodePaymentResponseHeader, wrapFetchWithPayment, x402Client } from "@x402/fetch";
 import { formatUnits, isAddress, parseUnits, type Address, type Hex } from "viem";
 import { z } from "zod";
+import { loadRepoEnv, REPO_ENV_PATH } from "./envFile.ts";
 import { appendAuditLog, DEFAULT_AUDIT_LOG_PATH } from "./log.ts";
 import {
   createAgentPolicySigner,
@@ -1370,6 +1371,9 @@ async function main() {
   console.log = (...args: unknown[]) => console.error(...args);
   console.info = (...args: unknown[]) => console.error(...args);
 
+  // Tự nạp .env của repo để cấu hình MCP của mọi agent chỉ cần `node <đường dẫn>/mcp.ts`.
+  loadRepoEnv();
+
   const policyAddress = (process.env.AGENT_POLICY_ADDRESS || "") as Address;
   const agentPrivateKey = (process.env.AGENT_PRIVATE_KEY || "") as Hex;
   const usdcAddress = (process.env.USDC_ADDRESS || DEFAULT_FUJI_USDC) as Address;
@@ -1378,10 +1382,10 @@ async function main() {
   const dashboardUrl = normalizeDashboardUrl(process.env.DASHBOARD_URL);
 
   if (!isAddress(policyAddress)) {
-    throw new Error("Thiếu AGENT_POLICY_ADDRESS hợp lệ trong .env.");
+    throw new Error(`Thiếu AGENT_POLICY_ADDRESS hợp lệ trong ${REPO_ENV_PATH}.`);
   }
   if (!/^0x[0-9a-fA-F]{64}$/.test(agentPrivateKey)) {
-    throw new Error("Thiếu AGENT_PRIVATE_KEY hợp lệ trong .env.");
+    throw new Error(`Thiếu AGENT_PRIVATE_KEY hợp lệ trong ${REPO_ENV_PATH}.`);
   }
 
   const gateway = createMcpGateway({
