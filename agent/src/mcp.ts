@@ -30,6 +30,7 @@ import { unwrapKnownError } from "./run.ts";
 
 const NETWORK_ID = "eip155:43113";
 const SNOWSCAN_EXPLORER = "https://testnet.snowscan.xyz";
+export const DEFAULT_DASHBOARD_URL = "http://localhost:3000";
 
 export interface McpPaymentContext {
   api: string;
@@ -107,6 +108,7 @@ export interface McpGatewayConfig {
   maxPriceUsdc?: string;
   auditLogPath?: string | null;
   catalog?: Record<string, ApiCatalogEntry>;
+  dashboardUrl?: string;
 }
 
 export type PayingFetchFactory = (options: {
@@ -186,37 +188,91 @@ function recordAudit(
   appendAuditLog(input, auditLogPath);
 }
 
+function normalizeDashboardUrl(raw?: string): string {
+  const trimmed = raw?.trim();
+  if (!trimmed) return DEFAULT_DASHBOARD_URL;
+  return trimmed.replace(/\/+$/, "");
+}
+
+function buildErrorHint(options: {
+  code: string;
+  dashboardUrl: string;
+  payTo?: string;
+  hintForPromote?: boolean;
+  includeContractFallback?: boolean;
+}): string | undefined {
+  const { code, dashboardUrl, payTo, hintForPromote, includeContractFallback } = options;
+  const targetNote = payTo ? ` cho ${payTo}` : "";
+
+  switch (code) {
+    case "PausedError":
+      return `Agent đang bị khóa bởi Kill Switch. Mở Dashboard (${dashboardUrl}) và bấm "Mở khóa" (unpause) để tiếp tục chi tiêu.`;
+
+    case "ExceedsSandboxPerTxCap":
+      return `Địa chỉ ${payTo || "lạ"} đã được ghi nhận vào mục Bị từ chối. Mở Dashboard (${dashboardUrl}) để bấm "Chuyển thành API quen" (\`setWhitelist\`) nếu tin cậy, hoặc tăng trần Sandbox qua \`setCaps\`, rồi gọi lại qua \`call_trusted_api\`.`;
+
+    case "ExceedsSandboxDailyCap":
+      return `Đã chạm trần Sandbox trong chu kỳ. Mở Dashboard (${dashboardUrl}) để bấm "Chuyển thành API quen" (\`setWhitelist\`)${targetNote} nếu tin cậy, chỉnh hạn mức Sandbox qua \`setCaps\`, hoặc chờ sang chu kỳ mới.`;
+
+    case "ExceedsDailyCap":
+      return `Đã chạm hạn mức chi tiêu chu kỳ (dailyCap). Mở Dashboard (${dashboardUrl}) để tăng hạn mức qua \`setCaps\` hoặc chờ sang chu kỳ mới.`;
+
+    case "ExceedsPerTxCap":
+      return `Khoản chi vượt trần mỗi giao dịch Trusted (perTxCap). Mở Dashboard (${dashboardUrl}) để điều chỉnh hạn mức qua \`setCaps\`.`;
+
+    case "NOT_WHITELISTED":
+      return `Hãy thử bằng \`test_unknown_api\` hoặc mở Dashboard (${dashboardUrl}) để bấm "Chuyển thành API quen" (\`setWhitelist\`)${targetNote} rồi gọi lại.`;
+
+    case "UNREGISTERED_API":
+      return `Dùng \`weather\`/\`rates\`, hoặc mở Dashboard (${dashboardUrl}) bấm "Chuyển thành API quen" rồi truyền \`url\` của API đó.`;
+
+    case "LOOP_DETECTED":
+      return `Mở Dashboard (${dashboardUrl}) để xử lý nguyên nhân bị chặn (bấm "Chuyển thành API quen", chỉnh \`setCaps\` hoặc mở khóa Kill Switch), rồi thử lại sau khi hết thời gian chờ.`;
+
+    case "Unauthorized":
+      return `Ví agent không khớp địa chỉ agent của policy. Mở Dashboard (${dashboardUrl}) để kiểm tra cấu hình policy.`;
+
+    default:
+      if (hintForPromote && payTo) {
+        return `Địa chỉ ${payTo} vừa được ghi nhận vào mục Bị từ chối trên Dashboard (${dashboardUrl}). Nếu tin cậy API này, chủ ví có thể mở Dashboard bấm "Chuyển thành API quen" rồi gọi lại qua \`call_trusted_api\`.`;
+      }
+      if (includeContractFallback) {
+        return `Mở Dashboard (${dashboardUrl}) để kiểm tra trạng thái AgentPolicy, hạn mức (\`setCaps\`), whitelist hoặc Kill Switch.`;
+      }
+      return undefined;
+  }
+}
+
 function formatErrorOutcome(
   err: unknown,
   ctx: McpPaymentContext,
   auditLogPath: string | null,
+  dashboardUrl: string,
   hintForPromote?: boolean,
 ): McpToolOutcome {
-  if (ctx.lastError instanceof McpGatewayRuleError) {
+  const gatewayRuleError =
+    ctx.lastError instanceof McpGatewayRuleError
+      ? ctx.lastError
+      : err instanceof McpGatewayRuleError
+        ? err
+        : undefined;
+  if (gatewayRuleError) {
     return {
       ok: false,
       blockedBy: "rule-engine",
-      code: ctx.lastError.code,
-      reason: ctx.lastError.reason,
+      code: gatewayRuleError.code,
+      reason: gatewayRuleError.reason,
       api: ctx.api,
       query: ctx.query,
       endpoint: ctx.endpointUrl,
       payTo: ctx.payTo,
       amountUsdc: ctx.amountUnits ? formatUnits(BigInt(ctx.amountUnits), 6) : undefined,
-    };
-  }
-
-  if (err instanceof McpGatewayRuleError) {
-    return {
-      ok: false,
-      blockedBy: "rule-engine",
-      code: err.code,
-      reason: err.reason,
-      api: ctx.api,
-      query: ctx.query,
-      endpoint: ctx.endpointUrl,
-      payTo: ctx.payTo,
-      amountUsdc: ctx.amountUnits ? formatUnits(BigInt(ctx.amountUnits), 6) : undefined,
+      hint: buildErrorHint({
+        code: gatewayRuleError.code,
+        dashboardUrl,
+        payTo: ctx.payTo,
+        hintForPromote,
+      }),
     };
   }
 
@@ -233,6 +289,12 @@ function formatErrorOutcome(
       endpoint: ctx.endpointUrl,
       payTo: ctx.payTo,
       amountUsdc: ctx.amountUnits ? formatUnits(BigInt(ctx.amountUnits), 6) : undefined,
+      hint: buildErrorHint({
+        code: known.code,
+        dashboardUrl,
+        payTo: ctx.payTo,
+        hintForPromote,
+      }),
     };
   }
 
@@ -259,10 +321,13 @@ function formatErrorOutcome(
       endpoint: ctx.endpointUrl,
       payTo: ctx.payTo,
       amountUsdc: ctx.amountUnits ? formatUnits(BigInt(ctx.amountUnits), 6) : undefined,
-      hint:
-        hintForPromote && ctx.payTo
-          ? `Địa chỉ ${ctx.payTo} vừa được ghi nhận vào mục Bị từ chối trên Dashboard. Nếu tin cậy API này, chủ ví có thể bấm "Chuyển thành API quen" (1-click) trên Dashboard rồi gọi lại qua call_trusted_api.`
-          : undefined,
+      hint: buildErrorHint({
+        code: known.errorName,
+        dashboardUrl,
+        payTo: ctx.payTo,
+        hintForPromote,
+        includeContractFallback: true,
+      }),
     };
   }
 
@@ -292,10 +357,13 @@ function formatErrorOutcome(
       endpoint: ctx.endpointUrl,
       payTo: ctx.payTo,
       amountUsdc: ctx.amountUnits ? formatUnits(BigInt(ctx.amountUnits), 6) : undefined,
-      hint:
-        hintForPromote && ctx.payTo
-          ? `Nếu tin cậy ${ctx.payTo}, hãy bấm "Chuyển thành API quen" trên Dashboard rồi gọi lại qua call_trusted_api.`
-          : undefined,
+      hint: buildErrorHint({
+        code: detail.errorName,
+        dashboardUrl,
+        payTo: ctx.payTo,
+        hintForPromote,
+        includeContractFallback: true,
+      }),
     };
   }
 
@@ -321,12 +389,36 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
   const rpcUrl = config.rpcUrl ?? DEFAULT_FUJI_RPC;
   const maxPriceUsdc = config.maxPriceUsdc ?? "0.01";
   const maxPriceUnits = parseUnits(maxPriceUsdc, 6);
+  const dashboardUrl = normalizeDashboardUrl(config.dashboardUrl);
   const auditLogPath =
     config.auditLogPath === undefined ? DEFAULT_AUDIT_LOG_PATH : config.auditLogPath;
   const catalog = config.catalog ?? getDefaultApiCatalog();
   const ruleEngine =
     deps.ruleEngine ?? new RuleEngine({ catalog, auditLogPath });
   const fetchFn = deps.fetchFn ?? fetch;
+
+  function toRuleViolationOutcome(
+    err: RuleViolationError,
+    params: { api: string; query: string; endpoint: string; payTo?: string; hintForPromote?: boolean },
+  ): McpToolOutcome {
+    const hint = buildErrorHint({
+      code: err.code,
+      dashboardUrl,
+      payTo: params.payTo,
+      hintForPromote: params.hintForPromote,
+    });
+    return {
+      ok: false,
+      blockedBy: "rule-engine",
+      code: err.code,
+      reason: err.reason,
+      api: params.api,
+      query: params.query,
+      endpoint: params.endpoint,
+      payTo: params.payTo,
+      ...(hint ? { hint } : {}),
+    };
+  }
 
   const checkWhitelist =
     deps.checkWhitelist ??
@@ -554,7 +646,7 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
         data,
       };
     } catch (err) {
-      const outcome = formatErrorOutcome(err, ctx, auditLogPath, hintForPromote);
+      const outcome = formatErrorOutcome(err, ctx, auditLogPath, dashboardUrl, hintForPromote);
       if (!outcome.ok && (outcome.blockedBy === "rule-engine" || outcome.blockedBy === "contract")) {
         ruleEngine.recordFailure(recordKey, loopKey, outcome.code);
       } else {
@@ -665,16 +757,13 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
         ruleEngine.enforceRateAndDedup(apiName, query, endpointUrl, loopKey, rawPayTo);
       } catch (err) {
         if (err instanceof RuleViolationError) {
-          return {
-            ok: false,
-            blockedBy: "rule-engine",
-            code: err.code,
-            reason: err.reason,
+          return toRuleViolationOutcome(err, {
             api: apiName,
             query,
             endpoint: endpointUrl,
             payTo: rawPayTo,
-          };
+            hintForPromote: true,
+          });
         }
         throw err;
       }
@@ -753,7 +842,7 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
           },
         };
       } catch (err) {
-        const outcome = formatErrorOutcome(err, ctx, auditLogPath, true);
+        const outcome = formatErrorOutcome(err, ctx, auditLogPath, dashboardUrl, true);
         if (!outcome.ok && (outcome.blockedBy === "rule-engine" || outcome.blockedBy === "contract")) {
           ruleEngine.recordFailure(apiName, loopKey, outcome.code);
         } else {
@@ -767,16 +856,13 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
       ruleEngine.enforceRateAndDedup(apiName, query, endpointUrl, loopKey, rawPayTo);
     } catch (err) {
       if (err instanceof RuleViolationError) {
-        return {
-          ok: false,
-          blockedBy: "rule-engine",
-          code: err.code,
-          reason: err.reason,
+        return toRuleViolationOutcome(err, {
           api: apiName,
           query,
           endpoint: endpointUrl,
           payTo: rawPayTo,
-        };
+          hintForPromote: true,
+        });
       }
       throw err;
     }
@@ -937,7 +1023,7 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
           api: apiName,
           query: queryLabel,
           endpoint: apiName,
-          hint: "Dùng `weather`/`rates`, hoặc truyền `url` của API đã bấm \"Chuyển thành API quen\" trên Dashboard.",
+          hint: buildErrorHint({ code: "UNREGISTERED_API", dashboardUrl }),
         };
       }
 
@@ -995,16 +1081,12 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
       }
     } catch (err) {
       if (err instanceof RuleViolationError) {
-        return {
-          ok: false,
-          blockedBy: "rule-engine",
-          code: err.code,
-          reason: err.reason,
+        return toRuleViolationOutcome(err, {
           api: apiName,
           query: queryLabel,
           endpoint: endpointUrl,
           payTo: expectedPayTo,
-        };
+        });
       }
       throw err;
     }
@@ -1036,7 +1118,11 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
           query: queryLabel,
           endpoint: endpointUrl,
           payTo: expectedPayTo,
-          hint: `Hãy thử bằng \`test_unknown_api\` hoặc bấm "Chuyển thành API quen" cho ${expectedPayTo} trên Dashboard.`,
+          hint: buildErrorHint({
+            code: "NOT_WHITELISTED",
+            dashboardUrl,
+            payTo: expectedPayTo,
+          }),
         };
       }
     }
@@ -1158,6 +1244,7 @@ export function createMcpGateway(config: McpGatewayConfig, deps: McpGatewayDeps 
     return {
       ok: true,
       policyAddress: status.policyAddress,
+      dashboardUrl,
       paused: status.paused,
       usdcBalance: `${formatUnits(status.usdcBalanceUnits, 6)} USDC`,
       trustedCaps: {
@@ -1288,6 +1375,7 @@ async function main() {
   const usdcAddress = (process.env.USDC_ADDRESS || DEFAULT_FUJI_USDC) as Address;
   const rpcUrl = process.env.FUJI_RPC_URL || DEFAULT_FUJI_RPC;
   const maxPriceUsdc = process.env.MAX_PRICE_USDC || "0.01";
+  const dashboardUrl = normalizeDashboardUrl(process.env.DASHBOARD_URL);
 
   if (!isAddress(policyAddress)) {
     throw new Error("Thiếu AGENT_POLICY_ADDRESS hợp lệ trong .env.");
@@ -1302,6 +1390,7 @@ async function main() {
     usdcAddress,
     rpcUrl,
     maxPriceUsdc,
+    dashboardUrl,
     auditLogPath: DEFAULT_AUDIT_LOG_PATH,
   });
 
