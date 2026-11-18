@@ -73,6 +73,14 @@ export const policyEventsAbi = [
       { name: "digest", type: "bytes32", indexed: true },
     ],
   },
+  {
+    type: "event",
+    name: "WhitelistChanged",
+    inputs: [
+      { name: "target", type: "address", indexed: true },
+      { name: "allowed", type: "bool", indexed: false },
+    ],
+  },
 ] as const;
 
 /** Các lệnh chủ ký trên policy (onlyOwner). */

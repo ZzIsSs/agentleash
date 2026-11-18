@@ -1,4 +1,4 @@
-import { createPublicClient, getAddress, http, type Address } from "viem";
+import { createPublicClient, fallback, getAddress, http, type Address } from "viem";
 import { avalancheFuji } from "viem/chains";
 
 // Chỉ dùng Fuji C-Chain (43113). Địa chỉ dưới đây đều công khai; env chỉ để ghi đè khi đổi policy.
@@ -51,11 +51,30 @@ export const DEMO_POLICY_PARAMS = {
 // nên lịch sử event lấy ở đây, còn event mới thì quét các block gần nhất bằng RPC.
 export const ROUTESCAN_API = "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan/api";
 
+const DEFAULT_PUBLIC_FUJI_RPC = "https://api.avax-test.network/ext/bc/C/rpc";
+const PUBLICNODE_FUJI_RPC = "https://avalanche-fuji-c-chain-rpc.publicnode.com";
+const customFujiRpc = process.env.NEXT_PUBLIC_FUJI_RPC_URL?.trim();
+const isCustomDedicatedRpc =
+  !!customFujiRpc && customFujiRpc.replace(/\/+$/, "") !== DEFAULT_PUBLIC_FUJI_RPC;
+
+const rpcUrls = [
+  ...(isCustomDedicatedRpc ? [customFujiRpc] : []),
+  PUBLICNODE_FUJI_RPC,
+  DEFAULT_PUBLIC_FUJI_RPC,
+];
+
 export const publicClient = createPublicClient({
   chain: CHAIN,
-  transport: http(process.env.NEXT_PUBLIC_FUJI_RPC_URL || undefined),
+  transport: fallback(
+    rpcUrls.map((url) => http(url, { retryCount: 0 })),
+    { rank: false },
+  ),
+  batch: { multicall: true },
 });
 
 export const addressUrl = (address: string) => `${EXPLORER}/address/${address}`;
 export const txUrl = (hash: string) => `${EXPLORER}/tx/${hash}`;
-export const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
+export const nftUrl = (contractAddress: string, tokenId: bigint | string | number) =>
+  `${EXPLORER}/nft/${contractAddress}/${tokenId.toString()}`;
+export const shortAddress = (address: string) =>
+  address.length <= 10 ? address : `${address.slice(0, 6)}…${address.slice(-4)}`;

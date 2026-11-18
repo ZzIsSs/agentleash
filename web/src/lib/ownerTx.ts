@@ -48,6 +48,19 @@ const OWNER_ERRORS: Record<string, string> = {
   InvalidPeriod: "Chu kỳ phải lớn hơn 0 giây.",
 };
 
+/** Kiểm tra lỗi có phải do người dùng chủ động từ chối / đóng hộp thoại ký ví hay không. */
+export function isUserRejectedError(err: unknown): boolean {
+  const text = (err instanceof Error ? `${err.message} ${(err as { details?: string }).details ?? ""}` : String(err))
+    .toLowerCase();
+  const code = (err as { code?: unknown })?.code;
+  return (
+    code === 4001 ||
+    text.includes("user rejected") ||
+    text.includes("user denied") ||
+    text.includes("rejected the request")
+  );
+}
+
 /** Lỗi giao dịch → một câu tiếng Việt cho người dùng. */
 export function describeTxError(err: unknown): string {
   if (err instanceof BaseError) {
@@ -60,12 +73,10 @@ export function describeTxError(err: unknown): string {
     }
   }
 
+  if (isUserRejectedError(err)) return "Bạn đã hủy, chưa ký giao dịch.";
+
   const text = (err instanceof Error ? `${err.message} ${(err as { details?: string }).details ?? ""}` : String(err))
     .toLowerCase();
-  const code = (err as { code?: unknown })?.code;
-
-  if (code === 4001 || text.includes("user rejected") || text.includes("user denied") || text.includes("rejected the request"))
-    return "Bạn đã hủy, chưa ký giao dịch.";
   if (text.includes("insufficient funds") || text.includes("exceeds the balance"))
     return "Ví chủ không đủ AVAX test để trả gas. Lấy ở faucet Fuji rồi thử lại.";
   if (text.includes("timeout") || text.includes("timed out"))

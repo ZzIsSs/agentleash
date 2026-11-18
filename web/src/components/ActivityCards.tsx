@@ -5,6 +5,7 @@ import type { Address } from "viem";
 import { addressUrl, shortAddress, txUrl } from "@/lib/chain";
 import { buildDemoCliCommand } from "@/lib/demoRun";
 import { formatUsdc } from "@/lib/policy";
+import type { TxState } from "@/lib/ownerTx";
 import type { Rejection } from "@/lib/rejections";
 import {
   sellerName,
@@ -15,6 +16,11 @@ import {
   type SpendFlowSummary,
 } from "@/lib/spends";
 import type { DemoRunState, DemoRunnerAvailability } from "@/lib/useDemoRunner";
+import {
+  getPromoteButtonState,
+  isUnknownOrSandboxRejection,
+  isUnknownOrSandboxSpend,
+} from "@/lib/whitelistPromote";
 
 /** Hôm nay thì chỉ giờ, ngày khác thì kèm ngày/tháng. */
 function formatTime(ms: number | null): string {
@@ -205,8 +211,100 @@ function SpendFlowDiagram({ summary }: { summary: SpendFlowSummary }) {
   );
 }
 
+export type PromoteWhitelistConfig = {
+  whitelist: Record<string, boolean> | null;
+  authenticated: boolean;
+  isOwner: boolean;
+  ownerReady: boolean;
+  busy: boolean;
+  txState: TxState;
+  promotingTarget: Address | null;
+  onPromote: (payTo: Address) => void;
+};
+
+/** Nút 1-click "Chuyển thành API quen" + trạng thái tx ngay cạnh giao dịch API lạ / Sandbox. */
+function PromoteWhitelistAction({
+  payTo,
+  eligible,
+  promote,
+}: {
+  payTo: string | null | undefined;
+  eligible: boolean;
+  promote: PromoteWhitelistConfig;
+}) {
+  if (!eligible) return null;
+
+  const btnState = getPromoteButtonState({
+    payTo,
+    whitelist: promote.whitelist,
+    isOwner: promote.isOwner,
+    ownerReady: promote.ownerReady,
+    busy: promote.busy,
+  });
+
+  const targetLower = btnState.targetAddress?.toLowerCase();
+  const isActiveTarget =
+    !!targetLower && !!promote.promotingTarget && promote.promotingTarget.toLowerCase() === targetLower;
+  const activeTx = isActiveTarget ? promote.txState : null;
+
+  if (btnState.alreadyWhitelisted) {
+    const doneHash = activeTx?.phase === "done" ? activeTx.hash : null;
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-trusted/15 px-2 py-0.5 text-[11px] font-medium text-trusted">
+        Đã thành API quen ✓
+        {doneHash && (
+          <a href={txUrl(doneHash)} target="_blank" rel="noreferrer" className="text-flow hover:underline">
+            Snowscan ↗
+          </a>
+        )}
+      </span>
+    );
+  }
+
+  if (!btnState.visible || !btnState.targetAddress) return null;
+  const targetAddress = btnState.targetAddress;
+
+  const isSigning = activeTx?.phase === "signing";
+  const isPending = activeTx?.phase === "pending";
+  const pendingHash = activeTx?.phase === "pending" ? activeTx.hash : null;
+  const errorMsg = activeTx?.phase === "error" ? activeTx.message : null;
+  const disabledReason = !promote.authenticated
+    ? "Đăng nhập ví chủ Privy để chuyển thành API quen."
+    : btnState.disabledReason;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        disabled={btnState.disabled || isSigning || isPending}
+        title={disabledReason ?? `Đưa ${targetAddress} vào Whitelist (Tầng 1) qua 1 chữ ký Privy`}
+        onClick={() => promote.onPromote(targetAddress)}
+        className="rounded-md border border-flow/50 bg-flow/10 px-2.5 py-1 text-[11px] font-semibold text-flow transition hover:bg-flow/20 disabled:cursor-not-allowed disabled:opacity-45"
+      >
+        {isSigning ? "Đang ký…" : isPending ? "Đang chờ xác nhận…" : "Chuyển thành API quen"}
+      </button>
+      {pendingHash && (
+        <a href={txUrl(pendingHash)} target="_blank" rel="noreferrer" className="font-mono text-[11px] text-flow hover:underline">
+          {shortAddress(pendingHash)} · Snowscan ↗
+        </a>
+      )}
+      {errorMsg && <span className="text-[11px] text-danger">{errorMsg}</span>}
+    </div>
+  );
+}
+
 /** Ô [2]: các khoản chi policy đã duyệt (event Authorized), mới nhất trên cùng. */
-export function SpendsCard({ spends, loaded, error }: { spends: Spend[]; loaded: boolean; error: string | null }) {
+export function SpendsCard({
+  spends,
+  loaded,
+  error,
+  promote,
+}: {
+  spends: Spend[];
+  loaded: boolean;
+  error: string | null;
+  promote: PromoteWhitelistConfig;
+}) {
   const flowSummary = summarizeSpendFlows(spends);
 
   return (
@@ -233,37 +331,41 @@ export function SpendsCard({ spends, loaded, error }: { spends: Spend[]; loaded:
             <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
           {spends.map((s) => {
             const name = sellerName(s.payTo);
+            const eligibleForPromote = isUnknownOrSandboxSpend(s, promote.whitelist);
             return (
-              <li key={s.key} className="flex items-center justify-between gap-3 rounded-xl bg-background px-3 py-2">
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{name ?? "Địa chỉ lạ"}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        s.isSandbox ? "bg-sandbox/15 text-sandbox" : "bg-trusted/15 text-trusted"
-                      }`}
-                    >
-                      {s.isSandbox ? "Sandbox" : "Whitelist"}
-                    </span>
-                    {s.released && (
-                      <span className="rounded-full bg-muted/15 px-2 py-0.5 text-[11px] text-muted" title="Không được thanh toán, hạn mức đã hoàn lại">
-                        Đã hoàn hạn mức
+              <li key={s.key} className="flex flex-col gap-1.5 rounded-xl bg-background px-3 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{name ?? "Địa chỉ lạ"}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          s.isSandbox ? "bg-sandbox/15 text-sandbox" : "bg-trusted/15 text-trusted"
+                        }`}
+                      >
+                        {s.isSandbox ? "Sandbox" : "Whitelist"}
                       </span>
-                    )}
+                      {s.released && (
+                        <span className="rounded-full bg-muted/15 px-2 py-0.5 text-[11px] text-muted" title="Không được thanh toán, hạn mức đã hoàn lại">
+                          Đã hoàn hạn mức
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 text-xs text-muted">
+                      <span>{formatTime(s.timestamp === null ? null : s.timestamp * 1000)}</span>
+                      <a href={addressUrl(s.payTo)} target="_blank" rel="noreferrer" className="font-mono hover:text-flow">
+                        → {shortAddress(s.payTo)}
+                      </a>
+                      <a href={txUrl(s.txHash)} target="_blank" rel="noreferrer" className="text-flow hover:underline">
+                        Snowscan ↗
+                      </a>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-x-3 text-xs text-muted">
-                    <span>{formatTime(s.timestamp === null ? null : s.timestamp * 1000)}</span>
-                    <a href={addressUrl(s.payTo)} target="_blank" rel="noreferrer" className="font-mono hover:text-flow">
-                      → {shortAddress(s.payTo)}
-                    </a>
-                    <a href={txUrl(s.txHash)} target="_blank" rel="noreferrer" className="text-flow hover:underline">
-                      Snowscan ↗
-                    </a>
-                  </div>
+                  <span className={`shrink-0 font-mono font-semibold ${s.released ? "text-muted line-through" : "text-flow"}`}>
+                    −{formatUsdc(s.amount)} USDC
+                  </span>
                 </div>
-                <span className={`shrink-0 font-mono font-semibold ${s.released ? "text-muted line-through" : "text-flow"}`}>
-                  −{formatUsdc(s.amount)} USDC
-                </span>
+                <PromoteWhitelistAction payTo={s.payTo} eligible={eligibleForPromote} promote={promote} />
               </li>
             );
           })}
@@ -283,32 +385,50 @@ export function SpendsCard({ spends, loaded, error }: { spends: Spend[]; loaded:
 export function RejectionsCard({
   policy,
   items,
+  total,
   available,
+  canRunDemo,
   demoAvailability,
   demoRunState,
   onRunDemo,
+  onResetDemoRun,
+  promote,
 }: {
   policy: Address;
   items: Rejection[];
+  total?: number;
   available: boolean | null;
+  canRunDemo: boolean;
   demoAvailability: DemoRunnerAvailability | null;
   demoRunState: DemoRunState;
   onRunDemo: (bypassRules: boolean) => void;
+  onResetDemoRun?: () => void;
+  promote: PromoteWhitelistConfig;
 }) {
+  const totalCount = Math.max(total ?? items.length, items.length);
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-semibold">
           <span className="text-muted">[4]</span> Bị từ chối
         </h2>
-        {items.length > 0 && <span className="text-sm text-danger">{items.length} lần bị chặn</span>}
+        {totalCount > 0 && (
+          <span className="text-sm text-danger">
+            {totalCount} lần bị chặn
+            {totalCount > items.length && (
+              <span className="text-xs text-muted"> (hiện {items.length} gần nhất)</span>
+            )}
+          </span>
+        )}
       </div>
 
       <DemoBypassControl
         policy={policy}
+        canRunDemo={canRunDemo}
         availability={demoAvailability}
         runState={demoRunState}
         onRunDemo={onRunDemo}
+        onResetDemoRun={onResetDemoRun}
       />
 
       {available === false ? (
@@ -322,29 +442,38 @@ export function RejectionsCard({
         <p className="text-sm text-muted">Chưa có lần nào bị chặn.</p>
       ) : (
         <ul className="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1">
-          {items.map((r) => (
-            <li key={r.id} className="flex flex-col gap-1 rounded-xl border-l-4 border-danger bg-background px-3 py-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                    r.source === "contract" ? "bg-danger/15 text-danger" : "bg-sandbox/15 text-sandbox"
-                  }`}
-                  title={r.source === "contract" ? "Contract từ chối trên chuỗi" : "Rule engine chặn trước khi gọi contract"}
-                >
-                  {r.source === "contract" ? "Contract chặn" : "Rule engine chặn"}
-                </span>
-                <span className="font-medium">{r.title}</span>
-              </div>
-              {r.detail && r.detail !== r.title && <p className="text-xs text-muted">{r.detail}</p>}
-              <div className="flex flex-wrap gap-x-3 text-xs text-muted">
-                <span>{formatTime(r.time)}</span>
-                <span>API: {r.api}</span>
-                {r.amountUnits !== null && <span className="font-mono">{formatUsdc(r.amountUnits)} USDC</span>}
-                <span className="font-mono">{r.code}</span>
-                {r.bypassRules && <span className="text-danger">Agent bị chiếm: bỏ qua rule engine</span>}
-              </div>
-            </li>
-          ))}
+          {items.map((r) => {
+            const eligibleForPromote = isUnknownOrSandboxRejection(r);
+            return (
+              <li key={r.id} className="flex flex-col gap-1.5 rounded-xl border-l-4 border-danger bg-background px-3 py-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      r.source === "contract" ? "bg-danger/15 text-danger" : "bg-sandbox/15 text-sandbox"
+                    }`}
+                    title={r.source === "contract" ? "Contract từ chối trên chuỗi" : "Rule engine chặn trước khi gọi contract"}
+                  >
+                    {r.source === "contract" ? "Contract chặn" : "Rule engine chặn"}
+                  </span>
+                  <span className="font-medium">{r.title}</span>
+                </div>
+                {r.detail && r.detail !== r.title && <p className="text-xs text-muted">{r.detail}</p>}
+                <div className="flex flex-wrap gap-x-3 text-xs text-muted">
+                  <span>{formatTime(r.time)}</span>
+                  <span>API: {r.api}</span>
+                  {r.payTo && (
+                    <a href={addressUrl(r.payTo)} target="_blank" rel="noreferrer" className="font-mono hover:text-flow">
+                      → {shortAddress(r.payTo)}
+                    </a>
+                  )}
+                  {r.amountUnits !== null && <span className="font-mono">{formatUsdc(r.amountUnits)} USDC</span>}
+                  <span className="font-mono">{r.code}</span>
+                  {r.bypassRules && <span className="text-danger">Agent bị chiếm: bỏ qua rule engine</span>}
+                </div>
+                <PromoteWhitelistAction payTo={r.payTo} eligible={eligibleForPromote} promote={promote} />
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
@@ -353,14 +482,18 @@ export function RejectionsCard({
 
 function DemoBypassControl({
   policy,
+  canRunDemo,
   availability,
   runState,
   onRunDemo,
+  onResetDemoRun,
 }: {
   policy: Address;
+  canRunDemo: boolean;
   availability: DemoRunnerAvailability | null;
   runState: DemoRunState;
   onRunDemo: (bypassRules: boolean) => void;
+  onResetDemoRun?: () => void;
 }) {
   const switchId = useId();
   const hintId = `${switchId}-hint`;
@@ -368,8 +501,9 @@ function DemoBypassControl({
   const [copied, setCopied] = useState(false);
 
   const running = runState.phase === "running";
-  const canRunLocal = !!availability?.available && !running;
+  const canRunLocal = canRunDemo && !!availability?.available && !running;
   const cliCommand = buildDemoCliCommand(bypassRules, policy);
+  const showModeResult = runState.phase !== "idle" && runState.phase !== "running" && runState.bypassRules === bypassRules;
 
   const handleCopy = async () => {
     try {
@@ -401,7 +535,10 @@ function DemoBypassControl({
             aria-checked={bypassRules}
             aria-describedby={hintId}
             checked={bypassRules}
-            onChange={(e) => setBypassRules(e.target.checked)}
+            onChange={(e) => {
+              setBypassRules(e.target.checked);
+              onResetDemoRun?.();
+            }}
             {...({ switch: "" } as Record<string, string>)}
             className="h-5 w-5 cursor-pointer accent-[#ef4444] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22d3ee]"
           />
@@ -449,8 +586,13 @@ function DemoBypassControl({
           {availability.reason ?? "Nút chạy trực tiếp chỉ khả dụng trên máy local; dùng lệnh CLI ở trên để test."}
         </p>
       )}
+      {availability?.available && !canRunDemo && (
+        <p className="text-[11px] text-muted">
+          Đăng nhập ví Privy để kích hoạt chạy agent trực tiếp từ trình duyệt, hoặc dùng lệnh CLI ở trên.
+        </p>
+      )}
 
-      {runState.phase === "done" && (
+      {showModeResult && runState.phase === "done" && (
         <div role="status" aria-live="polite" className="flex flex-col gap-1 rounded-lg bg-card px-3 py-2 text-xs">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold text-trusted">
@@ -487,7 +629,7 @@ function DemoBypassControl({
         </div>
       )}
 
-      {runState.phase === "error" && (
+      {showModeResult && runState.phase === "error" && (
         <p role="status" aria-live="polite" className="text-xs text-danger">
           Lỗi chạy agent: {runState.message}
         </p>

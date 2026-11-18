@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { rejectionToJson, toRejections } from "@/lib/rejections";
+import { rejectionToJson, toRejectionsWithTotal } from "@/lib/rejections";
 
 // Đọc file mỗi lần gọi, không cache: agent ghi thêm dòng trong lúc demo.
 export const dynamic = "force-dynamic";
@@ -14,14 +14,18 @@ export async function GET() {
     text = await readFile(AUDIT_LOG_PATH, "utf8");
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === "ENOENT") {
-      return Response.json({ available: false, items: [] });
+      return Response.json({ available: false, items: [], total: 0 });
     }
     return Response.json({ error: "Không đọc được nhật ký agent." }, { status: 500 });
   }
 
   try {
-    const items = toRejections(JSON.parse(text)).map(rejectionToJson);
-    return Response.json({ available: true, items });
+    const { items, total } = toRejectionsWithTotal(JSON.parse(text));
+    return Response.json({
+      available: true,
+      items: items.map(rejectionToJson),
+      total,
+    });
   } catch {
     // Agent đang ghi dở file: báo tạm thời để dashboard giữ danh sách cũ.
     return Response.json({ error: "Nhật ký agent đang được ghi, thử lại sau." }, { status: 503 });

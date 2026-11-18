@@ -15,7 +15,7 @@
 - **Track:** AI Agents & Security / Agent Economy on x402 (Avalanche Fuji Testnet)
 - **Thông điệp 1 câu:** AI agent tự trả phí API qua x402, nhưng tiền nằm trong policy contract của chủ; agent chỉ được xin chi, smart contract mới quyết chi theo hạn mức, whitelist và Kill Switch.
 - **Speaker note (Luật 6 — đọc ở 15 giây đầu tiên):**
-  > *"Lưu ý trước khi bắt đầu: trong bản demo hôm nay, chu kỳ hạn mức được rút ngắn còn **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và hai API Thời tiết & Tỷ giá trả dữ liệu mock; toàn bộ giao dịch `authorize`, chữ ký ERC-1271 và thanh toán USDC x402 đều chạy thật trên Avalanche Fuji."*
+  > *"Lưu ý trước khi bắt đầu: trong bản demo hôm nay, chu kỳ hạn mức được rút ngắn còn **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, hai API Thời tiết & Tỷ giá trả dữ liệu mock, và lượt chạy agent trong video dùng LLM giả lập (`--mock-llm`) theo kịch bản cố định; toàn bộ giao dịch `authorize`, `AgentPolicy`, chữ ký ERC-1271 và thanh toán USDC x402 (EIP-3009) đều chạy thật trên Avalanche Fuji (tích hợp Gemini thật có sẵn qua `demo:gd2`)."*
 
 ## Slide 2 — Vấn đề: AI Agent biết tiêu tiền là rủi ro lớn nhất
 - **Thực tế mới:** Với chuẩn HTTP `402` (**x402**), AI agent có thể tự mua dữ liệu, gọi tool API, trả từng khoản `0.001 USDC` mà không cần con người bấm xác nhận từng lần.

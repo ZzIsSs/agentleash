@@ -28,7 +28,7 @@ import {
 } from "./rules.ts";
 
 const NETWORK_ID = "eip155:43113";
-const EXPLORER = "https://testnet.snowtrace.io";
+const EXPLORER = "https://testnet.snowscan.xyz";
 const DEFAULT_PROMPT = "Tổng hợp thời tiết và tỷ giá cho chuyến đi Đà Lạt";
 
 const RULE_CODES = new Set<string>([
@@ -497,7 +497,7 @@ async function main() {
       );
 
       console.log(
-        `[SUCCESS 200 OK] Nhận dữ liệu từ ${api}. ${settleTx ? `Snowtrace: ${EXPLORER}/tx/${settleTx}` : ""}`,
+        `[SUCCESS 200 OK] Nhận dữ liệu từ ${api}. ${settleTx ? `Snowscan: ${EXPLORER}/tx/${settleTx}` : ""}`,
       );
       return { ok: true, data };
     } catch (err) {

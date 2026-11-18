@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Address } from "viem";
 import { erc8004RegistryAbi, factoryAbi, policyOwnerAbi } from "@/lib/abi";
 import type { ParsedCaps } from "@/lib/caps";
@@ -11,6 +11,7 @@ import {
   FACTORY_ADDRESS,
   POLICY_ADDRESS,
   addressUrl,
+  nftUrl,
   publicClient,
   shortAddress,
 } from "@/lib/chain";
@@ -29,26 +30,36 @@ import { resolveActivePolicy } from "@/lib/policyCreate";
 import { useDemoRunner } from "@/lib/useDemoRunner";
 import { useErc8004Identities, type AgentIdentityRecord } from "@/lib/useErc8004";
 import { useOwnerAccount, useOwnerTx, useOwnerWallet, useWhitelist } from "@/lib/useOwner";
-import { useNow, usePolicy } from "@/lib/usePolicy";
+import { useChainBlock, useNow, usePolicy } from "@/lib/usePolicy";
 import { useRejections } from "@/lib/useRejections";
 import { useSpends } from "@/lib/useSpends";
-import { RejectionsCard, SpendsCard } from "./ActivityCards";
+import { collectWhitelistCandidates, executeSetWhitelist, type SetWhitelistWalletClient } from "@/lib/whitelistPromote";
+import { RejectionsCard, SpendsCard, type PromoteWhitelistConfig } from "./ActivityCards";
 import { ConfirmDialog, KillSwitch, SetupCard, TxBanner } from "./OwnerPanels";
 
 export function Dashboard() {
   const { ready, authenticated, login, logout, user } = usePrivy();
   const owner = useOwnerWallet();
-  const account = useOwnerAccount(authenticated ? owner.address : null);
+  const { blockNumber: chainBlock, refreshBlock } = useChainBlock(true);
+  const account = useOwnerAccount(authenticated ? owner.address : null, chainBlock);
   const ownerPolicies = account.policies ?? [];
   const myPolicy = ownerPolicies.length > 0 ? ownerPolicies[ownerPolicies.length - 1] : null;
   const [selectedPolicy, setSelectedPolicy] = useState<Address | null>(null);
-  const policy: Address = resolveActivePolicy(selectedPolicy, ownerPolicies, POLICY_ADDRESS);
+  const policy: Address = resolveActivePolicy(
+    selectedPolicy,
+    authenticated ? ownerPolicies : [],
+    POLICY_ADDRESS,
+  );
 
-  const { raw, error, updatedAt, refresh } = usePolicy(authenticated, policy);
-  const wl = useWhitelist(authenticated ? policy : null);
-  const flow = useSpends(authenticated, policy);
-  const rejections = useRejections(authenticated);
-  const erc8004 = useErc8004Identities(authenticated, raw?.owner ?? owner.address);
+  const { raw, error, updatedAt, refresh } = usePolicy(true, policy, chainBlock);
+  const flow = useSpends(true, policy, chainBlock);
+  const rejections = useRejections(true);
+  const whitelistCandidates = useMemo(
+    () => collectWhitelistCandidates(flow.spends, rejections.items, flow.whitelistTargets),
+    [flow.spends, rejections.items, flow.whitelistTargets],
+  );
+  const wl = useWhitelist(policy, whitelistCandidates, chainBlock);
+  const erc8004 = useErc8004Identities(true, raw?.owner ?? owner.address);
   const now = useNow();
 
   const { refresh: refreshAccount } = account;
@@ -58,24 +69,30 @@ export function Dashboard() {
   const { refresh: refreshErc8004 } = erc8004;
 
   const onDemoFinished = useCallback(() => {
+    void refreshBlock();
     void refresh();
     void refreshSpends();
     void refreshRejections();
-  }, [refresh, refreshSpends, refreshRejections]);
+  }, [refreshBlock, refresh, refreshSpends, refreshRejections]);
 
-  const demoRunner = useDemoRunner(authenticated, onDemoFinished);
+  const demoRunner = useDemoRunner(true, onDemoFinished);
 
   const onConfirmed = useCallback(() => {
+    void refreshBlock();
     void refresh();
     void refreshAccount();
     void refreshWhitelist();
+    void refreshSpends();
     void refreshErc8004();
-  }, [refresh, refreshAccount, refreshWhitelist, refreshErc8004]);
+  }, [refreshBlock, refresh, refreshAccount, refreshWhitelist, refreshSpends, refreshErc8004]);
   const tx = useOwnerTx(onConfirmed);
   const busy = isBusy(tx.state);
   const [confirm, setConfirm] = useState<"pause" | "unpause" | null>(null);
+  const [promotingTarget, setPromotingTarget] = useState<Address | null>(null);
 
-  const isOwner = !!raw && !!owner.address && raw.owner.toLowerCase() === owner.address.toLowerCase();
+  const isOwner =
+    authenticated && !!raw && !!owner.address && raw.owner.toLowerCase() === owner.address.toLowerCase();
+  const ownerReady = authenticated && owner.ready && !!owner.address;
 
   // Mỗi lệnh chủ ký đều mô phỏng trước: lỗi như Unauthorized hiện ngay, không mở cửa sổ ký, không tốn gas.
   const sendPause = (functionName: "pause" | "unpause") =>
@@ -90,18 +107,33 @@ export function Dashboard() {
       return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
     });
 
-  const sendWhitelist = (payTo: Address, allowed: boolean) =>
-    tx.run(allowed ? "Thêm vào whitelist" : "Gỡ khỏi whitelist", async () => {
-      const wallet = await owner.getWalletClient();
-      const { request } = await publicClient.simulateContract({
-        address: policy,
-        abi: policyOwnerAbi,
-        functionName: "setWhitelist",
-        args: [payTo, allowed],
-        account: wallet.account.address,
-      });
-      return wallet.writeContract({ ...request, account: wallet.account, chain: wallet.chain });
+  const sendWhitelist = (payTo: Address, allowed: boolean, label?: string) =>
+    executeSetWhitelist({
+      policy,
+      targetAddress: payTo,
+      allowed,
+      label,
+      runTx: tx.run,
+      getWalletClient: async () => (await owner.getWalletClient()) as unknown as SetWhitelistWalletClient,
+      simulateContract: (args) =>
+        publicClient.simulateContract(args) as unknown as Promise<{ request: Record<string, unknown> }>,
     });
+
+  const promoteToTrusted = (payTo: Address) => {
+    setPromotingTarget(payTo);
+    void sendWhitelist(payTo, true, "Chuyển thành API quen");
+  };
+
+  const promoteConfig: PromoteWhitelistConfig = {
+    whitelist: wl.whitelist,
+    authenticated,
+    isOwner,
+    ownerReady,
+    busy,
+    txState: tx.state,
+    promotingTarget,
+    onPromote: promoteToTrusted,
+  };
 
   const sendSetCaps = async (caps: ParsedCaps): Promise<boolean> => {
     const receipt = await tx.run("Cập nhật hạn mức 2 tầng", async () => {
@@ -161,39 +193,18 @@ export function Dashboard() {
     return receipt !== null;
   };
 
-  if (!ready) {
-    return <Centered>Đang tải Privy…</Centered>;
-  }
-
-  if (!authenticated) {
-    return (
-      <Centered>
-        <div className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-border bg-card p-8 text-center">
-          <Logo />
-          <p className="text-muted">
-            Ví cho AI agent có dây xích on-chain: hạn mức hai tầng, whitelist và nút khóa khẩn cấp trên Avalanche
-            Fuji.
-          </p>
-          <button
-            onClick={login}
-            className="rounded-lg bg-flow px-4 py-3 font-semibold text-background transition hover:opacity-90"
-          >
-            Đăng nhập bằng email
-          </button>
-        </div>
-      </Centered>
-    );
-  }
-
   const overview = raw ? deriveOverview(raw, now) : null;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[1440px] flex-col gap-4 p-4 md:p-6">
       <Header
+        ready={ready}
+        authenticated={authenticated}
         email={user?.email?.address ?? null}
         wallet={user?.wallet?.address ?? null}
         policy={policy}
         overview={overview}
+        onLogin={login}
         onLogout={logout}
         killSwitch={<KillSwitch raw={raw} isOwner={isOwner} busy={busy} onRequest={setConfirm} />}
       />
@@ -225,14 +236,17 @@ export function Dashboard() {
           updatedAt={updatedAt}
           identities={erc8004.identities}
         />
-        <SpendsCard spends={flow.spends} loaded={flow.loaded} error={flow.error} />
+        <SpendsCard spends={flow.spends} loaded={flow.loaded} error={flow.error} promote={promoteConfig} />
         <SetupCard
+          authenticated={authenticated}
+          loginReady={ready}
+          onLogin={login}
           policy={policy}
           defaultPolicy={POLICY_ADDRESS}
-          owner={owner.address}
+          owner={authenticated ? owner.address : null}
           avax={account.avax}
-          policies={ownerPolicies}
-          myPolicy={myPolicy}
+          policies={authenticated ? ownerPolicies : []}
+          myPolicy={authenticated ? myPolicy : null}
           raw={raw}
           isOwner={isOwner}
           whitelist={wl.whitelist}
@@ -248,10 +262,14 @@ export function Dashboard() {
         <RejectionsCard
           policy={policy}
           items={rejections.items}
+          total={rejections.total}
           available={rejections.available}
+          canRunDemo={authenticated}
           demoAvailability={demoRunner.availability}
           demoRunState={demoRunner.runState}
           onRunDemo={(bypassRules) => void demoRunner.runDemo(bypassRules, policy)}
+          onResetDemoRun={demoRunner.resetRunState}
+          promote={promoteConfig}
         />
       </main>
     </div>
@@ -259,17 +277,23 @@ export function Dashboard() {
 }
 
 function Header({
+  ready,
+  authenticated,
   email,
   wallet,
   policy,
   overview,
+  onLogin,
   onLogout,
   killSwitch,
 }: {
+  ready: boolean;
+  authenticated: boolean;
   email: string | null;
   wallet: string | null;
   policy: Address;
   overview: PolicyOverview | null;
+  onLogin: () => void;
   onLogout: () => void;
   killSwitch: React.ReactNode;
 }) {
@@ -296,12 +320,28 @@ function Header({
           {shortAddress(policy)}
         </a>
         {overview && <span className="font-mono">{formatUsdc(overview.balance)} USDC</span>}
-        <span className="text-muted" title={wallet ?? undefined}>
-          {email ?? (wallet ? shortAddress(wallet) : "")}
-        </span>
-        <button onClick={onLogout} className="rounded-md border border-border px-3 py-1 text-muted hover:text-foreground">
-          Đăng xuất
-        </button>
+        {authenticated ? (
+          <>
+            <span className="text-muted" title={wallet ?? undefined}>
+              {email ?? (wallet ? shortAddress(wallet) : "")}
+            </span>
+            <button onClick={onLogout} className="rounded-md border border-border px-3 py-1 text-muted hover:text-foreground">
+              Đăng xuất
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="rounded-md border border-border px-2 py-1 text-xs text-muted">Chỉ xem</span>
+            <button
+              type="button"
+              onClick={onLogin}
+              disabled={!ready}
+              className="rounded-lg bg-flow px-3 py-1.5 text-xs font-semibold text-background transition hover:opacity-90 disabled:opacity-50"
+            >
+              {ready ? "Đăng nhập bằng email" : "Đang tải Privy…"}
+            </button>
+          </>
+        )}
         {killSwitch}
       </div>
     </header>
@@ -373,7 +413,7 @@ function OverviewCard({
               <div className="sm:col-span-2">
                 Hộ chiếu ERC-8004:{" "}
                 <a
-                  href={addressUrl(ERC8004_IDENTITY_REGISTRY_ADDRESS)}
+                  href={nftUrl(ERC8004_IDENTITY_REGISTRY_ADDRESS, latestIdentity.agentId)}
                   target="_blank"
                   rel="noreferrer"
                   className="font-mono text-trusted hover:underline"
@@ -458,8 +498,4 @@ function Logo() {
       Agent<span className="text-flow">Leash</span>
     </span>
   );
-}
-
-function Centered({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-screen items-center justify-center p-6 text-muted">{children}</div>;
 }

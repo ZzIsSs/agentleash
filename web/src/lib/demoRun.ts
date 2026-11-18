@@ -11,6 +11,63 @@ export type DemoRunResult = {
 
 const ANSI_PATTERN = /\u001b\[[0-9;]*m/g;
 
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
+
+function extractHostname(hostOrAuthority: string): string {
+  const trimmed = hostOrAuthority.trim().toLowerCase();
+  if (trimmed.startsWith("[")) {
+    const end = trimmed.indexOf("]");
+    return end >= 0 ? trimmed.slice(0, end + 1) : trimmed;
+  }
+  const colon = trimmed.indexOf(":");
+  return colon >= 0 ? trimmed.slice(0, colon) : trimmed;
+}
+
+/** Chặn request cross-site, thiếu JSON content-type hoặc đi qua IP LAN tới POST /api/demo-run. */
+export function validateDemoRunRequest(headers: Headers): { ok: true } | { ok: false; status: number; error: string } {
+  const host = headers.get("host");
+  if (!host || !LOOPBACK_HOSTS.has(extractHostname(host))) {
+    return { ok: false, status: 403, error: "Chỉ cho phép gọi /api/demo-run từ localhost." };
+  }
+
+  const secFetchSite = headers.get("sec-fetch-site")?.trim().toLowerCase();
+  if (secFetchSite && secFetchSite !== "same-origin" && secFetchSite !== "none") {
+    return { ok: false, status: 403, error: "Từ chối yêu cầu cross-site tới /api/demo-run." };
+  }
+
+  const origin = headers.get("origin");
+  if (origin) {
+    try {
+      const parsed = new URL(origin);
+      const hostname = parsed.hostname.toLowerCase();
+      if (!LOOPBACK_HOSTS.has(hostname) || parsed.host.toLowerCase() !== host.trim().toLowerCase()) {
+        return { ok: false, status: 403, error: "Origin không khớp với localhost của Dashboard." };
+      }
+    } catch {
+      return { ok: false, status: 403, error: "Origin không hợp lệ." };
+    }
+  } else {
+    const referer = headers.get("referer");
+    if (referer) {
+      try {
+        const parsed = new URL(referer);
+        if (!LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase()) || parsed.host.toLowerCase() !== host.trim().toLowerCase()) {
+          return { ok: false, status: 403, error: "Referer không khớp với localhost của Dashboard." };
+        }
+      } catch {
+        return { ok: false, status: 403, error: "Referer không hợp lệ." };
+      }
+    }
+  }
+
+  const contentType = headers.get("content-type")?.toLowerCase() ?? "";
+  if (!contentType.includes("application/json")) {
+    return { ok: false, status: 415, error: "Yêu cầu bắt buộc Content-Type: application/json." };
+  }
+
+  return { ok: true };
+}
+
 /** Tạo lệnh CLI tương ứng với công tắc "Bỏ qua Rule Engine" để hiển thị/copy dự phòng. */
 export function buildDemoCliCommand(bypassRules: boolean, policyAddress?: string): string {
   const base = bypassRules ? "cd agent && npm run demo:bypass" : "cd agent && npm run demo:mock";

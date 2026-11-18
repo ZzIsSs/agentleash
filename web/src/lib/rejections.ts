@@ -31,6 +31,12 @@ export const REJECTION_TITLES: Record<string, string> = {
   PRICE_MISMATCH: "Giá API đòi khác bảng giá",
   RATE_LIMIT_EXCEEDED: "Gọi API quá nhanh, vượt giới hạn tần suất",
   DUPLICATE_QUERY: "Mua trùng dữ liệu vừa mua",
+  LOOP_DETECTED: "Phát hiện vòng lặp gọi API bất thường",
+  NOT_WHITELISTED: "API chưa nằm trong Whitelist (Tầng 1)",
+  UNSAFE_URL: "URL không hợp lệ hoặc có rủi ro SSRF",
+  HTTP_402_REFUSED: "Server từ chối thanh toán x402 (HTTP 402)",
+  MISSING_TARGET: "Thiếu URL hoặc địa chỉ nhận thanh toán",
+  INVALID_AMOUNT: "Số tiền yêu cầu không hợp lệ",
   // Contract (contracts/src/AgentPolicy.sol)
   ExceedsDailyCap: "Vượt hạn mức chung của chu kỳ",
   ExceedsPerTxCap: "Vượt trần mỗi giao dịch (Whitelist)",
@@ -67,8 +73,14 @@ const units = (v: unknown): bigint | null => {
   }
 };
 
-/** Nhận nội dung audit.json (mảng, hoặc object có `entries`), trả về các lần bị chặn, mới nhất lên trên. */
-export function toRejections(input: unknown, limit = 50): Rejection[] {
+export type RejectionsResult = {
+  items: Rejection[];
+  /** Tổng số lượt bị chặn trong nhật ký trước khi cắt theo `limit`. */
+  total: number;
+};
+
+/** Nhận nội dung audit.json (mảng, hoặc object có `entries`), trả về danh sách đã cắt theo `limit` cùng tổng số `total`. */
+export function toRejectionsWithTotal(input: unknown, limit = 50): RejectionsResult {
   const list: unknown[] = Array.isArray(input)
     ? input
     : input && typeof input === "object" && Array.isArray((input as { entries?: unknown }).entries)
@@ -100,7 +112,16 @@ export function toRejections(input: unknown, limit = 50): Rejection[] {
     });
   });
 
-  return out.sort((a, b) => b.time - a.time).slice(0, limit);
+  const sorted = out.sort((a, b) => b.time - a.time);
+  return {
+    items: sorted.slice(0, limit),
+    total: sorted.length,
+  };
+}
+
+/** Nhận nội dung audit.json (mảng, hoặc object có `entries`), trả về các lần bị chặn, mới nhất lên trên. */
+export function toRejections(input: unknown, limit = 50): Rejection[] {
+  return toRejectionsWithTotal(input, limit).items;
 }
 
 /** Dạng JSON gửi từ API route (bigint không qua được JSON). */

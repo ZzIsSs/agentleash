@@ -1,11 +1,11 @@
 "use client";
 
 import { useWallets } from "@privy-io/react-auth";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { createWalletClient, custom, getAddress, type Address, type Hex, type WalletClient } from "viem";
 import { factoryAbi, policyOwnerAbi } from "./abi";
 import { CHAIN, FACTORY_ADDRESS, publicClient } from "./chain";
-import { describeTxError, txReducer } from "./ownerTx";
+import { describeTxError, isUserRejectedError, txReducer } from "./ownerTx";
 import { KNOWN_SELLERS } from "./spends";
 
 /** Ví nhúng Privy của người đang đăng nhập; ví này là chủ (owner) các policy họ tạo qua factory. */
@@ -27,9 +27,11 @@ export function useOwnerWallet() {
 }
 
 /** Policy mà ví này đã tạo qua factory (mới nhất ở cuối) và số dư AVAX để trả gas. */
-export function useOwnerAccount(owner: Address | null) {
+export function useOwnerAccount(owner: Address | null, chainBlock?: bigint | null) {
   const [policies, setPolicies] = useState<Address[] | null>(null);
   const [avax, setAvax] = useState<bigint | null>(null);
+  const lastBlockRef = useRef<bigint | null>(null);
+  const hasSharedBlock = chainBlock !== undefined;
 
   const refresh = useCallback(async () => {
     if (!owner) return;
@@ -53,41 +55,92 @@ export function useOwnerAccount(owner: Address | null) {
   useEffect(() => {
     setPolicies(null);
     setAvax(null);
+    lastBlockRef.current = null;
     if (!owner) return;
     void refresh();
-    const id = setInterval(() => void refresh(), 6_000);
+    if (hasSharedBlock) return;
+    const id = setInterval(() => {
+      if (typeof document === "undefined" || !document.hidden) {
+        void refresh();
+      }
+    }, 6_000);
     return () => clearInterval(id);
-  }, [owner, refresh]);
+  }, [owner, refresh, hasSharedBlock]);
+
+  useEffect(() => {
+    if (!owner || chainBlock === undefined || chainBlock === null) return;
+    if (lastBlockRef.current !== null && chainBlock - lastBlockRef.current < 2n) return;
+    lastBlockRef.current = chainBlock;
+    void refresh();
+  }, [owner, chainBlock, refresh]);
 
   return { policies, avax, refresh };
 }
 
-/** Trạng thái whitelist của 2 API demo trên policy đang xem. */
-export function useWhitelist(policy: Address | null) {
+/** Trạng thái whitelist của 2 API demo và các địa chỉ phát sinh trong Dòng tiền / Bị từ chối trên policy đang xem. */
+export function useWhitelist(
+  policy: Address | null,
+  extraAddresses: readonly Address[] = [],
+  chainBlock?: bigint | null,
+) {
   const [state, setState] = useState<Record<string, boolean> | null>(null);
+  const lastBlockRef = useRef<bigint | null>(null);
+  const hasSharedBlock = chainBlock !== undefined;
+  const extraKey = extraAddresses
+    .map((a) => a.toLowerCase())
+    .sort()
+    .join(",");
 
   const refresh = useCallback(async () => {
     if (!policy) return;
     try {
-      const sellers = Object.keys(KNOWN_SELLERS).map((a) => getAddress(a));
+      const unique = new Map<string, Address>();
+      for (const a of Object.keys(KNOWN_SELLERS)) {
+        const norm = getAddress(a);
+        unique.set(norm.toLowerCase(), norm);
+      }
+      if (extraKey) {
+        for (const a of extraKey.split(",")) {
+          const norm = getAddress(a);
+          unique.set(norm.toLowerCase(), norm);
+        }
+      }
+      const targets = [...unique.values()];
       const flags = await Promise.all(
-        sellers.map((s) =>
+        targets.map((s) =>
           publicClient.readContract({ address: policy, abi: policyOwnerAbi, functionName: "whitelist", args: [s] }),
         ),
       );
-      setState(Object.fromEntries(sellers.map((s, i) => [s.toLowerCase(), flags[i]])));
+      setState(Object.fromEntries(targets.map((s, i) => [s.toLowerCase(), flags[i]])));
     } catch {
       // Giữ số cũ.
     }
-  }, [policy]);
+  }, [policy, extraKey]);
 
   useEffect(() => {
     setState(null);
+    lastBlockRef.current = null;
+  }, [policy]);
+
+  useEffect(() => {
     if (!policy) return;
+    lastBlockRef.current = null;
     void refresh();
-    const id = setInterval(() => void refresh(), 6_000);
+    if (hasSharedBlock) return;
+    const id = setInterval(() => {
+      if (typeof document === "undefined" || !document.hidden) {
+        void refresh();
+      }
+    }, 6_000);
     return () => clearInterval(id);
-  }, [policy, refresh]);
+  }, [policy, refresh, hasSharedBlock]);
+
+  useEffect(() => {
+    if (!policy || chainBlock === undefined || chainBlock === null) return;
+    if (lastBlockRef.current !== null && chainBlock - lastBlockRef.current < 2n) return;
+    lastBlockRef.current = chainBlock;
+    void refresh();
+  }, [policy, chainBlock, refresh]);
 
   return { whitelist: state, refresh };
 }
@@ -114,7 +167,9 @@ export function useOwnerTx(onConfirmed?: () => void) {
         onConfirmed?.();
         return receipt;
       } catch (e) {
-        console.error(`[AgentLeash] ${label} thất bại`, e);
+        if (!isUserRejectedError(e)) {
+          console.error(`[AgentLeash] ${label} thất bại`, e);
+        }
         dispatch({ type: "failed", message: describeTxError(e) });
         return null;
       }

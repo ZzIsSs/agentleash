@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDemoCliCommand, sanitizeCliSummary } from "./demoRun";
+import { buildDemoCliCommand, sanitizeCliSummary, validateDemoRunRequest } from "./demoRun";
 
 describe("demoRun helpers", () => {
   it("sinh lệnh CLI đúng chế độ rule engine hoặc bypass", () => {
@@ -37,5 +37,57 @@ USDC Balance    : 0.051 USDC | Paused: false
     expect(summary.successCount).toBe(0);
     expect(summary.blockedCount).toBe(1);
     expect(summary.blockedLines).toHaveLength(1);
+  });
+
+  it("validateDemoRunRequest chặn request cross-site, sai Content-Type hoặc qua IP LAN", () => {
+    expect(
+      validateDemoRunRequest(
+        new Headers({
+          host: "localhost:3000",
+          origin: "http://evil.example",
+          "content-type": "text/plain",
+        }),
+      ),
+    ).toMatchObject({ ok: false, status: 403 });
+
+    expect(
+      validateDemoRunRequest(
+        new Headers({
+          host: "192.168.34.1:3000",
+          "content-type": "application/json",
+        }),
+      ),
+    ).toMatchObject({ ok: false, status: 403 });
+
+    expect(
+      validateDemoRunRequest(
+        new Headers({
+          host: "localhost:3000",
+          origin: "http://localhost:3000",
+          "sec-fetch-site": "same-origin",
+          "content-type": "text/plain",
+        }),
+      ),
+    ).toMatchObject({ ok: false, status: 415 });
+
+    expect(
+      validateDemoRunRequest(
+        new Headers({
+          host: "localhost:3000",
+          origin: "http://localhost:3000",
+          "sec-fetch-site": "same-origin",
+          "content-type": "application/json",
+        }),
+      ),
+    ).toEqual({ ok: true });
+
+    expect(
+      validateDemoRunRequest(
+        new Headers({
+          host: "127.0.0.1:3000",
+          "content-type": "application/json",
+        }),
+      ),
+    ).toEqual({ ok: true });
   });
 });

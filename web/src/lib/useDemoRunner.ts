@@ -81,5 +81,9 @@ export function useDemoRunner(enabled: boolean, onFinished?: () => void) {
     [checkAvailability, onFinished],
   );
 
-  return { availability, runState, checkAvailability, runDemo };
+  const resetRunState = useCallback(() => {
+    setRunState((prev) => (prev.phase === "running" ? prev : { phase: "idle" }));
+  }, []);
+
+  return { availability, runState, checkAvailability, runDemo, resetRunState };
 }

@@ -18,6 +18,7 @@ import {
   DEMO_POLICY_PARAMS,
   ERC8004_IDENTITY_REGISTRY_ADDRESS,
   addressUrl,
+  nftUrl,
   shortAddress,
   txUrl,
 } from "@/lib/chain";
@@ -31,6 +32,7 @@ import {
 } from "@/lib/policyCreate";
 import { KNOWN_SELLERS } from "@/lib/spends";
 import type { AgentIdentityRecord } from "@/lib/useErc8004";
+import { getExtraWhitelistedAddresses } from "@/lib/whitelistPromote";
 
 const FAUCET_URL = "https://core.app/tools/testnet-faucet/?subnet=c&token=c";
 
@@ -191,8 +193,11 @@ export function TxBanner({ state, onClose }: { state: TxState; onClose: () => vo
   );
 }
 
-/** Ô [3]: tạo policy của chủ (qua factory), chọn policy đang xem, whitelist 2 API, setCaps và hộ chiếu ERC-8004. */
+/** Ô [3]: tạo policy của chủ (qua factory), chọn policy đang xem, whitelist 2 API + API quen đã duyệt, setCaps và hộ chiếu ERC-8004. */
 export function SetupCard({
+  authenticated,
+  loginReady,
+  onLogin,
   policy,
   defaultPolicy,
   owner,
@@ -211,6 +216,9 @@ export function SetupCard({
   onSetCaps,
   onRegisterErc8004,
 }: {
+  authenticated: boolean;
+  loginReady: boolean;
+  onLogin: () => void;
   policy: Address;
   defaultPolicy: Address;
   owner: Address | null;
@@ -235,6 +243,7 @@ export function SetupCard({
 
   const noGas = avax !== null && avax === 0n;
   const policyOptions = buildPolicyOptions(policies, defaultPolicy);
+  const extraWhitelisted = getExtraWhitelistedAddresses(whitelist);
 
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
@@ -242,7 +251,7 @@ export function SetupCard({
         <h2 className="text-lg font-semibold">
           <span className="text-muted">[3]</span> Policy & luật chi tiêu
         </h2>
-        {myPolicy && (
+        {authenticated && myPolicy && (
           <button
             type="button"
             aria-expanded={showCreatePanel}
@@ -256,33 +265,47 @@ export function SetupCard({
         )}
       </div>
 
-      <div className="rounded-xl bg-background p-3 text-xs text-muted">
-        Ví chủ của bạn (Privy):{" "}
-        {owner ? (
-          <a href={addressUrl(owner)} target="_blank" rel="noreferrer" className="font-mono text-foreground hover:text-flow">
-            {shortAddress(owner)}
-          </a>
-        ) : (
-          "đang tạo…"
-        )}
-        {avax !== null && (
-          <>
-            {" "}
-            · <span className="font-mono">{Number(formatEther(avax)).toFixed(4)} AVAX</span>
-          </>
-        )}
-        {noGas && (
-          <>
-            {" "}
-            ·{" "}
-            <a href={FAUCET_URL} target="_blank" rel="noreferrer" className="text-sandbox hover:underline">
-              Cần AVAX test trả gas: lấy ở faucet ↗
+      {!authenticated ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-background p-3 text-xs text-muted">
+          <span>Chế độ chỉ xem (khách): đăng nhập ví Privy để tạo policy riêng hoặc chỉnh sửa luật chi tiêu.</span>
+          <button
+            type="button"
+            onClick={onLogin}
+            disabled={!loginReady}
+            className="shrink-0 rounded-lg bg-flow px-3 py-1.5 font-semibold text-background transition hover:opacity-90 disabled:opacity-50"
+          >
+            {loginReady ? "Đăng nhập bằng email" : "Đang tải Privy…"}
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-xl bg-background p-3 text-xs text-muted">
+          Ví chủ của bạn (Privy):{" "}
+          {owner ? (
+            <a href={addressUrl(owner)} target="_blank" rel="noreferrer" className="font-mono text-foreground hover:text-flow">
+              {shortAddress(owner)}
             </a>
-          </>
-        )}
-      </div>
+          ) : (
+            "đang tạo…"
+          )}
+          {avax !== null && (
+            <>
+              {" "}
+              · <span className="font-mono">{Number(formatEther(avax)).toFixed(4)} AVAX</span>
+            </>
+          )}
+          {noGas && (
+            <>
+              {" "}
+              ·{" "}
+              <a href={FAUCET_URL} target="_blank" rel="noreferrer" className="text-sandbox hover:underline">
+                Cần AVAX test trả gas: lấy ở faucet ↗
+              </a>
+            </>
+          )}
+        </div>
+      )}
 
-      {policyOptions.length > 1 && (
+      {authenticated && policyOptions.length > 1 && (
         <PolicySwitcher
           selectId={selectId}
           policy={policy}
@@ -291,7 +314,7 @@ export function SetupCard({
         />
       )}
 
-      {(!myPolicy || showCreatePanel) && (
+      {authenticated && (!myPolicy || showCreatePanel) && (
         <div
           id={createPanelId}
           className="flex flex-col gap-3 rounded-xl border border-flow/30 bg-background/70 p-4"
@@ -328,7 +351,11 @@ export function SetupCard({
             </a>
           </span>
           {!isOwner && (
-            <span className="text-xs text-muted">Chế độ chỉ xem (ví đang đăng nhập không phải chủ policy này)</span>
+            <span className="text-xs text-muted">
+              {authenticated
+                ? "Chế độ chỉ xem (ví đang đăng nhập không phải chủ policy này)"
+                : "Chế độ chỉ xem (khách)"}
+            </span>
           )}
         </div>
         {raw && raw.balance === 0n && (
@@ -362,6 +389,40 @@ export function SetupCard({
               </div>
             );
           })}
+          {extraWhitelisted.map((addr) => (
+            <div
+              key={addr}
+              className="flex items-center justify-between gap-3 rounded-xl border border-trusted/25 bg-background px-3 py-2 text-sm"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span>API quen đã duyệt</span>
+                  <span className="rounded-full bg-trusted/15 px-2 py-0.5 text-[10px] font-medium text-trusted">
+                    1-click
+                  </span>
+                </div>
+                <a
+                  href={addressUrl(addr)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono text-xs text-muted hover:text-flow"
+                >
+                  {shortAddress(addr)} ↗
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-trusted">Whitelist</span>
+                <button
+                  type="button"
+                  disabled={busy || !isOwner}
+                  onClick={() => onToggle(addr, false)}
+                  className="rounded-md border border-border px-2 py-1 text-xs text-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Gỡ
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
         <CapsForm policy={policy} raw={raw} isOwner={isOwner} busy={busy} onSetCaps={onSetCaps} />
         <Erc8004Section
@@ -610,9 +671,14 @@ function Erc8004Section({
             >
               <div className="flex flex-col gap-0.5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-trusted/15 px-2 py-0.5 font-mono font-semibold text-trusted">
+                  <a
+                    href={nftUrl(ERC8004_IDENTITY_REGISTRY_ADDRESS, id.agentId)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-trusted/15 px-2 py-0.5 font-mono font-semibold text-trusted hover:underline"
+                  >
                     ID #{id.agentId.toString()}
-                  </span>
+                  </a>
                   <span className="font-medium text-foreground">{id.decoded.name ?? "AgentIdentity NFT"}</span>
                 </div>
                 <span className="font-mono text-[11px] text-muted">
@@ -708,8 +774,11 @@ function CapsForm({
   const [interacted, setInteracted] = useState<Partial<Record<CapsField, boolean>>>({});
   const [touched, setTouched] = useState<Partial<Record<CapsField, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [zeroCapConfirmed, setZeroCapConfirmed] = useState(false);
   const [announcement, setAnnouncement] = useState("");
   const inputRefs = useRef<Partial<Record<CapsField, HTMLInputElement | null>>>({});
+  const zeroConfirmRef = useRef<HTMLInputElement | null>(null);
+  const zeroConfirmId = `${baseId}-zero-confirm`;
 
   const chainCapsKey = raw
     ? `${policy}:${raw.perTxCap}:${raw.dailyCap}:${raw.sandboxPerTxCap}:${raw.sandboxDailyCap}`
@@ -720,17 +789,25 @@ function CapsForm({
     setInteracted({});
     setTouched({});
     setSubmitted(false);
+    setZeroCapConfirmed(false);
     setAnnouncement("");
   }, [policy]);
 
   useEffect(() => {
     if (!dirty && raw) {
       setInputs(capsFromRaw(raw));
+      setZeroCapConfirmed(false);
     }
   }, [chainCapsKey, dirty, raw]);
 
   const validation = validateCaps(inputs);
   const sameAsChain = !!raw && validation.ok && capsEqual(validation.caps, raw);
+  const hasZeroCap =
+    validation.ok &&
+    (validation.caps.perTxCap === 0n ||
+      validation.caps.dailyCap === 0n ||
+      validation.caps.sandboxPerTxCap === 0n ||
+      validation.caps.sandboxDailyCap === 0n);
 
   const visibleError = (field: CapsField): string | undefined =>
     touched[field] || submitted ? validation.fieldErrors[field] : undefined;
@@ -739,6 +816,7 @@ function CapsForm({
     setInputs((prev) => ({ ...prev, [field]: value }));
     setDirty(true);
     setInteracted((prev) => ({ ...prev, [field]: true }));
+    setZeroCapConfirmed(false);
     setAnnouncement("");
   };
 
@@ -757,6 +835,7 @@ function CapsForm({
     setInteracted({});
     setTouched({});
     setSubmitted(false);
+    setZeroCapConfirmed(false);
     setAnnouncement("Đã điền 4 hạn mức mặc định demo: 0.002 / 0.003 / 0.0005 / 0.001 USDC.");
   };
 
@@ -767,6 +846,7 @@ function CapsForm({
     setInteracted({});
     setTouched({});
     setSubmitted(false);
+    setZeroCapConfirmed(false);
     setAnnouncement("Đã khôi phục theo giá trị hiện tại trên chuỗi.");
   };
 
@@ -780,6 +860,10 @@ function CapsForm({
       }
       return;
     }
+    if (hasZeroCap && !zeroCapConfirmed) {
+      zeroConfirmRef.current?.focus();
+      return;
+    }
     if (!isOwner || busy) return;
     const confirmed = await onSetCaps(validation.caps);
     if (confirmed) {
@@ -787,6 +871,7 @@ function CapsForm({
       setInteracted({});
       setTouched({});
       setSubmitted(false);
+      setZeroCapConfirmed(false);
     }
   };
 
@@ -881,6 +966,30 @@ function CapsForm({
       {submitted && !validation.ok && (
         <div className="rounded-lg border border-danger/50 bg-danger/10 px-3 py-2 text-xs text-danger">
           Chưa thể gửi giao dịch: {validation.errors[0]}
+        </div>
+      )}
+
+      {hasZeroCap && (
+        <div className="flex flex-col gap-2 rounded-lg border border-sandbox/60 bg-sandbox/10 px-3 py-2 text-xs text-sandbox">
+          <p>
+            Cảnh báo: bạn đang đặt ít nhất một hạn mức bằng <strong>0 USDC</strong>. Điều này sẽ khóa toàn bộ khoản chi
+            thuộc tầng tương ứng trên hợp đồng.
+          </p>
+          <label htmlFor={zeroConfirmId} className="flex cursor-pointer items-center gap-2 font-medium text-foreground">
+            <input
+              ref={zeroConfirmRef}
+              id={zeroConfirmId}
+              type="checkbox"
+              checked={zeroCapConfirmed}
+              disabled={controlsDisabled}
+              onChange={(e) => setZeroCapConfirmed(e.target.checked)}
+              className="h-4 w-4 accent-[#eab308]"
+            />
+            Tôi hiểu và vẫn muốn lưu hạn mức bằng 0 USDC
+          </label>
+          {submitted && !zeroCapConfirmed && (
+            <span className="text-danger">Vui lòng tick xác nhận ở trên trước khi ký giao dịch đặt hạn mức = 0.</span>
+          )}
         </div>
       )}
 

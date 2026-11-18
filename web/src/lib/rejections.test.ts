@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { rejectionFromJson, rejectionToJson, toRejections } from "./rejections";
+import { shortAddress } from "./chain";
+import { rejectionFromJson, rejectionToJson, toRejections, toRejectionsWithTotal } from "./rejections";
 
 // Rút gọn từ agent/logs/audit.json của demo 13/11.
 const AUDIT = [
@@ -88,11 +89,55 @@ describe("toRejections", () => {
 
   it("giới hạn số dòng", () => {
     expect(toRejections(AUDIT, 2)).toHaveLength(2);
+    const withTotal = toRejectionsWithTotal(AUDIT, 2);
+    expect(withTotal.items).toHaveLength(2);
+    expect(withTotal.total).toBe(3);
+  });
+
+  it("NEW-04: trả về total đúng (vd 71) ngay cả khi danh sách items bị cắt còn 50", () => {
+    const many = Array.from({ length: 71 }, (_, i) => ({
+      id: `rej-${i}`,
+      timestamp: new Date(1_700_000_000_000 + i * 1_000).toISOString(),
+      status: i % 2 === 0 ? "REJECTED_OFFCHAIN" : "REJECTED_ONCHAIN",
+      api: "unknown_api",
+      ruleCode: "ExceedsSandboxPerTxCap",
+      reason: `Lượt chặn ${i}`,
+    }));
+    // Trộn thêm 10 dòng SETTLED không phải lỗi chặn
+    const settled = Array.from({ length: 10 }, (_, i) => ({
+      id: `ok-${i}`,
+      timestamp: new Date(1_700_000_100_000 + i * 1_000).toISOString(),
+      status: "SETTLED",
+      api: "weather",
+    }));
+
+    const res = toRejectionsWithTotal([...many, ...settled]);
+    expect(res.total).toBe(71);
+    expect(res.items).toHaveLength(50);
+    expect(res.items[0].id).toBe("rej-70");
+
+    expect(toRejectionsWithTotal(null)).toEqual({ items: [], total: 0 });
   });
 
   it("đi qua JSON của API route không mất số tiền", () => {
     const [d] = toRejections(AUDIT);
     const back = rejectionFromJson(JSON.parse(JSON.stringify(rejectionToJson(d))));
     expect(back).toEqual(d);
+  });
+
+  it("gán tiêu đề ngắn cho các mã MCP mới và không cắt lặp địa chỉ ngắn", () => {
+    const items = toRejections([
+      { id: "1", timestamp: "2026-11-18T00:00:04Z", status: "REJECTED_OFFCHAIN", ruleCode: "NOT_WHITELISTED", reason: "long msg" },
+      { id: "2", timestamp: "2026-11-18T00:00:03Z", status: "REJECTED_OFFCHAIN", ruleCode: "UNSAFE_URL", reason: "long msg" },
+      { id: "3", timestamp: "2026-11-18T00:00:02Z", status: "REJECTED_OFFCHAIN", ruleCode: "LOOP_DETECTED", reason: "long msg" },
+      { id: "4", timestamp: "2026-11-18T00:00:01Z", status: "REJECTED_ONCHAIN", ruleCode: "HTTP_402_REFUSED", reason: "long msg" },
+    ]);
+    expect(items.map((x) => x.title)).toEqual([
+      "API chưa nằm trong Whitelist (Tầng 1)",
+      "URL không hợp lệ hoặc có rủi ro SSRF",
+      "Phát hiện vòng lặp gọi API bất thường",
+      "Server từ chối thanh toán x402 (HTTP 402)",
+    ]);
+    expect(shortAddress("0x1234")).toBe("0x1234");
   });
 });

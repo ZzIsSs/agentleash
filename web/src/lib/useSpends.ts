@@ -3,14 +3,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Address } from "viem";
 import { ROUTESCAN_API, publicClient } from "./chain";
-import { blockRanges, fromRoutescan, mergeSpends, type RawLog, type RoutescanLog, type Spend } from "./spends";
+import {
+  blockRanges,
+  extractWhitelistTargets,
+  fromRoutescan,
+  initialRpcScanFrom,
+  mergeSpends,
+  type RawLog,
+  type RoutescanLog,
+  type Spend,
+} from "./spends";
 
 const POLL_MS = 3_000;
-/** Cứ ~30 giây hỏi lại Routescan một lần, phòng khi RPC bỏ sót. */
+/** Cứ ~10 lần block mới hỏi lại Routescan một lần, phòng khi RPC bỏ sót. */
 const ROUTESCAN_EVERY = 10;
 
-async function fetchRoutescan(policy: Address): Promise<RawLog[]> {
-  const url = `${ROUTESCAN_API}?module=logs&action=getLogs&address=${policy}&fromBlock=0&toBlock=latest`;
+async function fetchRoutescan(policy: Address, toBlock: bigint): Promise<RawLog[]> {
+  // Ghim `toBlock` theo block hiện tại để tránh Cloudflare trả cache cũ của `toBlock=latest`.
+  const url = `${ROUTESCAN_API}?module=logs&action=getLogs&address=${policy}&fromBlock=0&toBlock=${toBlock.toString()}`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Routescan HTTP ${res.status}`);
   const json = (await res.json()) as { status: string; message: string; result: RoutescanLog[] | string };
@@ -21,7 +31,7 @@ async function fetchRoutescan(policy: Address): Promise<RawLog[]> {
   return json.result.map(fromRoutescan);
 }
 
-/** Quét các block mới bằng RPC (tối đa 100 block mỗi lần gọi), kèm thời gian block cho log mới. */
+/** Quét các block mới bằng RPC (tối đa 100 block mỗi lần gọi, tối đa 500 block), kèm thời gian block cho log mới. */
 async function fetchRecent(policy: Address, from: bigint, to: bigint): Promise<RawLog[]> {
   const logs: RawLog[] = [];
   for (const [fromBlock, toBlock] of blockRanges(from, to)) {
@@ -46,15 +56,18 @@ async function fetchRecent(policy: Address, from: bigint, to: bigint): Promise<R
   return logs.map((l) => ({ ...l, timestamp: l.blockNumber === null ? null : (times.get(l.blockNumber) ?? null) }));
 }
 
-/** Danh sách khoản chi (event Authorized) của policy, mới nhất lên trên, tự cập nhật 3 giây một lần. */
-export function useSpends(enabled: boolean, policy: Address | null) {
+/** Danh sách khoản chi (event Authorized) + địa chỉ WhitelistChanged của policy, tự cập nhật khi có block mới. */
+export function useSpends(enabled: boolean, policy: Address | null, chainBlock?: bigint | null) {
   const [spends, setSpends] = useState<Spend[]>([]);
+  const [whitelistTargets, setWhitelistTargets] = useState<Address[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const stepRef = useRef<(() => Promise<void>) | null>(null);
+  const stepRef = useRef<((targetBlock?: bigint) => Promise<void>) | null>(null);
+  const hasSharedBlock = chainBlock !== undefined;
 
   useEffect(() => {
     setSpends([]);
+    setWhitelistTargets([]);
     setLoaded(false);
     setError(null);
     stepRef.current = null;
@@ -65,21 +78,36 @@ export function useSpends(enabled: boolean, policy: Address | null) {
     let tick = 0;
     let running = false;
 
-    const step = async () => {
+    const step = async (targetBlock?: bigint) => {
       if (running) return;
+      if (typeof document !== "undefined" && document.hidden && targetBlock === undefined) return;
       running = true;
       try {
-        const latest = await publicClient.getBlockNumber();
-        const logs: RawLog[] = [];
-        if (cursor === null || tick % ROUTESCAN_EVERY === 0) {
-          logs.push(...(await fetchRoutescan(policy)));
+        const latest = targetBlock ?? (await publicClient.getBlockNumber());
+        if (cursor !== null && latest <= cursor) {
+          return;
         }
-        // Lần đầu quét lại 100 block gần nhất, vì Routescan có thể chậm vài block so với chuỗi.
-        const from: bigint = cursor === null ? (latest > 99n ? latest - 99n : 0n) : cursor + 1n;
-        logs.push(...(await fetchRecent(policy, from, latest)));
+        const logs: RawLog[] = [];
+        let routescanLogs: RawLog[] = [];
+        if (cursor === null || tick % ROUTESCAN_EVERY === 0) {
+          try {
+            routescanLogs = await fetchRoutescan(policy, latest);
+            logs.push(...routescanLogs);
+          } catch (e) {
+            if (cursor === null) throw e;
+          }
+        }
+        const from =
+          cursor === null ? initialRpcScanFrom(latest, routescanLogs) : cursor + 1n;
+        if (from <= latest) {
+          logs.push(...(await fetchRecent(policy, from, latest)));
+        }
         if (cancelled) return;
         cursor = latest;
-        setSpends((prev) => mergeSpends(prev, logs));
+        if (logs.length > 0) {
+          setSpends((prev) => mergeSpends(prev, logs));
+          setWhitelistTargets((prev) => extractWhitelistTargets(prev, logs));
+        }
         setLoaded(true);
         setError(null);
       } catch (e) {
@@ -91,18 +119,30 @@ export function useSpends(enabled: boolean, policy: Address | null) {
     };
 
     stepRef.current = step;
-    void step();
-    const id = setInterval(() => void step(), POLL_MS);
+    if (!hasSharedBlock) {
+      void step();
+      const id = setInterval(() => void step(), POLL_MS);
+      return () => {
+        cancelled = true;
+        stepRef.current = null;
+        clearInterval(id);
+      };
+    }
+
     return () => {
       cancelled = true;
       stepRef.current = null;
-      clearInterval(id);
     };
-  }, [enabled, policy]);
+  }, [enabled, policy, hasSharedBlock]);
+
+  useEffect(() => {
+    if (!enabled || !policy || chainBlock === undefined || chainBlock === null) return;
+    void stepRef.current?.(chainBlock);
+  }, [enabled, policy, chainBlock]);
 
   const refresh = useCallback(() => {
     void stepRef.current?.();
   }, []);
 
-  return { spends, loaded, error, refresh };
+  return { spends, whitelistTargets, loaded, error, refresh };
 }

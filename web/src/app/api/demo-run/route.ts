@@ -3,7 +3,7 @@ import { access } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { getAddress, isAddress } from "viem";
-import { sanitizeCliSummary } from "@/lib/demoRun";
+import { sanitizeCliSummary, validateDemoRunRequest } from "@/lib/demoRun";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +61,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const reqCheck = validateDemoRunRequest(req.headers);
+  if (!reqCheck.ok) {
+    return Response.json({ error: reqCheck.error }, { status: reqCheck.status });
+  }
+
   if (running) {
     return Response.json({ error: "Đang có một lượt chạy agent chưa xong, vui lòng đợi." }, { status: 409 });
   }
