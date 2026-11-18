@@ -9,6 +9,7 @@ import { readAuditLogs } from "../src/log.ts";
 import {
   createAgentLeashMcpServer,
   createMcpGateway,
+  DEFAULT_DASHBOARD_URL,
   validateApiUrl,
   type PayingFetchFactory,
 } from "../src/mcp.ts";
@@ -735,5 +736,169 @@ describe("AgentLeash MCP Gateway", () => {
     });
     expect(trustedCDup.ok).toBe(false);
     if (!trustedCDup.ok) expect(trustedCDup.code).toBe("DUPLICATE_QUERY");
+  });
+
+  it("10. hint trả về đúng dashboardUrl (mặc định và custom) ở NOT_WHITELISTED, vượt hạn mức và PausedError", async () => {
+    const auditLogPath = createTempAuditPath();
+    const customDashboardUrl = "https://agentleash-demo.vercel.app";
+
+    // 10a. Mặc định dùng DEFAULT_DASHBOARD_URL (http://localhost:3000)
+    const gwDefault = createMcpGateway(
+      { policyAddress: POLICY_ADDR, auditLogPath },
+      {
+        checkWhitelist: async () => false,
+        getPolicyStatus: async () => ({
+          policyAddress: POLICY_ADDR,
+          usdcBalanceUnits: 50_000n,
+          perTxCapUnits: 2_000n,
+          dailyCapUnits: 3_000n,
+          sandboxPerTxCapUnits: 500n,
+          sandboxDailyCapUnits: 1_000n,
+          remainingDailyUnits: 3_000n,
+          remainingSandboxDailyUnits: 1_000n,
+          currentPeriodStart: 1_700_000_000n,
+          paused: false,
+        }),
+        simulateAuthorize: async () => {
+          throw new PolicyOnChainRejectedError({
+            errorName: "ExceedsSandboxPerTxCap",
+            reason: "Vượt trần Sandbox mỗi giao dịch cho địa chỉ ngoài whitelist (sandboxPerTxCap)",
+          });
+        },
+        createPayingFetch: makeMockPayingFetch({
+          payTo: UNKNOWN_PAY_TO,
+          amount: "1000",
+          onAuthorizeError: new PolicyOnChainRejectedError({
+            errorName: "PausedError",
+            reason: "Agent đang bị khóa khẩn cấp bởi Kill Switch (paused = true)",
+          }),
+        }),
+      },
+    );
+
+    const statusDefault = await gwDefault.handleGetPolicyStatus();
+    expect(statusDefault.dashboardUrl).toBe(DEFAULT_DASHBOARD_URL);
+
+    const notWhitelistedDefault = await gwDefault.handleCallTrustedApi({
+      api: "custom_partner",
+      url: "https://partner.example/api",
+      payTo: UNKNOWN_PAY_TO,
+      query: "q-not-wl",
+    });
+    expect(notWhitelistedDefault.ok).toBe(false);
+    if (!notWhitelistedDefault.ok) {
+      expect(notWhitelistedDefault.code).toBe("NOT_WHITELISTED");
+      expect(notWhitelistedDefault.hint).toContain(DEFAULT_DASHBOARD_URL);
+      expect(notWhitelistedDefault.hint).toContain("Chuyển thành API quen");
+    }
+
+    const sandboxCapDefault = await gwDefault.handleTestUnknownApi({
+      payTo: UNKNOWN_PAY_TO,
+      query: "q-sandbox-cap",
+    });
+    expect(sandboxCapDefault.ok).toBe(false);
+    if (!sandboxCapDefault.ok) {
+      expect(sandboxCapDefault.code).toBe("ExceedsSandboxPerTxCap");
+      expect(sandboxCapDefault.hint).toContain(`Địa chỉ ${UNKNOWN_PAY_TO} đã được ghi nhận`);
+      expect(sandboxCapDefault.hint).toContain(DEFAULT_DASHBOARD_URL);
+      expect(sandboxCapDefault.hint).toContain("Chuyển thành API quen");
+      expect(sandboxCapDefault.hint).toContain("setCaps");
+    }
+
+    const pausedDefault = await gwDefault.handleTestUnknownApi({
+      url: "https://unknown-paused.example/api",
+      query: "q-paused",
+    });
+    expect(pausedDefault.ok).toBe(false);
+    if (!pausedDefault.ok) {
+      expect(pausedDefault.code).toBe("PausedError");
+      expect(pausedDefault.hint).toContain(DEFAULT_DASHBOARD_URL);
+      expect(pausedDefault.hint).toContain("Mở khóa");
+    }
+
+    // 10b. Custom dashboardUrl (kèm trailing slash được chuẩn hóa bỏ dấu / cuối)
+    const gwCustom = createMcpGateway(
+      { policyAddress: POLICY_ADDR, auditLogPath, dashboardUrl: `${customDashboardUrl}/` },
+      {
+        checkWhitelist: async (addr) => addr.toLowerCase() === WEATHER_PAY_TO.toLowerCase(),
+        getPolicyStatus: async () => ({
+          policyAddress: POLICY_ADDR,
+          usdcBalanceUnits: 50_000n,
+          perTxCapUnits: 2_000n,
+          dailyCapUnits: 3_000n,
+          sandboxPerTxCapUnits: 500n,
+          sandboxDailyCapUnits: 1_000n,
+          remainingDailyUnits: 0n,
+          remainingSandboxDailyUnits: 0n,
+          currentPeriodStart: 1_700_000_000n,
+          paused: true,
+        }),
+        simulateAuthorize: async () => {
+          throw new PolicyOnChainRejectedError({
+            errorName: "ExceedsDailyCap",
+            reason: "Vượt hạn mức chi tiêu trong chu kỳ (dailyCap)",
+          });
+        },
+        createPayingFetch: makeMockPayingFetch({
+          payTo: UNKNOWN_PAY_TO,
+          amount: "1000",
+        }),
+      },
+    );
+
+    const statusCustom = await gwCustom.handleGetPolicyStatus();
+    expect(statusCustom.dashboardUrl).toBe(customDashboardUrl);
+
+    // NOT_WHITELISTED từ onBeforePayment khi gọi custom URL không truyền payTo trước
+    const notWhitelistedFrom402 = await gwCustom.handleCallTrustedApi({
+      api: "unknown_402_partner",
+      url: "https://partner-no-payto.example/api",
+      query: "q-402-not-wl",
+    });
+    expect(notWhitelistedFrom402.ok).toBe(false);
+    if (!notWhitelistedFrom402.ok) {
+      expect(notWhitelistedFrom402.code).toBe("NOT_WHITELISTED");
+      expect(notWhitelistedFrom402.hint).toContain(customDashboardUrl);
+      expect(notWhitelistedFrom402.hint).not.toContain(`${customDashboardUrl}/`);
+      expect(notWhitelistedFrom402.hint).toContain("Chuyển thành API quen");
+    }
+
+    // ExceedsDailyCap trong handleTestUnknownApi
+    const dailyCapCustom = await gwCustom.handleTestUnknownApi({
+      payTo: UNKNOWN_PAY_TO,
+      query: "q-daily-cap",
+    });
+    expect(dailyCapCustom.ok).toBe(false);
+    if (!dailyCapCustom.ok) {
+      expect(dailyCapCustom.code).toBe("ExceedsDailyCap");
+      expect(dailyCapCustom.hint).toContain(customDashboardUrl);
+      expect(dailyCapCustom.hint).toContain("setCaps");
+    }
+
+    // PausedError trong handleCallTrustedApi với trusted API weather
+    const gwCustomPaused = createMcpGateway(
+      { policyAddress: POLICY_ADDR, auditLogPath, dashboardUrl: customDashboardUrl },
+      {
+        checkWhitelist: async () => true,
+        createPayingFetch: makeMockPayingFetch({
+          payTo: WEATHER_PAY_TO,
+          amount: "1000",
+          onAuthorizeError: new PolicyOnChainRejectedError({
+            errorName: "PausedError",
+            reason: "Agent đang bị khóa khẩn cấp bởi Kill Switch (paused = true)",
+          }),
+        }),
+      },
+    );
+    const pausedTrusted = await gwCustomPaused.handleCallTrustedApi({
+      api: "weather",
+      query: "Da Lat",
+    });
+    expect(pausedTrusted.ok).toBe(false);
+    if (!pausedTrusted.ok) {
+      expect(pausedTrusted.code).toBe("PausedError");
+      expect(pausedTrusted.hint).toContain(customDashboardUrl);
+      expect(pausedTrusted.hint).toContain("Mở khóa");
+    }
   });
 });

@@ -112,7 +112,7 @@ Làm theo thứ tự, hết giờ thì dừng:
 
 1. ✅ Nút "tạo agent" trên giao diện, gọi factory (`+ Tạo agent / policy mới` + bộ chuyển policy trong `SetupCard`).
 2. ✅ Công tắc chế độ demo "bỏ qua rule engine" trên giao diện (`--bypass-rules` + `POST /api/demo-run`, đã test thật bị `ExceedsSandboxPerTxCap` trên Fuji).
-3. 🟡 Danh tính agent theo ERC-8004 (`0x8004…BD9e`): xong đọc/mã hóa/hiển thị + form `Đăng ký ERC-8004` trên web; còn 1 bước bấm ký giao dịch mint NFT từ ví Privy khi phiên đăng nhập mới.
+3. ✅ Danh tính agent theo ERC-8004 (`0x8004…BD9e`): xong đọc/mã hóa/hiển thị + form `Đăng ký ERC-8004` trên web; đã mint thật trên Fuji **NFT ID `#305`** (tx `0xc8e7…c05c`, `17/11`) cho ví chủ `0x80a8…d58A`.
 
 Không làm bản chạy trên L1 riêng.
 
@@ -146,6 +146,6 @@ Giang đánh dấu ở đây hoặc trên trang Notion theo dõi tiến độ.
 - [x] 13/11 (dời từ 15/11): agent tự mua 3 lần, lần 4 bị chặn (`ExceedsDailyCap`, policy demo 120s, chạy bằng `demo:mock`)
 - [x] 15/11: đã chốt thư viện web (Privy `@privy-io/react-auth` + `viem` thuần, bỏ `wagmi`)
 - [x] 16/11 (dời từ 18/11): xong GĐ 3c (`setCaps`, sơ đồ dòng tiền SVG) và chạy trọn 7 bước kịch bản demo thật trên Fuji
-- [ ] 18/11 (dời từ 19/11): xong phần nên có (hoặc đã quyết bỏ)
-- [ ] 19/11: README, web deploy · 20/11: video
+- [x] 18/11 (dời từ 19/11): xong phần nên có (tạo policy qua factory, công tắc `--bypass-rules`, ERC-8004 NFT `#305`; kèm nút 1-click **Chuyển thành API quen** & MCP `stdio` `agent/src/mcp.ts`)
+- [ ] 19/11: README (`✅` xong), web deploy (chờ kiểm tra Vercel ẩn danh) · 20/11: video
 - [ ] 21/11 trước trưa: đã nộp
