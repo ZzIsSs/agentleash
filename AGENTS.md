@@ -9,10 +9,10 @@ Người phụ trách kỹ thuật: **Nguyên**. Mọi việc vượt ra ngoài 
 AgentLeash là **công cụ bảo vệ và kiểm soát chi tiêu cho AI agent**, dự thi **Avalanche Team1 Vietnam UniHack 2026** (hạn nộp **21/11/2026**). Đọc [README.md](README.md) và [docs/SPEC.md](docs/SPEC.md).
 
 - **Bản chạy thật đang thi UniHack:** AI agent tự trả tiền gọi API qua chuẩn x402, nhưng tiền (USDC) nằm trong hợp đồng thông minh có sẵn hạn mức 2 tầng (tin cậy vs. thử nghiệm), danh sách tin cậy (whitelist) và nút tắt khẩn cấp (Kill Switch) do chủ sở hữu giữ quyền.
-- **Định hướng phát triển tiếp theo (dành cho người không rành kỹ thuật / non-tech):**
-  - **Bên A** là các công cụ lập trình tự động (như Antigravity, Claude Code).
-  - **Bên B** là **AgentLeash** — tích hợp vào Bên A để giúp người không biết code **tự động kiểm thử các API lạ** (giới hạn ngân sách thử nghiệm siêu nhỏ tránh đốt tiền, kiểm tra an toàn chống lừa đảo/URL độc hại, chặn lỗi vòng lặp và đánh giá dữ liệu trả về có đúng ý người dùng không).
-  - Sau khi Bên A thử xong, người dùng chỉ cần xem danh sách các API mà Bên A đã thử truy cập rồi **bấm chọn để chuyển thành API quen** (đưa vào danh sách tin cậy với hạn mức cao hơn). Hệ thống hướng tới hỗ trợ cả **API truyền thống** (dùng API Key/thẻ) lẫn **API chuẩn x402** mà người dùng non-tech không cần thao tác phức tạp với ví crypto.
+- **Định hướng phát triển (Thuần x402 MCP Gateway — Bên A & Bên B):**
+  - **Bên A** là các công cụ lập trình tự động / AI agent (như Antigravity, Claude Code).
+  - **Bên B** là **AgentLeash** — cổng kiểm thử & bảo vệ chi tiêu chuẩn x402 tích hợp vào Bên A (giới hạn ngân sách Sandbox siêu nhỏ tránh đốt tiền, kiểm tra an toàn URL, chặn lỗi vòng lặp, và nâng cấp sau này thêm chấm chất lượng output / Remote MCP).
+  - Sau khi Bên A thử gọi một API x402 mới, chủ ví chỉ cần xem danh sách giao dịch trên Dashboard rồi **bấm 1-click "Chuyển thành API quen"** để đưa vào danh sách tin cậy với hạn mức cao hơn. Giai đoạn hiện tại tập trung **100% vào chuẩn x402 trên Avalanche** cho dev và AI agent builders; phần API truyền thống chỉ là tùy chọn mở rộng dài hạn.
 
 ## 2. Người bạn đang hỗ trợ
 

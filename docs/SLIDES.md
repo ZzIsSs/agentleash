@@ -97,12 +97,12 @@
 ## Slide 12 — Bằng chứng kiểm thử & Bước tiếp theo
 - **Đã chạy & kiểm chứng thật trước ngày nộp:**
   - **Smart Contracts (Foundry):** **29/29 tests pass** (unit + invariant fuzz 128.000 calls + fork Fuji với Circle USDC thật); `AgentPolicyFactory` (`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`) & `AgentPolicy` đã deploy & verified trên Fuji.
-  - **Web Dashboard:** **54/54 vitest tests pass**, `tsc --noEmit` & `eslint` sạch.
-  - **Agent & Rule Engine:** **18/18 vitest tests pass**, `tsc --noEmit` sạch, chạy thông suốt với x402 Facilitator & 2 API Seller trên Fuji.
-- **Mở rộng sắp tới (Tầm nhìn sản phẩm cho Non-tech — Mô hình Bên A & Bên B):**
-  - **Tích hợp chuẩn danh tính agent ERC-8004** (registry `0x8004A818BFB912233c491871b3d84c89A494BD9e` trên Fuji) để xây dựng điểm uy tín API/Agent dùng chung.
-  - **Cổng MCP Gateway cho AI Coding Tools (Bên A: Antigravity, Claude Code):** Biến AgentLeash (Bên B) thành người gác cổng giúp người dùng không rành kỹ thuật cho phép AI **tự động test API lạ** qua 4 lớp (trần Sandbox, lọc URL độc hại, chặn loop, chấm chất lượng đầu ra), sau đó bấm 1-click **chuyển API đã thử thành API quen (Whitelist)**.
-  - **Hỗ trợ song song API truyền thống (Vault giữ API Key + Quota Proxy) & API x402 (ẩn thao tác crypto):** Mở rộng tệp người dùng sang hàng triệu non-tech/vibe coders.
+  - **Web Dashboard:** **77/77 vitest tests pass**, `tsc --noEmit` & `eslint` sạch (bao gồm nút 1-click **Chuyển thành API quen**).
+  - **Agent, Rule Engine & MCP Gateway (`agent/src/mcp.ts`):** **32/32 vitest tests pass**, `tsc --noEmit` sạch, chạy thông suốt với x402 Facilitator & 2 API Seller trên Fuji.
+- **Mở rộng sắp tới (Thuần x402 MCP Gateway — Mô hình Bên A & Bên B):**
+  - **Hoàn thiện chuẩn danh tính & uy tín ERC-8004** (registry `0x8004A818BFB912233c491871b3d84c89A494BD9e` trên Fuji) để xếp hạng độ tin cậy của API x402 & AI Agent.
+  - **Nâng cấp `agent/src/mcp.ts` thành MCP Gateway x402 dùng thật cho AI Coding Tools (Bên A: Antigravity, Claude Code):** Bổ sung HTTP `POST`/headers/body, siết SSRF production, sổ ánh xạ `URL ↔ payTo`, chấm chất lượng output và Remote MCP (`Streamable HTTP`) đồng bộ Dashboard.
+  - **Định vị gọn theo hệ sinh thái x402/MCP:** Phục vụ trước cho dev & AI agent builders cần bảo vệ dòng tiền x402; dài hạn có thể tùy chọn mở rộng thêm cầu nối API truyền thống cho người dùng non-tech nếu thị trường cần.
 
 ---
 
