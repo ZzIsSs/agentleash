@@ -1,37 +1,37 @@
 # AgentLeash
 
-Ví cho AI agent có **"dây xích" on-chain** và **cổng kiểm thử & bảo vệ API** cho người dùng dùng công cụ lập trình tự động, dự thi **Team1 Vietnam UniHack 2026** trên Avalanche (Track *AI Agents & Security / Agent Economy on x402*).
+Ví cho AI agent có **"dây xích" on-chain** và **cổng kiểm thử & bảo vệ chi tiêu x402 (MCP Gateway)**, dự thi **Team1 Vietnam UniHack 2026** trên Avalanche (Track *AI Agents & Security / Agent Economy on x402*).
 
-**Một câu:** AI agent tự thanh toán API qua chuẩn HTTP **x402**, nhưng USDC nằm trong `AgentPolicy` contract của chủ sở hữu; agent chỉ được xin duyệt chi (`authorize`), smart contract mới là chốt chặn cuối theo hạn mức 2 tầng (Trusted / Sandbox), whitelist và Kill Switch — làm nền tảng phát triển thành cổng bảo vệ giúp người dùng không rành kỹ thuật (non-tech) cho phép AI coding agent tự test API lạ an toàn rồi duyệt thành API quen.
+**Một câu:** AI agent tự thanh toán API qua chuẩn HTTP **x402**, nhưng USDC nằm trong `AgentPolicy` contract của chủ sở hữu; agent chỉ được xin duyệt chi (`authorize`), smart contract mới là chốt chặn cuối theo hạn mức 2 tầng (Trusted / Sandbox), whitelist và Kill Switch — bảo vệ dev, AI agent builders và người dùng khi agent gọi các API x402 mới qua CLI hoặc MCP.
 
 > **Khai báo mô phỏng (Luật 6):** Bản demo rút ngắn chu kỳ hạn mức xuống **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và hai API Thời tiết / Tỷ giá trả dữ liệu mock. Lượt chạy agent trong video dùng LLM giả lập (`--mock-llm`) theo kịch bản cố định; thanh toán x402, `AgentPolicy`, ERC-1271/EIP-3009 và quản trị policy vẫn chạy thật trên **Avalanche Fuji**. Tích hợp Gemini thật có sẵn qua `npm --prefix agent run demo:gd2`.
 
 ---
 
-## Tầm nhìn & Hướng phát triển: Cổng bảo vệ API cho người dùng Non-Tech (Bên A – Bên B)
+## Tầm nhìn & Hướng phát triển: Cổng bảo vệ chi tiêu x402 cho AI Agents (Bên A – Bên B)
 
-Người dùng không rành code (non-tech / vibe coders) khi dùng các công cụ lập trình tự động (**Bên A**: Antigravity, Claude Code, ...) thường gặp 4 nỗi sợ lớn khi AI tự kết nối API ngoài: **lộ API Key / cháy tiền thẻ tín dụng**, **gọi nhầm API giả mạo/độc hại**, **AI bị kẹt vòng lặp đốt hết ngân sách**, và **không biết dữ liệu API trả về có đúng ý mình hay không**.
+Khi dùng các công cụ lập trình hoặc AI agent (**Bên A**: Antigravity, Claude Code, agent tự động...) kết nối với các dịch vụ thu phí theo lượt gọi chuẩn HTTP **x402**, chủ ví thường gặp 4 rủi ro lớn: **agent gọi nhầm endpoint lừa đảo/độc hại rút sạch ví**, **bị kẹt vòng lặp (loop bug) đốt hết ngân sách**, **prompt injection đổi địa chỉ nhận tiền (`payTo`)**, và **không kiểm soát được chất lượng dữ liệu trả về**.
 
-**AgentLeash (Bên B)** tích hợp trực tiếp vào **Bên A** (dưới dạng MCP Gateway / Proxy) để giải quyết bài toán này qua cơ chế **"Thử API lạ an toàn → Duyệt thành API quen"**:
+**AgentLeash (Bên B)** tích hợp trực tiếp vào **Bên A** qua **MCP Gateway** để giải quyết bài toán này theo cơ chế **"Thử API x402 lạ an toàn → Duyệt thành API quen"**:
 
 ```mermaid
 flowchart LR
-  User["Người dùng Non-tech"] -->|"1. Ra lệnh làm tính năng"| A["Bên A: Antigravity / Claude Code"]
-  A -->|"2. Gọi qua MCP / Proxy"| B["Bên B: AgentLeash Gateway"]
-  B -->|"API lạ: Test qua 4 lớp bảo vệ"| Sandbox["Sandbox (hạn mức siêu nhỏ, lọc URL, chặn loop, chấm output)"]
-  B -->|"API quen: Thực thi bình thường"| Trusted["Trusted / Whitelist (hạn mức cao hơn, Vault giữ key)"]
-  User -->|"3. Chọn API đã thử để chuyển thành Quen"| B
+  User["Chủ ví / Dev / Builder"] -->|"1. Giao việc cho agent"| A["Bên A: Antigravity / Claude Code / Agent"]
+  A -->|"2. Gọi qua MCP Gateway"| B["Bên B: AgentLeash (RuleEngine + AgentPolicy)"]
+  B -->|"API x402 lạ: Test qua 4 lớp bảo vệ"| Sandbox["Sandbox (trần siêu nhỏ, lọc SSRF, chặn loop, chấm output)"]
+  B -->|"API x402 quen: Thực thi ổn định"| Trusted["Trusted / Whitelist (hạn mức cao hơn trên Fuji)"]
+  User -->|"3. Bấm 1-click chuyển thành API quen"| B
 ```
 
-1. **Tự động test API lạ (4 lớp bảo vệ):**
-   - **Trần ngân sách Sandbox siêu nhỏ:** Cho phép Bên A gọi thử API có phí trong hạn mức an toàn tuyệt đối.
-   - **Kiểm tra an toàn & uy tín:** Lọc URL giả mạo, domain độc hại, chống rò rỉ dữ liệu hoặc tấn công SSRF.
-   - **Chặn vòng lặp & Rate limit:** Tự động ngắt khi Bên A gọi lặp bất thường, thông báo nguyên nhân bằng tiếng Việt dễ hiểu.
-   - **Đánh giá chất lượng đầu ra:** Kiểm tra dữ liệu API trả về có hợp lệ và đáp ứng đúng mục tiêu ban đầu của người dùng không.
-2. **Sử dụng API quen & chuyển đổi 1-click:** Người dùng xem danh sách các API mà Bên A đã thử truy cập ngay trên Dashboard và bấm chọn chuyển thành **API quen (Whitelist)** để dùng lâu dài.
-3. **Kết hợp cả API truyền thống & API x402:** Hỗ trợ đồng thời **API chuẩn x402** (thanh toán vi mô minh bạch bằng `AgentPolicy` trên Avalanche) và định hướng mở rộng sang **API truyền thống** (dùng API Key/thẻ qua két bảo mật Vault & Quota Proxy, không đưa key thật cho Bên A).
+1. **Tự động test API x402 lạ (4 lớp bảo vệ):**
+   - **Trần ngân sách Sandbox siêu nhỏ:** Cho phép Bên A thử gọi API x402 lạ trong hạn mức an toàn tuyệt đối trên `AgentPolicy`.
+   - **Kiểm tra an toàn & chống giả mạo:** Lọc URL độc hại, kiểm tra khớp `payTo`/giá và chặn SSRF.
+   - **Chặn vòng lặp & Rate limit:** Tự động ngắt khi Bên A gọi lặp bất thường, thông báo nguyên nhân bằng tiếng Việt rõ ràng.
+   - **Đánh giá chất lượng đầu ra (hướng mở rộng):** Kiểm tra dữ liệu API trả về có hợp lệ trước khi Bên A sử dụng tiếp.
+2. **Sử dụng API quen & chuyển đổi 1-click:** Chủ ví xem danh sách các giao dịch/từ chối mà Bên A đã thử ngay trên Dashboard và bấm chọn **Chuyển thành API quen** (`setWhitelist`) để cấp hạn mức Trusted.
+3. **Định vị tập trung thuần x402:** Giai đoạn đầu tập trung 100% vào thanh toán chuẩn **x402** (USDC trên Avalanche) cho dev / AI agent builders để kiến trúc gọn, đồng nhất và bảo mật on-chain tuyệt đối; dài hạn có thể cân nhắc bổ sung lớp mở rộng hỗ trợ API truyền thống nếu phục vụ thêm người dùng non-tech phổ thông.
 
-> **Ranh giới bản nộp UniHack (21/11/2026):** Toàn bộ kiến trúc ví chính sách 2 tầng (`AgentPolicy`), Rule Engine, 2 API x402, CLI agent và Dashboard quản trị đang chạy thật trên Avalanche Fuji. Phần tích hợp sâu cho non-tech (MCP Gateway đa nền tảng, Proxy giữ API Key truyền thống và trải nghiệm ẩn hoàn toàn thao tác crypto) là **hướng phát triển tiếp theo** từ nền tảng Sandbox/Whitelist hiện có.
+> **Ranh giới bản nộp UniHack (21/11/2026):** Toàn bộ kiến trúc ví chính sách 2 tầng (`AgentPolicy`), Rule Engine, 2 API x402, CLI agent, Dashboard quản trị và bản cầu nối MCP `stdio` (`agent/src/mcp.ts` cho luồng x402 trên Fuji) đang chạy thật. Phần nâng cấp `mcp.ts` thành **MCP Gateway x402 thực thụ** (hỗ trợ `POST`/headers/body, siết SSRF dải IP nội bộ cho production, sổ đăng ký `URL ↔ payTo` + chấm chất lượng output và Remote MCP `Streamable HTTP` đồng bộ DB) là **hướng phát triển tiếp theo** sau hạn nộp (chi tiết tại [docs/SPEC.md](docs/SPEC.md#L223)).
 
 ---
 

@@ -220,16 +220,28 @@ Rule engine chặn sớm và rẻ. Policy contract là lớp cuối, không ai v
 
 ---
 
-## Định hướng phát triển tiếp theo (Mô hình Bên A – Bên B cho người dùng Non-tech)
+## Định hướng phát triển tiếp theo (Thuần x402 MCP Gateway — Mô hình Bên A – Bên B)
 
-Sau khi hoàn thiện MVP bảo vệ chi tiêu x402 trên Avalanche Fuji, sản phẩm phát triển theo hướng trở thành **công cụ tích hợp cho người dùng không có nền tảng kỹ thuật (non-tech)** khi sử dụng các công cụ lập trình tự động:
+Sau khi hoàn thiện MVP bảo vệ chi tiêu x402 trên Avalanche Fuji, sản phẩm phát triển tập trung **thuần theo chuẩn HTTP `x402` (USDC on-chain)** để làm cổng kiểm thử & quản lý ngân sách cho AI agents và công cụ lập trình tự động:
 
 - **Vai trò hai bên:**
-  - **Bên A (AI Coding Agents):** Antigravity, Claude Code, Cursor, ...
-  - **Bên B (AgentLeash):** Đóng vai cổng kiểm thử & bảo vệ API (MCP Gateway + Proxy + Policy Dashboard) cắm vào Bên A.
+  - **Bên A (AI Agents / Coding Tools):** Antigravity, Claude Code, Cursor, hoặc agent tự động dùng MCP.
+  - **Bên B (AgentLeash):** Đóng vai cổng kiểm thử & bảo vệ chi tiêu x402 (MCP Gateway + Rule Engine + `AgentPolicy` + Dashboard) cắm vào Bên A.
 - **Luồng nghiệp vụ chính:**
-  1. **Tự động test API lạ (Sandbox):** Khi Bên A cần thử một API mới, Bên B áp dụng 4 lớp kiểm tra: (a) giới hạn ngân sách Sandbox siêu nhỏ, (b) kiểm tra uy tín/an toàn URL chống giả mạo và SSRF, (c) chặn vòng lặp / giới hạn tần suất (rate limit), (d) đánh giá kết quả trả về có khớp với mục tiêu người dùng không.
-  2. **Sử dụng API quen (Whitelist / Trusted):** Các API đã tin cậy được gọi với hạn mức cao hơn qua cấu hình ổn định.
-  3. **Chuyển "Lạ → Quen":** Trên giao diện của Bên B, người dùng non-tech xem lại danh sách các API mà Bên A đã thử truy cập (kèm kết quả đánh giá và chi phí) và bấm chọn để chuyển thành API quen (`setWhitelist`).
-- **Phạm vi API mục tiêu:** Hỗ trợ kết hợp cả **API chuẩn x402** (chính sách chi tiêu on-chain chạy ngầm trên Avalanche) và **API truyền thống** (API Key / thẻ tín dụng thông qua lớp Vault giữ khóa & Quota Proxy, không lộ khóa gốc cho Bên A).
-- **Nguyên tắc với bản nộp 21/11:** Không thay đổi hoặc làm mất ổn định Smart Contract (`AgentPolicy.sol`) và luồng demo 7 bước đã nghiệm thu; chỉ bổ sung lớp cầu nối mỏng (nếu kịp trước hạn) và đưa phần mở rộng toàn diện vào Roadmap/Pitch.
+  1. **Tự động test API x402 lạ (Sandbox):** Khi Bên A cần thử một endpoint x402 mới, Bên B áp dụng 4 lớp kiểm tra: (a) giới hạn ngân sách Sandbox siêu nhỏ trên `AgentPolicy`, (b) kiểm tra an toàn URL chống giả mạo và SSRF, (c) chặn vòng lặp / giới hạn tần suất (rate limit), (d) đánh giá chất lượng dữ liệu trả về.
+  2. **Sử dụng API x402 quen (Whitelist / Trusted):** Các địa chỉ `payTo` đã tin cậy được gọi với hạn mức cao hơn qua cấu hình ổn định.
+  3. **Chuyển "Lạ → Quen" 1-click:** Trên Dashboard của Bên B, chủ ví xem lại các giao dịch x402 mà Bên A đã thử (kèm chi phí và trạng thái) rồi bấm chọn **Chuyển thành API quen** (`setWhitelist`).
+- **Định vị thị trường & phạm vi (chốt 18/11/2026):**
+  - **Tập trung 100% vào x402:** Mọi thanh toán đều đi qua HTTP `402` + EIP-3009 USDC + `AgentPolicy` trên Avalanche, giúp kiến trúc đồng nhất và giữ sắc nét lý do bắt buộc dùng smart contract on-chain. Đối tượng dùng đầu tiên là **dev / AI agent builders** và các agent trong hệ sinh thái x402/MCP.
+  - **Tầm nhìn dài hạn (tùy chọn ngoài phạm vi hiện tại):** Nếu về sau mở rộng sang tệp người dùng non-tech phổ thông khi hệ sinh thái x402 chưa phủ đủ API thường ngày, mới cân nhắc bổ sung thêm lớp Vault giữ API Key truyền thống ở tầng Gateway.
+- **Nguyên tắc với bản nộp 21/11:** Không thay đổi hoặc làm mất ổn định Smart Contract (`AgentPolicy.sol`) và luồng demo 7 bước đã nghiệm thu; giữ bản cầu nối MCP `stdio` hiện tại (`agent/src/mcp.ts` cho luồng x402 trên Fuji) và đưa các hạng mục nâng cấp sau đây vào Roadmap/Pitch.
+
+### Lộ trình nâng cấp `agent/src/mcp.ts` thành MCP Gateway x402 thực thụ (sau 21/11)
+
+Bản `agent/src/mcp.ts` hiện tại đã chạy chuẩn MCP `stdio` cho luồng thanh toán x402 trên Fuji (`test_unknown_api`, `call_trusted_api`, `get_policy_status`). Để nâng cấp thành cổng MCP x402 dùng hằng ngày ngoài thực tế, các bước mở rộng ưu tiên gồm:
+
+1. **Hỗ trợ đầy đủ phương thức HTTP (`POST`, `PUT`, `DELETE`), headers & JSON body:** Mở rộng `executePaidRequest` (hiện chỉ gọi `GET`) để gọi được các API x402 thực tế cần truyền payload hoặc header tùy biến.
+2. **Siết bảo vệ SSRF mức production:** Tách cấu hình dev/demo khỏi production để chặn triệt để `localhost`, `127.0.0.1`, các dải IP nội bộ (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `::1`) và DNS rebinding (hiện mới chặn cloud metadata hosts để giữ khả năng gọi seller local khi demo).
+3. **Sổ đăng ký `URL/domain ↔ payTo` & Lớp đánh giá chất lượng output (Lớp 4):** Ánh xạ tên API quen sang URL/địa chỉ nhận tiền tương ứng (thay vì chỉ whitelist theo `payTo` on-chain) và kiểm tra schema/độ khớp mục tiêu người dùng trước khi trả dữ liệu cho Bên A.
+4. **Remote MCP (`Streamable HTTP`) + Storage dùng chung + Session Key:** Chuyển từ tiến trình `stdio` cục bộ (đòi Node ≥ 22, `AGENT_PRIVATE_KEY` trong `.env` và `agent/logs/audit.json` local) sang Remote MCP nối DB đồng bộ với Dashboard Vercel và cơ chế session key giới hạn quyền do chủ ví ủy quyền.
+5. *(Tùy chọn dài hạn nếu mở rộng sang non-tech đại chúng)* **Vault giữ API Key truyền thống:** Bổ sung proxy giữ `Bearer` / `x-api-key` cho API Web2 thông thường, không làm ảnh hưởng lõi on-chain x402.
