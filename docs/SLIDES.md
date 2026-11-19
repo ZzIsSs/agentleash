@@ -36,7 +36,7 @@
   `Người dùng (Privy Email)` → `AgentPolicyFactory` → `AgentPolicy (giữ USDC)`
   `AI Agent (chỉ giữ ít AVAX gas)` → `402 từ Seller (4021 / 4023)` → `Rule Engine` → `AgentPolicy.authorize()` → `x402 Header (PAYMENT-SIGNATURE)` → `Facilitator (4022)` → `Circle USDC.transferWithAuthorization` → `AgentPolicy.isValidSignature()`
 - **Điểm kỹ thuật mấu chốt:**
-  - `AgentPolicy.authorize(...)` tính đúng **EIP-712 digest** của `FiatTokenV2_2` (`transferWithAuthorization`) ngay trên chuỗi và ghi nhận `authorizedDigests[digest]`.
+  - `AgentPolicy.authorize(...)` tính đúng **EIP-712 digest** của `FiatTokenV2_2` (`transferWithAuthorization`) ngay trên chuỗi và ghi nhận `approvedUntil[digest]`.
   - Khi x402 Facilitator gọi `USDC.transferWithAuthorization(...)`, USDC Fuji gọi ngược `AgentPolicy.isValidSignature(digest, sig)` (**ERC-1271**) — trả `0x1626ba7e` chỉ khi digest đã duyệt, chưa quá hạn và contract chưa `paused`.
   - Nếu facilitator không settle, chủ/agent gọi `release(nonce)` để hoàn hạn mức nhưng **chỉ tăng hạn mức khả dụng**, không phá vỡ bất biến ngân sách.
 
@@ -65,7 +65,7 @@
 
 ## Slide 8 — Kịch bản Demo 7 bước chạy thật trên Avalanche Fuji
 - **Hiển thị ảnh Dashboard (4 thẻ một màn hình, Dark Mode):**
-  - `[1] Tổng quan`: Số dư `0.051 USDC`, đồng hồ hạn mức Whitelist (`0.003`) & Sandbox (`0.001`), nút đỏ **KHÓA KHẨN CẤP**.
+  - `[1] Tổng quan`: Số dư `0.034 USDC`, đồng hồ hạn mức Whitelist (`0.003`) & Sandbox (`0.001`), nút đỏ **KHÓA KHẨN CẤP**.
   - `[2] Dòng tiền`: Sơ đồ SVG `AI Agent → AgentPolicy → Thời tiết / Tỷ giá / Địa chỉ lạ` + danh sách kèm link Snowtrace.
   - `[3] Policy & luật chi tiêu`: Tạo policy qua Factory, bật/tắt Whitelist, sửa 4 ngưỡng `setCaps` ngay trên web.
   - `[4] Bị từ chối`: Gộp cả chặn off-chain (`RuleEngine`) lẫn revert on-chain (`ExceedsDailyCap`, `ExceedsSandboxPerTxCap`, `PausedError`).
@@ -97,9 +97,8 @@
 ## Slide 12 — Bằng chứng kiểm thử & Bước tiếp theo
 - **Đã chạy & kiểm chứng thật trước ngày nộp:**
   - **Smart Contracts (Foundry):** **29/29 tests pass** (unit + invariant fuzz 128.000 calls + fork Fuji với Circle USDC thật); `AgentPolicyFactory` (`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`) & `AgentPolicy` đã deploy & verified trên Fuji.
-  - **Web Dashboard:** **77/77 vitest tests pass**, `tsc --noEmit` & `eslint` sạch (bao gồm nút 1-click **Chuyển thành API quen**).
-  - **Agent, Rule Engine & MCP Gateway (`agent/src/mcp.ts`):** **33/33 vitest tests pass**, `tsc --noEmit` sạch, chạy thông suốt với x402 Facilitator & 2 API Seller trên Fuji (trả link Dashboard khi cần chủ ví duyệt, đã thử thật Khóa/Mở khóa qua bản Vercel `https://agentleash-two.vercel.app`).
-- **Đang hoàn thiện trước 21/11:** **1 lệnh setup** tự ghi cấu hình MCP cho Claude Code / Antigravity, người dùng không phải sửa tay `.json` (xong thì chuyển lên mục đã kiểm chứng ở trên).
+  - **Web Dashboard:** **86/86 vitest tests pass**, `tsc --noEmit`, `eslint` & `next build` sạch (gồm nút 1-click **Chuyển thành API quen**, ô **Thêm API quen bằng địa chỉ**, và tùy chọn đọc mục *Bị từ chối* qua Upstash Redis khi cấu hình).
+  - **Agent, Rule Engine & MCP Gateway (`agent/src/mcp.ts`):** **49/49 vitest tests pass**, `tsc --noEmit` sạch, chạy thông suốt với x402 Facilitator & 2 API Seller trên Fuji (trả link Dashboard khi cần chủ ví duyệt, đã thử thật Khóa/Mở khóa qua bản Vercel `https://agentleash-two.vercel.app`, hỗ trợ 1 lệnh `npm --prefix agent run setup:mcp` cho Claude Code & Antigravity).
 - **Mở rộng sau 21/11 (Mức phức tạp — Remote MCP đa người dùng thuần x402):**
   - **Hoàn thiện chuẩn danh tính & uy tín ERC-8004** (registry `0x8004A818BFB912233c491871b3d84c89A494BD9e` trên Fuji) để xếp hạng độ tin cậy của API x402 & AI Agent.
   - **Nâng cấp lên Remote MCP Cloud (`Streamable HTTP` + OAuth Privy + DB dùng chung + Plugin Marketplace):** Cài 1 chạm trên IDE như Canva/Notion/Figma không cần Node/.env local, hỗ trợ HTTP `POST`/headers/body, siết SSRF production, sổ ánh xạ `URL ↔ payTo` và chấm chất lượng output.
