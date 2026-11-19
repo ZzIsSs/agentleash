@@ -147,5 +147,5 @@ Giang đánh dấu ở đây hoặc trên trang Notion theo dõi tiến độ.
 - [x] 15/11: đã chốt thư viện web (Privy `@privy-io/react-auth` + `viem` thuần, bỏ `wagmi`)
 - [x] 16/11 (dời từ 18/11): xong GĐ 3c (`setCaps`, sơ đồ dòng tiền SVG) và chạy trọn 7 bước kịch bản demo thật trên Fuji
 - [x] 18/11 (dời từ 19/11): xong phần nên có (tạo policy qua factory, công tắc `--bypass-rules`, ERC-8004 NFT `#305`; kèm nút 1-click **Chuyển thành API quen** & MCP `stdio` `agent/src/mcp.ts`)
-- [ ] 19/11: README (`✅` xong), 1 lệnh `setup:mcp` (`✅` PR #15), web deploy (bỏ từ 20/11, không dùng Vercel nữa; demo chạy local) · 20/11: video
+- [ ] 19/11: README (`✅` xong), PR #14 & PR #15 (`✅` ô thêm whitelist địa chỉ, Upstash tùy chọn, `setup:mcp`), web deploy (bỏ từ 20/11, không dùng Vercel nữa; demo chạy local) · 20/11: video
 - [ ] 21/11 trước trưa: đã nộp
