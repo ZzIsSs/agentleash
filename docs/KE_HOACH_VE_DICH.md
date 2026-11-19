@@ -42,7 +42,7 @@ Lập ngày 13/11/2026 cho Nguyên. File này gom **mọi việc còn lại** đ
 | **T2 16/11** | GĐ 3c (7–8h): Luật chi tiêu (`setCaps`, `setWhitelist`), cập nhật realtime (`watchContractEvent` hoặc hỏi định kỳ 3 giây), chạy agent từ CLI song song với dashboard. **Chạy trọn 7 bước demo trong [SPEC.md](SPEC.md)** | 7 bước chạy liền một mạch, không phải sửa tay |
 | **T3 17/11** | Dư giờ hoặc phương án B của GĐ 3 (4h). Bắt đầu slide (3h): dàn ý 10–12 trang, đủ 3 câu bắt buộc và phần luật Việt Nam. **20:00 Workshop 3** (đăng ký Luma trước) | Demo ổn định; có slide nháp |
 | **T4 18/11** | GĐ 4 (6–8h), làm theo thứ tự, hết giờ thì dừng: nút tạo agent qua factory → công tắc "bỏ qua rule engine" trên UI → danh tính ERC-8004 (registry `0x8004A818BFB912233c491871b3d84c89A494BD9e`) | Mỗi mục làm xong có PR riêng, hoặc ghi rõ "đã bỏ" ở ROADMAP |
-| **T5 19/11** | GĐ 5a (6–7h): README (sơ đồ kiến trúc, địa chỉ contract, chạy bằng 3 lệnh), `scripts/seed-demo`, deploy web lên Vercel (đọc dữ liệu on-chain thật), hoàn thiện slide. **20:00 Office Hours 1**: mang demo tới hỏi mentor | Mở link Vercel bằng tab ẩn danh thấy dữ liệu thật |
+| **T5 19/11** | GĐ 5a (6–7h): README (sơ đồ kiến trúc, địa chỉ contract, chạy bằng 3 lệnh), `scripts/seed-demo`, ~~deploy web lên Vercel~~ (bỏ từ 20/11, demo chạy local), hoàn thiện slide. **20:00 Office Hours 1**: mang demo tới hỏi mentor | Dashboard local chạy đủ 5 trang với dữ liệu Fuji thật |
 | **T6 20/11** | Tập kịch bản, quay và dựng video 2–3 phút, câu khai chu kỳ giả lập và dữ liệu mock ở **giây đầu** (luật 6), up YouTube unlisted (5–6h). Soạn nháp form nộp (1h). **20:00 Office Hours 2**: xin góp ý video và slide | Video, slide, form nháp đều đã lưu |
 | **T7 21/11** | Sáng: chạy checklist bên dưới, mở mọi link ở tab ẩn danh, bấm **Submit** trước 12:00. Chiều: dự phòng | Trang Profile hiện trạng thái đã nộp |
 | 23–30/11 | Nếu vào Top 10 (công bố 23/11): đăng ký Final Demo Day trên Luma, tập pitch trực tiếp, chuẩn bị câu hỏi giám khảo, nhất là "khác gì Safe allowance module" (SPEC mục "Chưa chốt" 4). Demo Day 09:00 T2 30/11 | — |
@@ -74,7 +74,7 @@ Rút từ [doc/07](../../doc/07-yeu-cau-nop-bai.md) và [doc/06](../../doc/06-ti
 | Slide nhấn Avalanche Integration (25 điểm): ERC-1271 + EIP-3009 trên USDC Fuji, x402, facilitator tự host, ERC-8004 nếu kịp | 19/11 |
 | Khai dữ liệu mock và chu kỳ giả lập ngay đầu pitch và video | 20/11 |
 | Video 2–3 phút, xem được khi chưa đăng nhập | 20/11 |
-| Live app (không bắt buộc): link Vercel kèm tài khoản test | ✅ `https://agentleash-two.vercel.app`: khách chưa đăng nhập vẫn xem được dữ liệu Fuji (kiểm 18/11); 21/11 mở lại bằng tab ẩn danh |
+| Live app (không bắt buộc) | Để trống: nhóm không dùng Vercel nữa (chốt 20/11), giám khảo xem qua video demo, repo và Snowscan |
 | "What it does" ≤ 800 ký tự: vấn đề, cho ai, cái gì chạy được hôm nay | 20/11 |
 | "Anything else" ≤ 800 ký tự: cách chạy agent local, rule engine + policy contract + LLM không giữ khóa | 20/11 |
 | Mở mọi link bằng tab ẩn danh rồi mới bấm **Submit** | 21/11 |
@@ -90,6 +90,6 @@ Tick ở đây khi xong mốc của từng ngày.
 - [x] 16/11: xong GĐ 3c (`setCaps` 2 tầng + kiểm tra ràng buộc trên web, sơ đồ SVG `Agent → Policy → API` ở ô Dòng tiền) và chạy trọn 7 bước demo thật trên Fuji (policy `0x62Ea…4177`: `demo:mock` 3 khoản + lần 4 `ExceedsDailyCap`, `demo:bypass` `ExceedsSandboxPerTxCap`, `pause` `0x75db…fe3f` → 4 lần `PausedError` → `unpause` `0xa1f9…c883`, `setCaps` `0x949a…04c7` → khôi phục mặc định `0xb31b…c5b2`). Vitest 54/54, agent tests 18/18, build web sạch
 - [ ] 17/11: slide nháp (`✅` Canva 12 trang + PR #8/#10), dự Workshop 3 (chưa xác nhận tham dự)
 - [x] 18/11: GĐ 4 xong (tạo policy qua factory, công tắc `--bypass-rules`, ERC-8004 NFT `#305` tx `0xc8e7…c05c`; cộng thêm nút 1-click **Chuyển thành API quen** & MCP `stdio` gắn link Dashboard)
-- [ ] 19/11: README (`✅` xong), web deploy (`✅` làm sớm 18/11 sau PR #12: `agentleash-two.vercel.app` chế độ khách đọc đủ số dư, hạn mức, Dòng tiền, whitelist, ERC-8004 `#305`; chủ ví đăng nhập Privy và Khóa `0x4af5…a35c` → Mở khóa `0x05f3…f9ec` thật), slide chốt view-only, Office Hours 1
+- [ ] 19/11: README (`✅` xong), web deploy (bỏ từ 20/11, không dùng Vercel nữa; demo chạy local), slide chốt view-only, Office Hours 1
 - [ ] 20/11: video, form nháp (`✅` đã có nháp trong `SLIDES.md`), Office Hours 2
 - [ ] 21/11 trước 12:00: đã Submit

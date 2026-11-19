@@ -31,7 +31,7 @@ flowchart LR
 2. **Sử dụng API quen & chuyển đổi 1-click:** Chủ ví xem danh sách các giao dịch/từ chối mà Bên A đã thử ngay trên Dashboard và bấm chọn **Chuyển thành API quen** (`setWhitelist`) để cấp hạn mức Trusted.
 3. **Định vị tập trung thuần x402:** Giai đoạn đầu tập trung 100% vào thanh toán chuẩn **x402** (USDC trên Avalanche) cho dev / AI agent builders để kiến trúc gọn, đồng nhất và bảo mật on-chain tuyệt đối; dài hạn có thể cân nhắc bổ sung lớp mở rộng hỗ trợ API truyền thống nếu phục vụ thêm người dùng non-tech phổ thông.
 
-> **Ranh giới bản nộp UniHack (21/11/2026):** Toàn bộ kiến trúc ví chính sách 2 tầng (`AgentPolicy`), Rule Engine, 2 API x402, CLI agent, Dashboard quản trị và bản MCP local (`agent/src/mcp.ts` trả kèm `DASHBOARD_URL`, cùng 1 lệnh setup tự ghi cấu hình để không phải sửa tay `.json`) nằm trong phạm vi nộp. Phần **phức tạp** để nâng cấp lên **Remote MCP đa người dùng** (Cloud `Streamable HTTP` + OAuth Privy + Session Key từng user + DB dùng chung với Vercel + Plugin Marketplace, cùng `POST`/body, siết SSRF IP nội bộ production và sổ `URL ↔ payTo` + chấm output) là **hướng phát triển tiếp theo sau 21/11** (chi tiết tại [docs/SPEC.md](docs/SPEC.md#L223)).
+> **Ranh giới bản nộp UniHack (21/11/2026):** Toàn bộ kiến trúc ví chính sách 2 tầng (`AgentPolicy`), Rule Engine, 2 API x402, CLI agent, Dashboard quản trị và bản MCP local (`agent/src/mcp.ts` trả kèm `DASHBOARD_URL`, cùng 1 lệnh setup tự ghi cấu hình để không phải sửa tay `.json`) nằm trong phạm vi nộp. Phần **phức tạp** để nâng cấp lên **Remote MCP đa người dùng** (Cloud `Streamable HTTP` + OAuth Privy + Session Key từng user + DB dùng chung với Dashboard cloud + Plugin Marketplace, cùng `POST`/body, siết SSRF IP nội bộ production và sổ `URL ↔ payTo` + chấm output) là **hướng phát triển tiếp theo sau 21/11** (chi tiết tại [docs/SPEC.md](docs/SPEC.md#L223)).
 
 ---
 
@@ -97,7 +97,7 @@ node --env-file=.env scripts/seed-demo.mjs && npm --prefix agent run demo:mock
 | `contracts/` | `AgentPolicy.sol`, `AgentPolicyFactory.sol` (Foundry: ERC-1271, EIP-3009, 2 tầng hạn mức, Kill Switch, `release(nonce)`). |
 | `agent/` | CLI agent (`gemini-3.8-flash` & `--mock-llm`), MCP Gateway (`src/mcp.ts`), off-chain `RuleEngine`, `PolicySigner`, nhật ký `audit.json`. |
 | `sellers/` | 2 API thu phí x402 (`4021` Thời tiết, `4023` Tỷ giá) giá `0.001 USDC/lượt`. |
-| `web/` | Dashboard Next.js 15 + Privy + viem thuần: 4 ô (Tổng quan, Sơ đồ SVG Dòng tiền, Whitelist + `setCaps` + Factory + ERC-8004 + nút 1-click **Chuyển thành API quen**, Công tắc `--bypass-rules` + Bị từ chối). |
+| `web/` | Dashboard Next.js 15 + Privy + viem thuần, 5 trang: Tổng quan (hạn mức 2 tầng, thanh Demo 2 phút, Kill Switch), Dòng tiền x402, Policy & Luật 2 tầng (Whitelist, `setCaps`, Factory, ERC-8004, nút 1-click **Chuyển thành API quen**), Nhật ký & Rules (Bị từ chối off/on-chain), MCP Bên A – Bên B. |
 | `scripts/` | `seed-demo.mjs` kiểm tra on-chain policy, số dư, dịch vụ local và hỗ trợ khôi phục trạng thái demo. |
 | `docs/` | `SPEC.md`, `ROADMAP.md`, `KE_HOACH_VE_DICH.md`, `SLIDES.md`, `SPIKE.md`, `sessions/`. |
 
@@ -110,9 +110,7 @@ node --env-file=.env scripts/seed-demo.mjs && npm --prefix agent run demo:mock
 - `call_trusted_api`: Gọi API trong danh mục Trusted (`weather`, `rates`) hoặc API vừa được chủ ví bấm **Chuyển thành API quen** (`setWhitelist`) trên Dashboard.
 - `get_policy_status`: Xem nhanh số dư USDC, hạn mức Trusted/Sandbox còn lại và trạng thái Kill Switch.
 
-> **Phân quyền (Luật 3 & 4):** MCP tuyệt đối không giữ khóa `owner`. Khi gặp `NOT_WHITELISTED`, vượt hạn mức hoặc `PausedError`, trường `hint` sẽ trả kèm sẵn đường link `DASHBOARD_URL` (mặc định `http://localhost:3000`; khi chạy online đổi sang `https://agentleash-two.vercel.app` trong `.env` hoặc mục `env` của `.mcp.json`) để chủ ví mở ra ký bằng Privy.
->
-> Bản Vercel đọc dữ liệu on-chain nên ký được Mở khóa, `setCaps`, Gỡ/Thêm 2 API whitelist và nút **Chuyển thành API quen** cho các khoản đã có trong Dòng tiền. Riêng mục **Bị từ chối** chỉ có khi Dashboard chạy cùng máy với agent (đọc `agent/logs/audit.json`), nên muốn duyệt một địa chỉ bị contract từ chối thì dùng `http://localhost:3000`.
+> **Phân quyền (Luật 3 & 4):** MCP tuyệt đối không giữ khóa `owner`. Khi gặp `NOT_WHITELISTED`, vượt hạn mức hoặc `PausedError`, trường `hint` sẽ trả kèm sẵn đường link `DASHBOARD_URL` (mặc định `http://localhost:3000`) để chủ ví mở ra ký bằng Privy.
 
 Chạy thử trực tiếp:
 
@@ -134,17 +132,13 @@ Cấu hình được ghi chỉ gồm đường dẫn tuyệt đối tới `node`
 
 ---
 
-## Bản online trên Vercel
+## Demo chạy local
 
-Dashboard Production: **`https://agentleash-two.vercel.app`** (tự deploy mỗi khi merge vào `main`). Khách chưa đăng nhập vẫn xem được dữ liệu on-chain trên Fuji. Chủ ví đăng nhập Privy để ký Khóa/Mở khóa, `setCaps` và whitelist, kể cả ô **Thêm API quen bằng địa chỉ** để dán địa chỉ `payTo` lấy từ gợi ý MCP.
+Bản nộp UniHack chạy hoàn toàn trên máy: Dashboard tại `http://localhost:3000`, Facilitator `4022`, 2 API Seller `4021`/`4023`, giao dịch thật trên Fuji. Nhóm **không duy trì bản online** (đã bỏ Vercel từ 20/11), nên ô *Live app* trên form nộp để trống; giám khảo kiểm chứng qua video demo, repo và các địa chỉ Snowscan ở trên.
 
-**Đồng bộ mục Bị từ chối (tùy chọn):** agent chạy trên máy vẫn ghi `agent/logs/audit.json`. Khi có biến Upstash, agent đẩy thêm các lượt bị chặn lên Upstash Redis để bản Vercel hiển thị. Chỉ gồm tên API, `payTo`, số tiền, mã lỗi và lý do; không có nội dung truy vấn, không có khóa.
-
-1. Trên Vercel, vào project `agentleash` → **Storage** → thêm **Upstash for Redis** (Marketplace) và kết nối với project, rồi **Redeploy**. Vercel tự đặt `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`; Dashboard dùng token chỉ-đọc.
-2. Trong `.env` của máy chạy agent, điền `UPSTASH_REDIS_REST_URL` và `UPSTASH_REDIS_REST_TOKEN` (REST URL và token quyền ghi của cùng database). Code nhận cả hai kiểu tên biến `UPSTASH_REDIS_REST_*` và `KV_REST_API_*`.
-3. Chạy agent hoặc MCP như bình thường; lượt bị chặn hiện trên Vercel sau vài giây. Không đặt biến thì mọi thứ chạy như bản local.
-
-Nút **Chạy Agent Đà Lạt** chỉ chạy trên `localhost:3000`, vì bản online không giữ khóa agent và ai mở link cũng bấm được (Luật 3 & 4). Khi quay demo bằng bản Vercel, chạy agent bằng lệnh CLI trên máy.
+- Dashboard đọc mục **Bị từ chối** từ `agent/logs/audit.json` trên cùng máy với agent. Trước khi quay, chạy `node --env-file=.env scripts/seed-demo.mjs --reset-logs` để danh sách trống.
+- Nút **Chạy Agent Đà Lạt** chỉ chạy trên `localhost`, vì khóa agent nằm trong `.env` của máy (Luật 3 & 4).
+- Code vẫn giữ phần đồng bộ Upstash Redis tùy chọn (`agent/src/auditSync.ts`, `web/src/lib/auditStore.ts`) cho bản cloud sau 21/11. Không đặt biến `UPSTASH_REDIS_REST_*` / `KV_REST_API_*` thì phần này không chạy.
 
 ---
 

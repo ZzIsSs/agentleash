@@ -1,5 +1,7 @@
 # So sánh 2 phương án bố cục UI/UX để đưa vào Figma (AgentLeash)
 
+> ⚠️ **Lỗi thời (20/11/2026):** Đã không còn so sánh Bản A / Bản B. Code thật đi theo bố cục nhiều trang (Tổng quan, Dòng tiền x402, Policy & Luật 2 tầng, Nhật ký & Rules, MCP Bên A – Bên B), xem [DESIGN.md](../DESIGN.md). Giữ file này để tra lịch sử quyết định.
+
 > **Tài liệu đi kèm:** [HUONG_DAN_CHUAN_BI_FIGMA.md](HUONG_DAN_CHUAN_BI_FIGMA.md)  
 > **Sơ đồ trên FigJam:** [Mở bảng FigJam](https://www.figma.com/board/lUMYemD6G4EiO4H3dcP7uj)  
 > **Mục đích:** Chuẩn bị chi tiết khung bố cục cho **Bản A** và **Bản B** (cùng mô hình Hạn mức 2 tầng **1B** và Sơ đồ dòng tiền nối dây **5**) để Nguyên và nhóm so sánh trước khi lên màu chi tiết trên Figma.
