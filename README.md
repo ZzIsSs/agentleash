@@ -120,19 +120,17 @@ Chạy thử trực tiếp:
 npm --prefix agent run mcp
 ```
 
-Cấu hình vào `.mcp.json` (Claude Code) hoặc cấu hình MCP của Antigravity (thay `<PATH_TO_AGENTLEASH>` bằng đường dẫn tuyệt đối tới thư mục `agentleash`):
+Cài cho Claude Code và Antigravity bằng 1 lệnh (chạy ở gốc repo, sau khi đã có `.env`):
 
-```json
-{
-  "mcpServers": {
-    "agentleash": {
-      "command": "node",
-      "args": ["--env-file=../.env", "src/mcp.ts"],
-      "cwd": "<PATH_TO_AGENTLEASH>/agent"
-    }
-  }
-}
+```bash
+npm --prefix agent run setup:mcp
 ```
+
+- **Claude Code:** lệnh tự chạy `claude mcp add agentleash --scope user`, nên server dùng được ở mọi thư mục dự án. Mở Claude Code, gõ `/mcp` để thấy 3 tool.
+- **Antigravity:** lệnh gộp server `agentleash` vào `~/.gemini/config/mcp_config.json` và giữ nguyên các server khác; file cũ có nội dung thì được sao lưu thành `mcp_config.json.agentleash.bak`. Trong Antigravity mở **MCP Servers → Manage MCP Servers** rồi bấm Refresh.
+- Xem trước, không ghi gì: `npm --prefix agent run setup:mcp -- --print`. Chỉ cài một bên: thêm `-- --only=claude` hoặc `-- --only=antigravity`. Chạy lại nhiều lần vẫn an toàn.
+
+Cấu hình được ghi chỉ gồm đường dẫn tuyệt đối tới `node` và `agent/src/mcp.ts`, không có `cwd`, `--env-file` hay khóa nào. `mcp.ts` tự nạp `.env` ở gốc repo theo vị trí của chính nó và bỏ qua `PRIVATE_KEY` (owner) cùng `FACILITATOR_PRIVATE_KEY`, nên tiến trình MCP chỉ giữ `AGENT_PRIVATE_KEY`. Biến đặt trong mục `env` của cấu hình agent được ưu tiên hơn `.env`. Các agent khác hỗ trợ MCP stdio có thể dùng cùng cặp `command` / `args` mà `--print` in ra (chưa kiểm).
 
 ---
 

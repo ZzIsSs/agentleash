@@ -9,7 +9,8 @@
     "demo:gd2": "node --env-file=../.env src/run.ts --prompt \"Tổng hợp thời tiết và tỷ giá cho chuyến đi Đà Lạt\"",
     "demo:mock": "node --env-file=../.env src/run.ts --mock-llm --prompt \"Tổng hợp thời tiết và tỷ giá cho chuyến đi Đà Lạt\"",
     "demo:bypass": "node --env-file=../.env src/run.ts --bypass-rules --rogue-pay-to 0x1111111111111111111111111111111111111111",
-    "mcp": "node --env-file=../.env src/mcp.ts",
+    "mcp": "node src/mcp.ts",
+    "setup:mcp": "node src/setupMcp.ts",
     "test-spike": "node --env-file=../.env src/spikePay.ts"
   },
   "dependencies": {
