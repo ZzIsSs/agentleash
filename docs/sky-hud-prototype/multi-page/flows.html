@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Route /flows — Dòng tiền x402 | AgentLeash Multi-Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../hud-tokens.css">
+  <link rel="stylesheet" href="./mp-shell.css">
+</head>
+<body>
+  <div id="mp-root"></div>
+
+  <script src="../hud-sim.js"></script>
+  <script src="./mp-shell.js"></script>
+  <script>
+    (function () {
+      let filter = "all";
+
+      window.AgentLeashMultiPage.mountMultiPageApp("flows", function (mount, sim, s, d, H) {
+        const summary = H.summarizeSpendFlows(s.spends);
+        const visible =
+          filter === "all"
+            ? s.spends
+            : s.spends.filter((sp) => (filter === "sandbox" ? sp.isSandbox : !sp.isSandbox));
+
+        mount.innerHTML = `
+          <section class="al-glass-panel mp-page-banner">
+            <div>
+              <h1 class="al-hero-greeting">Dòng tiền x402 &amp; Sổ giao dịch (Route <code class="mono" style="color:var(--flow-text);">/flows</code>)</h1>
+              <p style="font-size:0.8125rem;color:var(--sky-muted);margin-block-start:0.2rem;">
+                Không gian rộng cho sơ đồ nối dây AI Agent → AgentPolicy → API và bảng đối chiếu từng giao dịch trên Snowscan.
+              </p>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+              <button type="button" id="fl-probe" class="al-btn">Thử gọi API lạ (0.0005)</button>
+              <button type="button" id="fl-demo" ${s.runningDemo ? "disabled" : ""} class="al-btn al-btn--primary">Chạy Demo x402</button>
+            </div>
+          </section>
+
+          <section class="al-glass-panel mp-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+              <h2 class="al-panel-title">Sơ đồ dòng tiền trực quan</h2>
+              <span class="mono tabular-nums" style="color:var(--flow-text);font-weight:600;">Tổng đã chi: ${H.formatUsdc(summary.totalAmount)} USDC (${summary.totalCount} khoản)</span>
+            </div>
+
+            <div class="al-inset-well" style="padding:1rem;">
+              ${H.renderSpendFlowSvg(summary, { paused: s.paused })}
+            </div>
+
+            <div class="mp-grid-3">
+              ${summary.nodes
+                .map(
+                  (n) => `
+                <div class="al-inset-well" style="padding:0.75rem 0.9rem;display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <strong>${n.label}</strong>
+                    <div style="font-size:0.75rem;color:var(--sky-muted);">${n.count} giao dịch</div>
+                  </div>
+                  <strong class="mono tabular-nums" style="color:${n.tier === "trusted" ? "var(--trusted-text)" : n.tier === "sandbox" ? "var(--sandbox-text)" : "var(--sky-muted)"};">${H.formatUsdc(n.amount)} USDC</strong>
+                </div>`,
+                )
+                .join("")}
+            </div>
+          </section>
+
+          <section class="al-glass-panel mp-card">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.75rem;">
+              <h2 class="al-panel-title">Lịch sử khoản chi (Event Authorized)</h2>
+              <div class="al-pill-tabs" role="group" aria-label="Lọc giao dịch theo tầng">
+                <button type="button" class="al-pill-tab" data-fl-filter="all" aria-selected="${filter === "all"}">Tất cả (${s.spends.length})</button>
+                <button type="button" class="al-pill-tab" data-fl-filter="trusted" aria-selected="${filter === "trusted"}">Whitelist (${s.spends.filter((x) => !x.isSandbox).length})</button>
+                <button type="button" class="al-pill-tab" data-fl-filter="sandbox" aria-selected="${filter === "sandbox"}">Sandbox (${s.spends.filter((x) => x.isSandbox).length})</button>
+              </div>
+            </div>
+
+            <div class="mp-table-wrap">
+              <table class="mp-table">
+                <thead>
+                  <tr>
+                    <th>Thời gian</th>
+                    <th>API nhận tiền</th>
+                    <th>Tầng</th>
+                    <th>Số tiền</th>
+                    <th>Kiểm chứng</th>
+                    <th>Thao tác nhanh</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${visible
+                    .map((sp) => {
+                      const nowWl = s.whitelist[sp.payTo.toLowerCase()] === true;
+                      return `
+                      <tr>
+                        <td class="mono tabular-nums" style="color:var(--sky-muted);">${sp.time}</td>
+                        <td>
+                          <strong>${sp.name}</strong>
+                          <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">${H.shortAddr(sp.payTo)}</div>
+                        </td>
+                        <td><span class="al-chip ${sp.isSandbox ? "al-chip--sandbox" : "al-chip--trusted"}">${sp.isSandbox ? "Sandbox" : "Whitelist"}</span></td>
+                        <td class="mono tabular-nums" style="color:var(--flow-text);font-weight:600;">−${H.formatUsdc(sp.amountUnits)} USDC</td>
+                        <td><a href="${H.txUrl(sp.txHash)}" target="_blank" rel="noreferrer" class="mono" style="color:var(--flow);text-decoration:none;">Snowscan ${H.ICONS.arrowUpRight}</a></td>
+                        <td>
+                          ${
+                            sp.isSandbox
+                              ? nowWl
+                                ? `<span class="al-chip al-chip--trusted">${H.ICONS.check} Đã thành API quen</span>`
+                                : `<button type="button" class="al-btn al-btn--promote" data-fl-promote="${sp.payTo}" ${!s.authenticated ? "disabled" : ""} style="min-block-size:2rem;padding:0.2rem 0.65rem;">Chuyển thành API quen</button>`
+                              : `<span style="font-size:0.75rem;color:var(--sky-muted);">Đã ở Whitelist</span>`
+                          }
+                        </td>
+                      </tr>`;
+                    })
+                    .join("")}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `;
+
+        document.getElementById("fl-probe").addEventListener("click", sim.runSandboxProbe);
+        document.getElementById("fl-demo").addEventListener("click", sim.runDemoSequence);
+        mount.querySelectorAll("[data-fl-filter]").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            filter = btn.dataset.flFilter;
+            sim.notify();
+          }),
+        );
+        mount.querySelectorAll("[data-fl-promote]").forEach((btn) =>
+          btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.flPromote, true)),
+        );
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Mobile Watch &amp; Trạng thái Sống — AgentLeash × SKY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hud-tokens.css">
+  <style>
+    .ws-shell {
+      max-inline-size: 1380px;
+      margin-inline: auto;
+      padding: 1.25rem 1.25rem 2.5rem;
+      display: grid;
+      grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .ws-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Device Frame 390x844 (Watch / Mobile Carousel like SKY) */
+    .ws-phone-bezel {
+      inline-size: min(390px, 100%);
+      margin-inline: auto;
+      border-radius: 34px;
+      padding: 0.75rem;
+      border: 1px solid rgba(122, 222, 255, 0.28);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(12, 49, 89, 0.7), rgba(3, 9, 20, 0.96) 70%);
+      box-shadow:
+        0 24px 60px rgba(1, 8, 18, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .ws-phone-notch {
+      inline-size: 92px;
+      block-size: 18px;
+      margin-inline: auto;
+      border-radius: 9999px;
+      background: #020612;
+      border: 1px solid rgba(122, 222, 255, 0.14);
+    }
+
+    .ws-carousel-viewport {
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid rgba(122, 222, 255, 0.14);
+      background: rgba(4, 13, 27, 0.85);
+      block-size: 540px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ws-carousel-track {
+      display: flex;
+      flex: 1;
+      min-block-size: 0;
+      transition: transform 240ms cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .ws-slide {
+      flex: 0 0 100%;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      overflow-y: auto;
+    }
+
+    .ws-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem 0.65rem;
+      border-block-start: 1px solid var(--divider-hairline);
+    }
+
+    .ws-dot-btn {
+      inline-size: 10px;
+      block-size: 10px;
+      padding: 0;
+      border-radius: 9999px;
+      border: 0;
+      background: rgba(122, 222, 255, 0.25);
+      cursor: pointer;
+      transition: inline-size 160ms ease, background-color 160ms ease;
+    }
+
+    .ws-dot-btn[aria-current="true"] {
+      inline-size: 26px;
+      background: var(--sky-accent);
+    }
+
+    .ws-state-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .ws-state-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .ws-state-card {
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-ws" class="al-skip-link">Chuyển tới trình xem Mobile Watch và trạng thái</a>
+
+  <div class="al-proto-ribbon">
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+      <span class="al-chip al-chip--neutral">MOBILE WATCH &amp; 4 TRẠNG THÁI SỐNG</span>
+      <span>Mô phỏng chế độ Carousel 390×844 của SKY &amp; ma trận trạng thái để Giang duyệt</span>
+    </div>
+    <nav class="al-proto-nav" aria-label="Chuyển giữa các bản mô phỏng">
+      <a class="al-proto-link" href="./index.html">Cổng so sánh</a>
+      <a class="al-proto-link" href="./01-hud-glass-skin.html">PA 1: HUD Glass Skin</a>
+      <a class="al-proto-link" href="./02-mission-control-3col.html">PA 2: Mission Control 3 Cột</a>
+      <a class="al-proto-link" href="./03-mobile-and-states.html" aria-current="page">Watch &amp; Trạng thái</a>
+      <a class="al-proto-link" href="./04-ben-a-ben-b-mcp.html">MCP Bên A – Bên B</a>
+      <a class="al-proto-link" href="./multi-page/index.html">Nhiều trang (5 routes)</a>
+    </nav>
+  </div>
+
+  <main id="main-ws" class="ws-shell">
+    <!-- Left: Interactive Mobile / Watch View (390x844 style) -->
+    <section aria-label="Mô phỏng giao diện điện thoại 390 pixel">
+      <div class="ws-phone-bezel">
+        <div class="ws-phone-notch" aria-hidden="true"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-inline:0.4rem;">
+          <strong style="font-size:0.875rem;">Agent<span style="color:var(--flow);">Leash</span> Mobile</strong>
+          <span class="al-chip al-chip--amber">DEMO 120s</span>
+        </div>
+
+        <div class="ws-carousel-viewport">
+          <div class="ws-carousel-track" id="ws-track">
+            <!-- Slide 1: Guardrail & Kill Switch -->
+            <div class="ws-slide" id="ws-slide-0"></div>
+            <!-- Slide 2: Dòng tiền x402 -->
+            <div class="ws-slide" id="ws-slide-1"></div>
+            <!-- Slide 3: Bị chặn & 1-click -->
+            <div class="ws-slide" id="ws-slide-2"></div>
+          </div>
+
+          <div class="ws-dots" role="group" aria-label="Chọn trang Watch Carousel">
+            <button type="button" class="al-btn" id="ws-prev" style="min-block-size:1.75rem;padding:0.15rem 0.55rem;font-size:0.75rem;">Trước</button>
+            <button type="button" class="ws-dot-btn" data-slide="0" aria-label="Trang 1: Tổng quan & Khóa khẩn cấp" aria-current="true"></button>
+            <button type="button" class="ws-dot-btn" data-slide="1" aria-label="Trang 2: Dòng tiền x402"></button>
+            <button type="button" class="ws-dot-btn" data-slide="2" aria-label="Trang 3: Bị chặn & 1-click Duyệt"></button>
+            <button type="button" class="al-btn" id="ws-next" style="min-block-size:1.75rem;padding:0.15rem 0.55rem;font-size:0.75rem;">Sau</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: 4 Live States Matrix + Roster Dialog Trigger -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;min-inline-size:0;">
+      <section class="al-glass-panel" style="padding:1.25rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
+        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+          <h1 class="al-hero-greeting">Kiểm tra 4 trạng thái &amp; Policy Roster</h1>
+          <p style="font-size:0.8125rem;color:var(--sky-muted);">
+            Giống SKY: màn hình Mobile dùng Carousel 3 trang để vừa khít không tràn ngang, còn trên Desktop có bảng chọn Policy (chỉ mở khi bấm, không tự che màn hình lúc mới vào).
+          </p>
+        </div>
+        <button type="button" id="ws-open-roster" class="al-gradient-pill">Mở Policy Roster (như Crew Roster)</button>
+      </section>
+
+      <section class="ws-state-grid" aria-label="Ma trận 4 trạng thái vận hành">
+        <!-- State A -->
+        <article class="al-glass-panel ws-state-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+            <h2 class="al-panel-title">A. Hoạt động bình thường</h2>
+            <span class="al-chip al-chip--trusted">ACTIVE</span>
+          </div>
+          <p style="font-size:0.8125rem;color:var(--sky-muted);">
+            Agent chạy Rule Engine + mua API Thời tiết &amp; Tỷ giá trong hạn mức Whitelist.
+          </p>
+          <div class="al-inset-well" style="padding:0.75rem;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.78rem;color:var(--sky-muted);">Chi được ngay</span>
+            <strong class="mono tabular-nums" style="color:var(--flow-text);">0.0015 USDC</strong>
+          </div>
+          <button type="button" class="al-btn al-btn--promote" data-apply-state="active">Áp trạng thái này vào Mobile</button>
+        </article>
+
+        <!-- State B -->
+        <article class="al-glass-panel al-glass-panel--sandbox ws-state-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+            <h2 class="al-panel-title">B. Giả lập bị hack (--bypass-rules)</h2>
+            <span class="al-chip al-chip--sandbox">SANDBOX GUARD</span>
+          </div>
+          <p style="font-size:0.8125rem;color:var(--sky-muted);">
+            Tắt Rule Engine off-chain; contract vẫn chặn khoản 0.001 USDC tới 0x1111…1111 vì vượt trần Sandbox.
+          </p>
+          <div class="al-inset-well" style="padding:0.75rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.4rem;">
+            <span style="font-size:0.78rem;color:var(--sky-muted);">Mã lỗi on-chain</span>
+            <code class="mono" style="color:var(--danger-text);font-size:0.78rem;">ExceedsSandboxPerTxCap</code>
+          </div>
+          <button type="button" class="al-btn" data-apply-state="hack">Áp trạng thái này vào Mobile</button>
+        </article>
+
+        <!-- State C -->
+        <article class="al-glass-panel al-glass-panel--danger ws-state-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+            <h2 class="al-panel-title">C. Đã khóa khẩn cấp (Paused)</h2>
+            <span class="al-chip al-chip--danger">KILL SWITCH</span>
+          </div>
+          <p style="font-size:0.8125rem;color:var(--sky-muted);">
+            Chủ ví bấm KHÓA KHẨN CẤP; vòng radial chuyển đỏ, chi được ngay tụt về 0 USDC và trả PausedError.
+          </p>
+          <div class="al-inset-well" style="padding:0.75rem;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.78rem;color:var(--sky-muted);">Chi được ngay</span>
+            <strong class="mono tabular-nums" style="color:var(--danger-text);">0 USDC</strong>
+          </div>
+          <button type="button" class="al-btn al-btn--danger" data-apply-state="paused">Áp trạng thái này vào Mobile</button>
+        </article>
+
+        <!-- State D -->
+        <article class="al-glass-panel ws-state-card" style="border-color:rgba(34,211,238,0.4);">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+            <h2 class="al-panel-title">D. Ký Privy 3 bước (TxBanner)</h2>
+            <span class="al-chip al-chip--flow">SIGNING</span>
+          </div>
+          <p style="font-size:0.8125rem;color:var(--sky-muted);">
+            Hiển thị rõ 3 bước: Đang ký Privy → Chờ xác nhận Fuji → Hoàn tất kèm link Snowscan.
+          </p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
+            <span class="al-chip al-chip--trusted">1. Đang ký Privy</span>
+            <span class="al-chip al-chip--flow">2. Chờ Fuji</span>
+            <span class="al-chip al-chip--neutral">3. Hoàn tất</span>
+          </div>
+          <button type="button" class="al-btn al-btn--primary" data-apply-state="promote">Thử bấm 1-click Duyệt</button>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <!-- Policy Roster Modal (tương đương CREW ROSTER trên SKY, nhưng chỉ mở khi bấm) -->
+  <dialog id="ws-roster-dialog" closedby="any" class="al-dialog al-dialog--gradient" aria-labelledby="ws-roster-title">
+    <div style="padding:1.35rem 1.5rem;display:flex;flex-direction:column;gap:0.9rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <h2 id="ws-roster-title" style="font-size:1.05rem;font-weight:700;">Agent &amp; Policy Roster</h2>
+          <p style="font-size:0.78rem;color:var(--sky-muted);">Chọn AI Agent / AgentPolicy muốn giám sát (không chặn lúc tải trang)</p>
+        </div>
+        <button type="button" id="ws-roster-close" class="al-btn" style="min-block-size:2rem;">Đóng</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.65rem;">
+        <button type="button" class="al-inset-well" data-select-policy="main" style="padding:0.85rem;text-align:start;color:inherit;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong>Bot Du Lịch · Đà Lạt Demo</strong>
+            <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">0x62Ea…4177 · ERC-8004 #305</div>
+          </div>
+          <span class="al-chip al-chip--trusted">0.051 USDC</span>
+        </button>
+        <button type="button" class="al-inset-well" data-select-policy="alt" style="padding:0.85rem;text-align:start;color:inherit;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <strong>Bot Research · x402 Sandbox</strong>
+            <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">0x91Fa…32c0 · Chu kỳ 120s</div>
+          </div>
+          <span class="al-chip al-chip--flow">0.024 USDC</span>
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="./hud-sim.js"></script>
+  <script>
+    (function () {
+      const H = window.AgentLeashHud;
+      const rosterDialog = document.getElementById("ws-roster-dialog");
+      H.initDialogs(document);
+
+      let activeSlide = 0;
+      const track = document.getElementById("ws-track");
+      const dots = document.querySelectorAll(".ws-dot-btn");
+
+      function goSlide(idx) {
+        activeSlide = (idx + 3) % 3;
+        track.style.transform = `translateX(-${activeSlide * 100}%)`;
+        dots.forEach((d, i) => d.setAttribute("aria-current", i === activeSlide ? "true" : "false"));
+      }
+
+      dots.forEach((d) => d.addEventListener("click", () => goSlide(Number(d.dataset.slide))));
+      document.getElementById("ws-prev").addEventListener("click", () => goSlide(activeSlide - 1));
+      document.getElementById("ws-next").addEventListener("click", () => goSlide(activeSlide + 1));
+
+      document.getElementById("ws-open-roster").addEventListener("click", () => rosterDialog.showModal());
+      document.getElementById("ws-roster-close").addEventListener("click", () => rosterDialog.close());
+
+      const sim = H.createSimulation(renderWatch);
+
+      rosterDialog.querySelectorAll("[data-select-policy]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          sim.switchPolicy(btn.dataset.selectPolicy === "alt" ? H.ADDRESSES.policyAlt : H.ADDRESSES.policyMain);
+          rosterDialog.close();
+        });
+      });
+
+      document.querySelectorAll("[data-apply-state]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const kind = btn.dataset.applyState;
+          if (kind === "active") {
+            sim.state.paused = false;
+            sim.setBypassRules(false);
+            goSlide(0);
+          } else if (kind === "hack") {
+            sim.state.paused = false;
+            sim.setBypassRules(true);
+            sim.runDemoSequence();
+            goSlide(2);
+          } else if (kind === "paused") {
+            sim.state.paused = true;
+            sim.notify();
+            goSlide(0);
+          } else if (kind === "promote") {
+            sim.toggleWhitelist(H.ADDRESSES.flightSandbox, true);
+            goSlide(1);
+          }
+        });
+      });
+
+      function renderWatch(s, d) {
+        const wlPct = Math.round((d.remainingDaily / s.dailyCapUnits) * 100);
+        const sbPct = Math.round((d.remainingSandbox / s.sandboxDailyCapUnits) * 100);
+        const r = 42;
+        const c = 2 * Math.PI * r;
+        const offset = c * (1 - Math.max(0, Math.min(1, d.spendableRatio)));
+
+        document.getElementById("ws-slide-0").innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="al-hud-heading">1/3 · Guardrail</span>
+            <span class="al-chip ${s.paused ? "al-chip--danger" : "al-chip--trusted"}">${s.paused ? "ĐÃ KHÓA" : "AN TOÀN"}</span>
+          </div>
+          <div style="position:relative;inline-size:112px;block-size:112px;margin-inline:auto;display:grid;place-items:center;">
+            <svg viewBox="0 0 104 104" width="112" height="112" aria-hidden="true">
+              <circle cx="52" cy="52" r="${r}" fill="none" stroke="rgba(122,222,255,0.14)" stroke-width="8"/>
+              <circle cx="52" cy="52" r="${r}" fill="none" stroke="${s.paused ? "#ef4444" : "#5eead4"}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" transform="rotate(-90 52 52)"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <strong class="mono tabular-nums" style="font-size:1rem;color:${s.paused ? "var(--danger-text)" : "var(--flow-text)"};">${H.formatUsdc(d.spendableNow)}</strong>
+              <span style="font-size:0.7rem;color:var(--sky-muted);">USDC</span>
+            </div>
+          </div>
+          <div class="al-inset-well" style="padding:0.65rem;display:flex;justify-content:space-between;font-size:0.75rem;">
+            <span style="color:var(--sky-muted);">Hồi sau</span>
+            <strong class="mono tabular-nums">${H.formatCountdown(s.secondsToReset)}</strong>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-block-end:0.2rem;">
+              <span>Whitelist</span><span class="mono tabular-nums" style="color:var(--trusted-text);">${H.formatUsdc(d.remainingDaily)} USDC</span>
+            </div>
+            <div class="al-meter-track"><div class="al-meter-fill al-meter-fill--trusted" style="inline-size:${wlPct}%;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-block-end:0.2rem;">
+              <span>Sandbox</span><span class="mono tabular-nums" style="color:var(--sandbox-text);">${H.formatUsdc(d.remainingSandbox)} USDC</span>
+            </div>
+            <div class="al-meter-track"><div class="al-meter-fill al-meter-fill--sandbox" style="inline-size:${sbPct}%;"></div></div>
+          </div>
+          <button type="button" id="ws-kill-btn" class="al-btn ${s.paused ? "al-btn--trusted" : "al-btn--danger"}" style="margin-block-start:auto;inline-size:100%;">
+            ${s.paused ? H.ICONS.unlock : H.ICONS.lock}
+            <span>${s.paused ? "MỞ KHÓA POLICY" : "KHÓA KHẨN CẤP"}</span>
+          </button>
+        `;
+        document.getElementById("ws-kill-btn").addEventListener("click", () => sim.togglePause(!sim.state.paused));
+
+        const summary = H.summarizeSpendFlows(s.spends);
+        document.getElementById("ws-slide-1").innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="al-hud-heading">2/3 · Dòng tiền x402</span>
+            <strong class="mono tabular-nums" style="color:var(--flow-text);font-size:0.8125rem;">${H.formatUsdc(summary.totalAmount)} USDC</strong>
+          </div>
+          <div class="al-inset-well" style="padding:0.65rem;display:flex;flex-direction:column;gap:0.45rem;">
+            ${summary.nodes
+              .map(
+                (n) => `
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;">
+                  <span>${n.label}</span>
+                  <span class="mono tabular-nums">${H.formatUsdc(n.amount)} USDC</span>
+                </div>
+                <div class="al-meter-track" style="block-size:0.38rem;margin-block-start:0.2rem;">
+                  <div class="al-meter-fill ${n.tier === "trusted" ? "al-meter-fill--trusted" : "al-meter-fill--sandbox"}" style="inline-size:${n.amount ? Math.max(12, Math.round(n.share * 100)) : 0}%;"></div>
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+          <ul class="al-list" style="font-size:0.78rem;">
+            ${s.spends
+              .slice(0, 4)
+              .map(
+                (sp) => `
+              <li style="padding-block:0.45rem;display:flex;justify-content:space-between;gap:0.4rem;">
+                <div>
+                  <div style="font-weight:600;">${sp.name}</div>
+                  <div class="mono" style="font-size:0.72rem;color:var(--sky-muted);">${sp.time}</div>
+                </div>
+                <strong class="mono tabular-nums" style="color:var(--flow-text);">−${H.formatUsdc(sp.amountUnits)}</strong>
+              </li>
+            `,
+              )
+              .join("")}
+          </ul>
+        `;
+
+        document.getElementById("ws-slide-2").innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="al-hud-heading" style="color:var(--danger-text);">3/3 · Đã chặn</span>
+            <span class="al-chip al-chip--danger tabular-nums">${s.rejections.length} lần</span>
+          </div>
+          <ul class="al-list" style="font-size:0.78rem;">
+            ${s.rejections
+              .slice(0, 4)
+              .map((r) => {
+                const nowWl = r.payTo && s.whitelist[r.payTo.toLowerCase()] === true;
+                const canPromote = r.payTo && !nowWl && r.payTo.toLowerCase() !== H.ADDRESSES.attackerTarget.toLowerCase();
+                return `
+                  <li style="padding-block:0.55rem;display:flex;flex-direction:column;gap:0.25rem;">
+                    <span class="al-chip ${r.source === "contract" ? "al-chip--danger" : "al-chip--sandbox"}" style="align-self:start;">${r.code}</span>
+                    <strong>${r.title}</strong>
+                    <span style="color:var(--sky-muted);font-size:0.75rem;">${r.api}</span>
+                    ${
+                      canPromote
+                        ? `<button type="button" class="al-btn al-btn--promote" data-ws-promote="${r.payTo}" style="min-block-size:1.9rem;font-size:0.75rem;">Chuyển thành API quen</button>`
+                        : ""
+                    }
+                  </li>
+                `;
+              })
+              .join("")}
+          </ul>
+        `;
+        document.getElementById("ws-slide-2").querySelectorAll("[data-ws-promote]").forEach((b) =>
+          b.addEventListener("click", () => sim.toggleWhitelist(b.dataset.wsPromote, true)),
+        );
+      }
+
+      sim.notify();
+    })();
+  </script>
+</body>
+</html>

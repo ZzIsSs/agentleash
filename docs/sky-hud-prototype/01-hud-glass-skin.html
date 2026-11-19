@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>PA 1: HUD Glass Skin (4 Panel) — AgentLeash × SKY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hud-tokens.css">
+  <style>
+    .pa1-shell {
+      max-inline-size: 1440px;
+      margin-inline: auto;
+      padding: 1rem 1.25rem 2.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .pa1-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.125rem;
+    }
+
+    @media (min-width: 1024px) {
+      .pa1-grid {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+      }
+      .pa1-col-5 { grid-column: span 5; }
+      .pa1-col-7 { grid-column: span 7; }
+      .pa1-col-6 { grid-column: span 6; }
+    }
+
+    .pa1-panel {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .pa1-panel-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .pa1-overview-hero {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 1rem;
+      align-items: center;
+    }
+
+    @media (max-width: 560px) {
+      .pa1-overview-hero {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pa1-radial-wrap {
+      position: relative;
+      inline-size: 132px;
+      block-size: 132px;
+      display: grid;
+      place-items: center;
+      margin-inline: auto;
+    }
+
+    .pa1-radial-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0.5rem;
+    }
+
+    .pa1-kpi-stack {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.625rem;
+    }
+
+    .pa1-stat-well {
+      padding: 0.7rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .pa1-steps {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    @media (min-width: 1024px) {
+      .pa1-steps {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+      }
+    }
+
+    .pa1-step {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 10px;
+      border: 1px solid rgba(122, 222, 255, 0.12);
+      background: rgba(6, 15, 29, 0.72);
+      font-size: 0.75rem;
+      color: var(--sky-muted);
+      min-inline-size: 0;
+    }
+
+    .pa1-step--done {
+      border-color: rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--trusted-text);
+    }
+
+    .pa1-step--active {
+      border-color: rgba(34, 211, 238, 0.42);
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--flow-text);
+    }
+
+    .pa1-meta-dl {
+      margin: 0;
+      margin-block-start: auto;
+      padding-block-start: 0.85rem;
+      border-block-start: 1px solid var(--divider-hairline);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 0.5rem 1rem;
+      font-size: 0.75rem;
+      color: var(--sky-muted);
+    }
+
+    .pa1-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.3rem 0.5rem;
+    }
+
+    .pa1-caps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .pa1-fieldset {
+      margin: 0;
+      padding: 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(122, 222, 255, 0.12);
+      background: var(--inset-well);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .pa1-banner {
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.8125rem;
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-dashboard" class="al-skip-link">Chuyển tới bảng điều khiển chính</a>
+
+  <div class="al-proto-ribbon">
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+      <span class="al-chip al-chip--trusted">PHƯƠNG ÁN 1 · HUD GLASS SKIN</span>
+      <span>Giữ nguyên bố cục 4 panel · An toàn trước hạn 21/11</span>
+    </div>
+    <nav class="al-proto-nav" aria-label="Chuyển giữa các bản mô phỏng">
+      <a class="al-proto-link" href="./index.html">Cổng so sánh</a>
+      <a class="al-proto-link" href="./01-hud-glass-skin.html" aria-current="page">PA 1: HUD Glass Skin</a>
+      <a class="al-proto-link" href="./02-mission-control-3col.html">PA 2: Mission Control 3 Cột</a>
+      <a class="al-proto-link" href="./03-mobile-and-states.html">Watch &amp; Trạng thái</a>
+      <a class="al-proto-link" href="./04-ben-a-ben-b-mcp.html">MCP Bên A – Bên B</a>
+      <a class="al-proto-link" href="./multi-page/index.html">Nhiều trang (5 routes)</a>
+    </nav>
+  </div>
+
+  <header class="al-hud-header">
+    <div class="al-brand">
+      <svg viewBox="0 0 28 28" width="32" height="32" fill="none" aria-hidden="true">
+        <rect x="2" y="2" width="24" height="24" rx="7" fill="#0d1e38" stroke="rgba(122,222,255,0.35)" stroke-width="1.25"/>
+        <path d="M14 6.25L20 8.75V13.6C20 17.35 17.45 20.65 14 21.75C10.55 20.65 8 17.35 8 13.6V8.75L14 6.25Z" stroke="#22d3ee" stroke-width="1.6" stroke-linejoin="round"/>
+        <circle cx="14" cy="13.5" r="2.25" fill="#22c55e"/>
+        <path d="M14 15.75V18.5" stroke="#22d3ee" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h1 class="al-brand-title" translate="no">Agent<span>Leash</span></h1>
+        <div class="al-brand-sub">Cổng kiểm soát chi tiêu x402 · HUD Glass Skin</div>
+      </div>
+      <span class="al-pill al-pill--amber" style="margin-inline-start:0.35rem;">
+        <span class="al-dot al-dot--sandbox al-dot--live" aria-hidden="true"></span>
+        <span>DEMO: chu kỳ 120 giây (thực tế: 1 ngày)</span>
+      </span>
+    </div>
+
+    <div class="al-hud-cluster" id="header-controls"></div>
+  </header>
+
+  <div class="pa1-shell">
+    <!-- Collapsible Demo Control Bar -->
+    <section class="al-glass-panel" id="demo-bar" aria-label="Bảng điều khiển Demo 2 phút"></section>
+
+    <!-- 3-step Privy TxBanner -->
+    <div id="tx-banner-mount"></div>
+
+    <!-- Main 4-Panel Asymmetric 12-col Grid -->
+    <main id="main-dashboard" tabindex="-1" class="pa1-grid">
+      <section class="al-glass-panel pa1-panel pa1-col-5" id="overview-panel" aria-label="Tổng quan và hạn mức 2 tầng"></section>
+      <section class="al-glass-panel pa1-panel pa1-col-7" id="spends-panel" aria-label="Dòng tiền x402"></section>
+
+      <section class="al-glass-panel pa1-panel pa1-col-6" id="setup-panel" aria-label="Policy và luật chi tiêu">
+        <div class="pa1-panel-head">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <span style="color:var(--flow);" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h9m4 0h3M4 12h3m4 0h9M4 17h11m4 0h1" stroke-linecap="round"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+            </span>
+            <h2 class="al-panel-title">Policy &amp; luật chi tiêu</h2>
+          </div>
+          <span class="al-chip al-chip--flow" id="setup-owner-pill">Chủ ví Privy</span>
+        </div>
+
+        <div class="al-inset-well" style="padding:0.65rem 0.85rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;font-size:0.75rem;" id="setup-wallet-strip"></div>
+
+        <div>
+          <div role="tablist" aria-label="Cấu hình chi tiết Policy" class="al-tablist-line">
+            <button type="button" role="tab" id="pa1-tab-wl" aria-selected="true" tabindex="0" class="al-tab">Whitelist API</button>
+            <button type="button" role="tab" id="pa1-tab-caps" aria-selected="false" tabindex="-1" class="al-tab">Hạn mức 2 tầng</button>
+            <button type="button" role="tab" id="pa1-tab-erc" aria-selected="false" tabindex="-1" class="al-tab">Policy &amp; ERC-8004</button>
+          </div>
+
+          <div role="tabpanel" aria-labelledby="pa1-tab-wl" tabindex="0">
+            <div style="padding-block-start:0.9rem;display:flex;flex-direction:column;gap:0.75rem;" id="tab-wl-body"></div>
+          </div>
+          <div role="tabpanel" aria-labelledby="pa1-tab-caps" hidden="until-found">
+            <div style="padding-block-start:0.9rem;" id="tab-caps-body"></div>
+          </div>
+          <div role="tabpanel" aria-labelledby="pa1-tab-erc" hidden="until-found">
+            <div style="padding-block-start:0.9rem;" id="tab-erc-body"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="al-glass-panel pa1-panel pa1-col-6" id="rejections-panel" aria-label="Nhật ký bị từ chối"></section>
+    </main>
+  </div>
+
+  <!-- Native Kill Switch Confirmation <dialog> -->
+  <dialog id="kill-dialog" class="al-dialog al-dialog--danger" aria-labelledby="kill-dialog-title">
+    <form method="dialog" style="padding:1.35rem 1.5rem;display:flex;flex-direction:column;gap:1rem;">
+      <div style="display:flex;align-items:flex-start;gap:0.85rem;">
+        <div id="kill-dialog-icon" style="inline-size:2.5rem;block-size:2.5rem;border-radius:10px;display:grid;place-items:center;flex-shrink:0;"></div>
+        <div style="display:flex;flex-direction:column;gap:0.25rem;">
+          <h2 id="kill-dialog-title" style="font-size:1rem;font-weight:700;">Khóa khẩn cấp toàn bộ policy?</h2>
+          <p id="kill-dialog-desc" style="font-size:0.8125rem;color:var(--sky-muted);"></p>
+        </div>
+      </div>
+      <div class="al-inset-well mono" style="padding:0.55rem 0.75rem;font-size:0.75rem;color:var(--sky-muted);word-break:break-all;" id="kill-dialog-policy"></div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:0.625rem;">
+        <button type="submit" value="cancel" autofocus class="al-btn">Hủy</button>
+        <button type="submit" value="confirm" id="kill-dialog-confirm" class="al-btn al-btn--danger">Xác nhận khóa ngay</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./hud-sim.js"></script>
+  <script>
+    (function () {
+      const H = window.AgentLeashHud;
+      let spendFilter = "all";
+      let rejFilter = "all";
+      let demoExpanded = true;
+
+      const killDialog = document.getElementById("kill-dialog");
+      H.initTabs(document);
+      H.initDialogs(document);
+
+      const sim = H.createSimulation(render);
+
+      function openKillDialog() {
+        const pausing = !sim.state.paused;
+        killDialog.classList.toggle("al-dialog--danger", pausing);
+        document.getElementById("kill-dialog-title").textContent = pausing
+          ? "Khóa khẩn cấp toàn bộ policy?"
+          : "Mở khóa hoạt động policy?";
+        document.getElementById("kill-dialog-desc").textContent = pausing
+          ? "Mọi khoản chi tiếp theo của agent sẽ bị contract từ chối ngay lập tức, kể cả khoản đã authorize nhưng chưa settle. Cần 1 chữ ký trên Fuji."
+          : "Agent sẽ được phép xin chi trở lại trong phần hạn mức còn lại của chu kỳ.";
+        document.getElementById("kill-dialog-policy").textContent = "Policy: " + sim.state.activePolicy;
+        const iconBox = document.getElementById("kill-dialog-icon");
+        iconBox.innerHTML = pausing ? H.ICONS.lock : H.ICONS.unlock;
+        iconBox.style.background = pausing ? "rgba(239,68,68,0.14)" : "rgba(34,197,94,0.14)";
+        iconBox.style.color = pausing ? "var(--danger-text)" : "var(--trusted-text)";
+        iconBox.style.border = pausing ? "1px solid rgba(239,68,68,0.4)" : "1px solid rgba(34,197,94,0.4)";
+
+        const confirmBtn = document.getElementById("kill-dialog-confirm");
+        confirmBtn.textContent = pausing ? "Xác nhận khóa ngay" : "Mở khóa policy";
+        confirmBtn.className = pausing ? "al-btn al-btn--danger" : "al-btn al-btn--trusted";
+
+        killDialog.showModal();
+      }
+
+      killDialog.addEventListener("close", () => {
+        const val = killDialog.returnValue;
+        killDialog.returnValue = "";
+        if (val === "confirm") {
+          sim.togglePause(!sim.state.paused);
+        }
+      });
+
+      function renderHeader(s) {
+        const mount = document.getElementById("header-controls");
+        const killBtn = s.paused
+          ? `<button type="button" id="btn-kill-switch" ${!s.authenticated ? "disabled title='Đăng nhập ví chủ Privy để mở khóa'" : ""} class="al-btn al-btn--trusted">${H.ICONS.unlock}<span>MỞ KHÓA</span></button>`
+          : `<button type="button" id="btn-kill-switch" ${!s.authenticated ? "disabled title='Đăng nhập ví chủ Privy để khóa'" : ""} class="al-btn al-btn--danger">${H.ICONS.lock}<span>KHÓA KHẨN CẤP</span></button>`;
+
+        mount.innerHTML = `
+          <span class="al-pill"><span class="al-dot al-dot--trusted" aria-hidden="true"></span>Fuji Testnet</span>
+          <a href="${H.addressUrl(s.activePolicy)}" target="_blank" rel="noreferrer" class="al-pill mono" style="color:var(--flow);">
+            <span>${H.shortAddr(s.activePolicy)}</span>${H.ICONS.arrowUpRight}
+          </a>
+          <span class="al-pill mono tabular-nums" style="color:var(--sky-text);font-weight:600;">${H.formatUsdc(s.balanceUnits)} USDC</span>
+          ${
+            s.authenticated
+              ? `<span class="al-pill">${s.userEmail}</span>
+                 <button type="button" id="btn-auth" class="al-btn">Đăng xuất</button>`
+              : `<span class="al-pill">Chỉ xem (Khách)</span>
+                 <button type="button" id="btn-auth" class="al-btn al-btn--primary">Đăng nhập email Privy</button>`
+          }
+          ${killBtn}
+        `;
+        document.getElementById("btn-auth").addEventListener("click", sim.toggleAuth);
+        document.getElementById("btn-kill-switch").addEventListener("click", openKillDialog);
+      }
+
+      function renderDemoBar(s, d) {
+        const mount = document.getElementById("demo-bar");
+        mount.className = `al-glass-panel ${s.bypassRules ? "al-glass-panel--danger" : "al-glass-panel--sandbox"}`;
+
+        const steps = [
+          { n: 1, label: "Đăng nhập", done: s.authenticated, active: !s.authenticated },
+          { n: 2, label: "Luật 2 tầng", done: s.authenticated },
+          { n: 3, label: "Mua x402", done: d.hasSpends, active: s.authenticated && !d.hasSpends },
+          { n: 4, label: "Chặn trần", done: d.hasWhitelistCapBlock },
+          { n: 5, label: "Sandbox", done: d.hasSandboxBlock, active: s.bypassRules && !d.hasSandboxBlock },
+          { n: 6, label: "Kill Switch", done: s.paused },
+          { n: 7, label: "Snowscan", done: d.hasSpends && s.paused },
+        ];
+        const doneCount = steps.filter((x) => x.done).length;
+
+        mount.innerHTML = `
+          <div style="padding:0.75rem 1.25rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.65rem;">
+              <span class="al-chip ${s.bypassRules ? "al-chip--danger" : "al-chip--sandbox"}">${H.ICONS.terminal}<span>Demo 2 phút</span></span>
+              <strong style="font-size:0.875rem;">${s.bypassRules ? "Giả lập agent bị chiếm quyền (--bypass-rules)" : "Luồng mẫu Đà Lạt (--mock-llm) & kiểm thử 7 bước"}</strong>
+              <span class="mono tabular-nums" style="font-size:0.75rem;color:var(--sky-muted);">${doneCount}/7 mốc</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <button type="button" id="btn-reset-cycle" class="al-btn" title="Đặt lại hạn mức chu kỳ 120s để thử lại">Hồi chu kỳ 120s</button>
+              <button type="button" id="btn-toggle-demo" aria-expanded="${demoExpanded}" class="al-btn">${demoExpanded ? "Thu gọn" : "Mở bảng Demo"}</button>
+            </div>
+          </div>
+          ${
+            demoExpanded
+              ? `
+            <div style="padding:0.9rem 1.25rem 1rem;border-block-start:1px solid var(--divider-hairline);display:flex;flex-direction:column;gap:0.85rem;">
+              <ol class="pa1-steps" aria-label="Tiến trình kịch bản demo 7 bước">
+                ${steps
+                  .map(
+                    (st) => `
+                  <li class="pa1-step ${st.done ? "pa1-step--done" : st.active ? "pa1-step--active" : ""}">
+                    <span class="mono" style="inline-size:1.15rem;block-size:1.15rem;border-radius:4px;display:grid;place-items:center;background:rgba(255,255,255,0.06);flex-shrink:0;">
+                      ${st.done ? H.ICONS.check : st.n}
+                    </span>
+                    <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${st.label}</span>
+                  </li>`,
+                  )
+                  .join("")}
+              </ol>
+
+              <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.85rem;padding-block-start:0.75rem;border-block-start:1px solid var(--divider-hairline);">
+                <label style="display:inline-flex;align-items:center;gap:0.65rem;cursor:pointer;font-size:0.8125rem;font-weight:600;">
+                  <input id="chk-bypass" type="checkbox" switch role="switch" aria-checked="${s.bypassRules}" ${s.bypassRules ? "checked" : ""} class="al-switch">
+                  <span>Bỏ qua Rule Engine (<code class="mono" style="color:var(--sandbox-text);">--bypass-rules</code>)</span>
+                </label>
+
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.6rem;">
+                  <button type="button" id="btn-probe-sandbox" class="al-btn" title="Gửi 1 yêu cầu Sandbox hợp lệ 0.0005 USDC">
+                    Thử gọi API lạ (0.0005 USDC)
+                  </button>
+                  <button type="button" id="btn-run-demo" ${s.runningDemo ? "disabled" : ""} class="al-gradient-pill ${s.bypassRules ? "al-gradient-pill--danger" : ""}">
+                    ${s.bypassRules ? H.ICONS.alert : H.ICONS.play}
+                    <span>${s.runningDemo ? "Đang chạy agent trên Fuji…" : s.bypassRules ? "Thử tấn công địa chỉ lạ (0.001)" : "Chạy Agent Đà Lạt (mock)"}</span>
+                  </button>
+                </div>
+              </div>
+              <p style="font-size:0.75rem;color:var(--sky-muted);">
+                ${
+                  s.bypassRules
+                    ? "Đang BẬT: Tắt kiểm tra off-chain, giả lập agent bị chiếm gọi thẳng địa chỉ lạ 0x1111…1111 (0.001 USDC) để AgentPolicy chặn ở tầng Sandbox."
+                    : "Đang TẮT: Agent chạy Rule Engine + Gemini mock (--mock-llm) thực hiện mua dữ liệu Thời tiết & Tỷ giá hợp lệ; tới lần vượt 0.003 USDC sẽ tự động kích hoạt chặn ExceedsDailyCap."
+                }
+              </p>
+            </div>
+          `
+              : ""
+          }
+        `;
+
+        document.getElementById("btn-toggle-demo").addEventListener("click", () => {
+          demoExpanded = !demoExpanded;
+          renderDemoBar(sim.state, sim.derived());
+        });
+        document.getElementById("btn-reset-cycle").addEventListener("click", sim.resetCycle);
+        if (demoExpanded) {
+          document.getElementById("chk-bypass").addEventListener("change", (e) => sim.setBypassRules(e.target.checked));
+          document.getElementById("btn-run-demo").addEventListener("click", sim.runDemoSequence);
+          document.getElementById("btn-probe-sandbox").addEventListener("click", sim.runSandboxProbe);
+        }
+      }
+
+      function renderTxBanner(s) {
+        const mount = document.getElementById("tx-banner-mount");
+        if (!s.txBanner) {
+          mount.innerHTML = "";
+          return;
+        }
+        const b = s.txBanner;
+        const steps = ["Đang ký Privy", "Chờ xác nhận Fuji", "Hoàn tất"];
+        const curIdx = b.phase === "signing" ? 0 : b.phase === "pending" ? 1 : 2;
+        mount.innerHTML = `
+          <div role="status" aria-live="polite" class="al-glass-panel pa1-banner" style="border-color:${b.phase === "done" ? "rgba(34,197,94,0.45)" : "rgba(34,211,238,0.45)"};">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;">
+              <strong style="display:inline-flex;align-items:center;gap:0.45rem;">
+                ${b.phase === "done" ? `<span style="color:var(--trusted-text)">${H.ICONS.check}</span>` : `<span class="al-dot al-dot--flow al-dot--live"></span>`}
+                <span>${b.label}</span>
+              </strong>
+              <ol style="list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:0.4rem;">
+                ${steps
+                  .map((st, idx) => {
+                    const done = idx < curIdx || b.phase === "done";
+                    const active = idx === curIdx && b.phase !== "done";
+                    return `<li class="al-chip ${done ? "al-chip--trusted" : active ? "al-chip--flow" : "al-chip--neutral"}">${done ? H.ICONS.check : idx + 1 + "."} ${st}</li>`;
+                  })
+                  .join("")}
+              </ol>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              ${b.hash ? `<a href="${H.txUrl(b.hash)}" target="_blank" rel="noreferrer" class="mono" style="font-size:0.75rem;color:var(--flow);text-decoration:none;">${H.shortAddr(b.hash)} · Snowscan</a>` : ""}
+              ${b.phase === "done" ? `<button type="button" id="btn-close-tx" class="al-btn" style="min-block-size:1.9rem;padding:0.2rem 0.65rem;">Đóng</button>` : ""}
+            </div>
+          </div>
+        `;
+        const closeBtn = document.getElementById("btn-close-tx");
+        if (closeBtn) {
+          closeBtn.addEventListener("click", () => {
+            sim.state.txBanner = null;
+            renderTxBanner(sim.state);
+          });
+        }
+      }
+
+      function renderOverview(s, d) {
+        const mount = document.getElementById("overview-panel");
+        const r = 50;
+        const c = 2 * Math.PI * r;
+        const pct = Math.max(0, Math.min(1, d.spendableRatio));
+        const dashOffset = c * (1 - pct);
+        const ringColor = s.paused ? "#ef4444" : "#5eead4";
+
+        const wlRemainPct = Math.round((d.remainingDaily / s.dailyCapUnits) * 100);
+        const sbRemainPct = Math.round((d.remainingSandbox / s.sandboxDailyCapUnits) * 100);
+
+        mount.innerHTML = `
+          <div class="pa1-panel-head">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <span style="color:var(--trusted-text);" aria-hidden="true">${H.ICONS.shieldCheck}</span>
+              <h2 class="al-panel-title">Tổng quan &amp; hạn mức 2 tầng</h2>
+            </div>
+            <span class="al-chip ${s.paused ? "al-chip--danger" : "al-chip--trusted"}">
+              ${s.paused ? H.ICONS.lock : `<span class="al-dot al-dot--trusted al-dot--live" aria-hidden="true"></span>`}
+              <span>${s.paused ? "Đã khóa (paused)" : "Đang hoạt động"}</span>
+            </span>
+          </div>
+
+          <div class="pa1-overview-hero">
+            <div class="pa1-radial-wrap" aria-label="Tỷ lệ chi được ngay trên hạn mức chu kỳ">
+              <svg viewBox="0 0 124 124" width="132" height="132" aria-hidden="true">
+                <circle cx="62" cy="62" r="${r}" fill="none" stroke="rgba(122, 222, 255, 0.12)" stroke-width="8" />
+                <circle cx="62" cy="62" r="${r}" fill="none" stroke="${ringColor}" stroke-width="8" stroke-linecap="round"
+                  stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${dashOffset.toFixed(1)}"
+                  transform="rotate(-90 62 62)" style="transition:stroke-dashoffset 320ms ease,stroke 200ms ease;filter:drop-shadow(0 0 8px ${s.paused ? "rgba(239,68,68,0.45)" : "rgba(94,234,212,0.4)"});" />
+              </svg>
+              <div class="pa1-radial-center">
+                <span style="font-size:0.7rem;color:var(--sky-muted);">Chi được ngay</span>
+                <strong class="mono tabular-nums" style="font-size:1.1rem;color:${s.paused ? "var(--danger-text)" : "var(--flow-text)"};">${H.formatUsdc(d.spendableNow)}</strong>
+                <span class="mono" style="font-size:0.7rem;color:var(--sky-muted);">/ ${H.formatUsdc(s.dailyCapUnits)} USDC</span>
+              </div>
+            </div>
+
+            <div class="pa1-kpi-stack">
+              <div class="al-inset-well pa1-stat-well">
+                <span style="font-size:0.75rem;color:var(--sky-muted);">Số dư policy</span>
+                <div style="display:flex;align-items:baseline;gap:0.35rem;">
+                  <strong class="mono tabular-nums" style="font-size:1.125rem;">${H.formatUsdc(s.balanceUnits)}</strong>
+                  <span style="font-size:0.75rem;color:var(--sky-muted);">USDC</span>
+                </div>
+              </div>
+              <div class="al-inset-well pa1-stat-well">
+                <span style="font-size:0.75rem;color:var(--sky-muted);">Hồi hạn mức sau</span>
+                <div style="display:flex;align-items:baseline;gap:0.35rem;">
+                  <strong class="mono tabular-nums" style="font-size:1.125rem;color:var(--sky-hero-ink);">${H.formatCountdown(s.secondsToReset)}</strong>
+                  <span style="font-size:0.75rem;color:var(--sky-muted);">phút:giây</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:0.9rem;">
+            <div style="display:flex;flex-direction:column;gap:0.35rem;">
+              <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.5rem;">
+                <h3 style="font-size:0.9375rem;font-weight:500;display:inline-flex;align-items:center;gap:0.45rem;">
+                  <span class="al-dot al-dot--trusted"></span>Tầng 1 · Whitelist (tin cậy)
+                </h3>
+                <span class="mono tabular-nums" style="font-size:0.8125rem;color:var(--sky-muted);">
+                  Còn <strong style="font-size:1rem;color:var(--trusted-text);">${H.formatUsdc(d.remainingDaily)}</strong> / ${H.formatUsdc(s.dailyCapUnits)} USDC
+                </span>
+              </div>
+              <div class="al-meter-track" role="meter" aria-label="Tầng 1 Whitelist" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${wlRemainPct}">
+                <div class="al-meter-fill al-meter-fill--trusted" style="inline-size:${wlRemainPct}%;"></div>
+              </div>
+              <p style="font-size:0.75rem;color:var(--sky-muted);">
+                Đã chi <span class="mono tabular-nums" style="color:var(--sky-text);">${H.formatUsdc(s.spentUnits)}</span> USDC. Tối đa ${H.formatUsdc(s.perTxCapUnits)} USDC/lần.
+              </p>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:0.35rem;">
+              <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.5rem;">
+                <h3 style="font-size:0.9375rem;font-weight:500;display:inline-flex;align-items:center;gap:0.45rem;">
+                  <span class="al-dot al-dot--sandbox"></span>Tầng 2 · Sandbox (API lạ)
+                </h3>
+                <span class="mono tabular-nums" style="font-size:0.8125rem;color:var(--sky-muted);">
+                  Còn <strong style="font-size:1rem;color:var(--sandbox-text);">${H.formatUsdc(d.remainingSandbox)}</strong> / ${H.formatUsdc(s.sandboxDailyCapUnits)} USDC
+                </span>
+              </div>
+              <div class="al-meter-track" role="meter" aria-label="Tầng 2 Sandbox" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${sbRemainPct}">
+                <div class="al-meter-fill al-meter-fill--sandbox" style="inline-size:${sbRemainPct}%;"></div>
+              </div>
+              <p style="font-size:0.75rem;color:var(--sky-muted);">
+                Đã chi <span class="mono tabular-nums" style="color:var(--sky-text);">${H.formatUsdc(s.sandboxSpentUnits)}</span> USDC. Tối đa ${H.formatUsdc(s.sandboxPerTxCapUnits)} USDC/lần.
+              </p>
+            </div>
+          </div>
+
+          <dl class="pa1-meta-dl">
+            <div class="pa1-meta-row"><dt>Chủ policy:</dt><dd style="margin:0;"><a href="${H.addressUrl(H.ADDRESSES.ownerPrivy)}" target="_blank" rel="noreferrer" class="mono" style="color:var(--sky-text);text-decoration:none;">${H.shortAddr(H.ADDRESSES.ownerPrivy)} ${H.ICONS.arrowUpRight}</a></dd></div>
+            <div class="pa1-meta-row"><dt>Ví agent:</dt><dd style="margin:0;"><a href="${H.addressUrl(H.ADDRESSES.agent)}" target="_blank" rel="noreferrer" class="mono" style="color:var(--sky-text);text-decoration:none;">${H.shortAddr(H.ADDRESSES.agent)} ${H.ICONS.arrowUpRight}</a></dd></div>
+            <div class="pa1-meta-row"><dt>Block Fuji:</dt><dd class="mono tabular-nums" style="margin:0;color:var(--sky-text);">${s.blockNumber}</dd></div>
+            <div class="pa1-meta-row"><dt>Cập nhật:</dt><dd class="mono tabular-nums" style="margin:0;color:var(--sky-text);">${s.updatedAt} (1s sim)</dd></div>
+            <div class="pa1-meta-row" style="grid-column:1 / -1;"><dt style="display:inline-flex;align-items:center;gap:0.35rem;">${H.ICONS.badge} Hộ chiếu ERC-8004:</dt><dd style="margin:0;"><span class="mono" style="color:var(--trusted-text);font-weight:600;">ID #305 (AgentLeash · x402 Fuji Agent)</span></dd></div>
+          </dl>
+        `;
+      }
+
+      function renderSpends(s) {
+        const mount = document.getElementById("spends-panel");
+        const summary = H.summarizeSpendFlows(s.spends);
+        const visible =
+          spendFilter === "all"
+            ? s.spends
+            : s.spends.filter((item) => (spendFilter === "sandbox" ? item.isSandbox : !item.isSandbox));
+
+        mount.innerHTML = `
+          <div class="pa1-panel-head">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <span style="color:var(--flow);" aria-hidden="true">${H.ICONS.flow}</span>
+              <h2 class="al-panel-title">Dòng tiền x402</h2>
+            </div>
+            <span class="mono tabular-nums" style="font-size:0.8125rem;color:var(--sky-muted);">
+              ${s.spends.length} khoản · <strong style="color:var(--flow-text);">${H.formatUsdc(summary.totalAmount)}</strong> USDC
+            </span>
+          </div>
+
+          <div class="al-inset-well" style="padding:0.75rem;display:flex;flex-direction:column;gap:0.55rem;">
+            ${H.renderSpendFlowSvg(summary, { paused: s.paused })}
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;font-size:0.75rem;color:var(--sky-muted);">
+              <div style="display:flex;flex-wrap:wrap;gap:0.85rem;">
+                <span style="display:inline-flex;align-items:center;gap:0.35rem;"><span class="al-dot al-dot--flow"></span>Agent → Policy</span>
+                <span style="display:inline-flex;align-items:center;gap:0.35rem;"><span class="al-dot al-dot--trusted"></span>Whitelist</span>
+                <span style="display:inline-flex;align-items:center;gap:0.35rem;"><span class="al-dot al-dot--sandbox"></span>Sandbox</span>
+              </div>
+              <span>Nét đứt động biểu thị luồng x402 đang mở</span>
+            </div>
+          </div>
+
+          <div class="al-pill-tabs" role="group" aria-label="Lọc khoản chi theo tầng">
+            <button type="button" class="al-pill-tab" data-sfilter="all" aria-selected="${spendFilter === "all"}">Tất cả (${s.spends.length})</button>
+            <button type="button" class="al-pill-tab" data-sfilter="trusted" aria-selected="${spendFilter === "trusted"}">Whitelist (${s.spends.filter((x) => !x.isSandbox).length})</button>
+            <button type="button" class="al-pill-tab" data-sfilter="sandbox" aria-selected="${spendFilter === "sandbox"}">Sandbox (${s.spends.filter((x) => x.isSandbox).length})</button>
+          </div>
+
+          <ul class="al-list al-scroll" style="max-block-size:13.5rem;padding-inline-end:0.35rem;">
+            ${visible
+              .map((sp) => {
+                const nowWl = s.whitelist[sp.payTo.toLowerCase()] === true;
+                return `
+                  <li style="padding-block:0.65rem;display:flex;flex-direction:column;gap:0.4rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;">
+                      <div style="display:flex;flex-direction:column;gap:0.2rem;min-inline-size:0;">
+                        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem;">
+                          <strong style="font-size:0.875rem;">${sp.name}</strong>
+                          <span class="al-chip ${sp.isSandbox ? "al-chip--sandbox" : "al-chip--trusted"}">${sp.isSandbox ? "Sandbox" : "Whitelist"}</span>
+                        </div>
+                        <div class="mono tabular-nums" style="display:flex;flex-wrap:wrap;gap:0.65rem;font-size:0.75rem;color:var(--sky-muted);">
+                          <span>${sp.time}</span>
+                          <span>→ ${H.shortAddr(sp.payTo)}</span>
+                          <a href="${H.txUrl(sp.txHash)}" target="_blank" rel="noreferrer" style="color:var(--flow);text-decoration:none;">Snowscan ${H.ICONS.arrowUpRight}</a>
+                        </div>
+                      </div>
+                      <strong class="mono tabular-nums" style="color:var(--flow-text);white-space:nowrap;">−${H.formatUsdc(sp.amountUnits)} USDC</strong>
+                    </div>
+                    ${
+                      sp.isSandbox
+                        ? nowWl
+                          ? `<div><span class="al-chip al-chip--trusted">${H.ICONS.check} Đã thành API quen</span></div>`
+                          : `<div><button type="button" class="al-btn al-btn--promote" data-promote="${sp.payTo}" ${!s.authenticated ? "disabled title='Đăng nhập ví chủ Privy để chuyển thành API quen'" : ""} style="min-block-size:2rem;padding:0.25rem 0.7rem;">${H.ICONS.shieldCheck} Chuyển thành API quen</button></div>`
+                        : ""
+                    }
+                  </li>
+                `;
+              })
+              .join("")}
+          </ul>
+        `;
+
+        mount.querySelectorAll("[data-sfilter]").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            spendFilter = btn.dataset.sfilter;
+            renderSpends(sim.state);
+          }),
+        );
+        mount.querySelectorAll("[data-promote]").forEach((btn) =>
+          btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.promote, true)),
+        );
+      }
+
+      function renderSetup(s) {
+        document.getElementById("setup-owner-pill").textContent = s.authenticated ? "Ví chủ Privy (Chủ sở hữu)" : "Chỉ xem (Khách)";
+        document.getElementById("setup-wallet-strip").innerHTML = s.authenticated
+          ? `<span>Ví chủ Privy: <strong class="mono" style="color:var(--sky-text);">${H.shortAddr(H.ADDRESSES.ownerPrivy)}</strong> · <span class="mono tabular-nums">0.4280 AVAX</span></span>
+             <span class="mono" style="color:var(--flow-text);">Policy: ${H.shortAddr(s.activePolicy)}</span>`
+          : `<span style="color:var(--sky-muted);">Chế độ khách: đăng nhập ví Privy ở thanh trên để chỉnh Whitelist hoặc Hạn mức.</span>`;
+
+        const sellers = [
+          { addr: H.ADDRESSES.weatherSeller, name: "API Thời tiết" },
+          { addr: H.ADDRESSES.ratesSeller, name: "API Tỷ giá" },
+          { addr: H.ADDRESSES.flightSandbox, name: "API Dự báo Chuyến bay" },
+        ];
+
+        const wlMount = document.getElementById("tab-wl-body");
+        wlMount.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+            <h3 style="font-size:0.9375rem;font-weight:500;">Danh sách API tin cậy (Tầng 1)</h3>
+            <span style="font-size:0.75rem;color:var(--sky-muted);">Ngoài danh sách → áp trần Sandbox</span>
+          </div>
+          <ul class="al-list" style="border-block:1px solid var(--divider-hairline);">
+            ${sellers
+              .map((item) => {
+                const allowed = s.whitelist[item.addr.toLowerCase()] === true;
+                return `
+                  <li style="padding-block:0.6rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;">
+                    <div>
+                      <div style="font-weight:600;">${item.name}</div>
+                      <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">${H.shortAddr(item.addr)}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <span class="al-chip ${allowed ? "al-chip--trusted" : "al-chip--sandbox"}">${allowed ? "Whitelist" : "Sandbox"}</span>
+                      <button type="button" class="al-btn" data-wl-toggle="${item.addr}" data-wl-next="${!allowed}" ${!s.authenticated ? "disabled" : ""} style="min-block-size:2rem;padding:0.25rem 0.7rem;">
+                        ${allowed ? "Gỡ" : "Thêm"}
+                      </button>
+                    </div>
+                  </li>
+                `;
+              })
+              .join("")}
+          </ul>
+        `;
+        wlMount.querySelectorAll("[data-wl-toggle]").forEach((btn) =>
+          btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.wlToggle, btn.dataset.wlNext === "true")),
+        );
+
+        const capsMount = document.getElementById("tab-caps-body");
+        capsMount.innerHTML = `
+          <form id="caps-form" style="display:flex;flex-direction:column;gap:0.85rem;">
+            <div class="pa1-caps-grid">
+              <fieldset class="pa1-fieldset">
+                <legend style="font-size:0.75rem;font-weight:600;color:var(--trusted-text);padding-inline:0.3rem;">Tầng 1 · Whitelist</legend>
+                <label style="font-size:0.75rem;color:var(--sky-muted);">Mỗi lần (USDC)
+                  <input type="text" id="cap-per-tx" class="al-input mono tabular-nums" value="${H.formatUsdc(s.perTxCapUnits)}" ${!s.authenticated ? "disabled" : ""} style="margin-block-start:0.25rem;">
+                </label>
+                <label style="font-size:0.75rem;color:var(--sky-muted);">Chu kỳ (chung cả 2 tầng)
+                  <input type="text" id="cap-daily" class="al-input mono tabular-nums" value="${H.formatUsdc(s.dailyCapUnits)}" ${!s.authenticated ? "disabled" : ""} style="margin-block-start:0.25rem;">
+                </label>
+              </fieldset>
+              <fieldset class="pa1-fieldset">
+                <legend style="font-size:0.75rem;font-weight:600;color:var(--sandbox-text);padding-inline:0.3rem;">Tầng 2 · Sandbox</legend>
+                <label style="font-size:0.75rem;color:var(--sky-muted);">Mỗi lần (USDC)
+                  <input type="text" id="cap-sb-per-tx" class="al-input mono tabular-nums" value="${H.formatUsdc(s.sandboxPerTxCapUnits)}" ${!s.authenticated ? "disabled" : ""} style="margin-block-start:0.25rem;">
+                </label>
+                <label style="font-size:0.75rem;color:var(--sky-muted);">Chu kỳ (USDC)
+                  <input type="text" id="cap-sb-daily" class="al-input mono tabular-nums" value="${H.formatUsdc(s.sandboxDailyCapUnits)}" ${!s.authenticated ? "disabled" : ""} style="margin-block-start:0.25rem;">
+                </label>
+              </fieldset>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+              <span style="font-size:0.75rem;color:var(--sky-muted);">Ràng buộc on-chain: Sandbox chu kỳ ≤ Whitelist chu kỳ.</span>
+              <button type="submit" class="al-btn al-btn--primary" ${!s.authenticated ? "disabled" : ""}>Lưu hạn mức (setCaps)</button>
+            </div>
+          </form>
+        `;
+        document.getElementById("caps-form").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const toUnits = (id) => Math.max(0, Math.round(parseFloat(document.getElementById(id).value || "0") * 1_000_000));
+          sim.updateCaps({
+            perTxCapUnits: toUnits("cap-per-tx"),
+            dailyCapUnits: toUnits("cap-daily"),
+            sandboxPerTxCapUnits: toUnits("cap-sb-per-tx"),
+            sandboxDailyCapUnits: toUnits("cap-sb-daily"),
+          });
+        });
+
+        const ercMount = document.getElementById("tab-erc-body");
+        ercMount.innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:0.85rem;">
+            <div class="al-inset-well" style="padding:0.85rem;display:flex;flex-direction:column;gap:0.5rem;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+                <strong style="font-size:0.875rem;">Chuyển đổi nhanh Policy (Factory)</strong>
+                <span class="mono" style="font-size:0.75rem;color:var(--sky-muted);">${H.shortAddr(H.ADDRESSES.factory)}</span>
+              </div>
+              <select id="policy-select" class="al-select mono" aria-label="Chọn policy thao tác">
+                <option value="${H.ADDRESSES.policyMain}" ${s.activePolicy === H.ADDRESSES.policyMain ? "selected" : ""}>Bot Du Lịch · ${H.shortAddr(H.ADDRESSES.policyMain)}</option>
+                <option value="${H.ADDRESSES.policyAlt}" ${s.activePolicy === H.ADDRESSES.policyAlt ? "selected" : ""}>Bot Research · ${H.shortAddr(H.ADDRESSES.policyAlt)}</option>
+              </select>
+            </div>
+            <div class="al-inset-well" style="padding:0.85rem;display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+              <div>
+                <div style="display:flex;align-items:center;gap:0.45rem;">
+                  <span class="al-chip al-chip--trusted">ID #305</span>
+                  <strong>AgentLeash · x402 Fuji Agent</strong>
+                </div>
+                <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);margin-block-start:0.2rem;">Registry: ${H.shortAddr(H.ADDRESSES.erc8004Registry)}</div>
+              </div>
+              <a href="${H.addressUrl(H.ADDRESSES.erc8004Registry)}" target="_blank" rel="noreferrer" class="al-btn">Xem Snowscan ${H.ICONS.arrowUpRight}</a>
+            </div>
+          </div>
+        `;
+        document.getElementById("policy-select").addEventListener("change", (e) => sim.switchPolicy(e.target.value));
+      }
+
+      function renderRejections(s) {
+        const mount = document.getElementById("rejections-panel");
+        const visible =
+          rejFilter === "all" ? s.rejections : s.rejections.filter((r) => r.source === rejFilter);
+
+        mount.innerHTML = `
+          <div class="pa1-panel-head">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <span style="color:var(--danger-text);" aria-hidden="true">${H.ICONS.shieldBan}</span>
+              <h2 class="al-panel-title">Nhật ký bị từ chối</h2>
+            </div>
+            <span class="al-chip al-chip--danger tabular-nums">${s.rejections.length} lần bị chặn</span>
+          </div>
+
+          <div class="al-pill-tabs" role="group" aria-label="Lọc theo lớp chặn">
+            <button type="button" class="al-pill-tab" data-rfilter="all" aria-selected="${rejFilter === "all"}">Tất cả (${s.rejections.length})</button>
+            <button type="button" class="al-pill-tab" data-rfilter="contract" aria-selected="${rejFilter === "contract"}">Contract (${s.rejections.filter((x) => x.source === "contract").length})</button>
+            <button type="button" class="al-pill-tab" data-rfilter="rule-engine" aria-selected="${rejFilter === "rule-engine"}">Rule Engine (${s.rejections.filter((x) => x.source === "rule-engine").length})</button>
+          </div>
+
+          <ul class="al-list al-scroll" style="max-block-size:21.5rem;padding-inline-end:0.35rem;">
+            ${visible
+              .map((r) => {
+                const isContract = r.source === "contract";
+                const nowWl = r.payTo && s.whitelist[r.payTo.toLowerCase()] === true;
+                const canPromote = r.payTo && !nowWl && r.payTo.toLowerCase() !== H.ADDRESSES.attackerTarget.toLowerCase();
+                return `
+                  <li style="padding-block:0.7rem;display:flex;flex-direction:column;gap:0.35rem;">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.45rem;">
+                      <span class="al-chip ${isContract ? "al-chip--danger" : "al-chip--sandbox"}">
+                        ${isContract ? H.ICONS.shieldBan : H.ICONS.alert}
+                        <span>${isContract ? "Contract chặn" : "Rule engine chặn"}</span>
+                      </span>
+                      <strong style="font-size:0.875rem;">${r.title}</strong>
+                    </div>
+                    <p style="font-size:0.78rem;color:var(--sky-muted);">${r.detail}</p>
+                    <div class="mono tabular-nums" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.65rem;font-size:0.75rem;color:var(--sky-muted);">
+                      <span>${r.time}</span>
+                      <span>API: ${r.api}</span>
+                      ${r.amountUnits ? `<span style="color:var(--sky-text);">${H.formatUsdc(r.amountUnits)} USDC</span>` : ""}
+                      <code style="padding:0.1rem 0.4rem;border-radius:5px;background:rgba(5,13,27,0.85);color:var(--sky-text);">${r.code}</code>
+                      ${r.bypassRules ? `<span style="color:var(--danger-text);font-family:var(--font-sans);font-weight:600;">Giả lập bị chiếm: bỏ qua Rule Engine</span>` : ""}
+                    </div>
+                    ${
+                      canPromote
+                        ? `<div><button type="button" class="al-btn al-btn--promote" data-rpromote="${r.payTo}" ${!s.authenticated ? "disabled" : ""} style="min-block-size:2rem;padding:0.25rem 0.7rem;">${H.ICONS.shieldCheck} Chuyển thành API quen</button></div>`
+                        : ""
+                    }
+                  </li>
+                `;
+              })
+              .join("")}
+          </ul>
+        `;
+
+        mount.querySelectorAll("[data-rfilter]").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            rejFilter = btn.dataset.rfilter;
+            renderRejections(sim.state);
+          }),
+        );
+        mount.querySelectorAll("[data-rpromote]").forEach((btn) =>
+          btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.rpromote, true)),
+        );
+      }
+
+      function render(s, d) {
+        renderHeader(s);
+        renderDemoBar(s, d);
+        renderTxBanner(s);
+        renderOverview(s, d);
+        renderSpends(s);
+        renderSetup(s);
+        renderRejections(s);
+      }
+
+      sim.notify();
+    })();
+  </script>
+</body>
+</html>

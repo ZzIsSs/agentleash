@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Route /audit — Nhật ký bị từ chối &amp; RuleEngine | AgentLeash Multi-Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../hud-tokens.css">
+  <link rel="stylesheet" href="./mp-shell.css">
+</head>
+<body>
+  <div id="mp-root"></div>
+
+  <script src="../hud-sim.js"></script>
+  <script src="./mp-shell.js"></script>
+  <script>
+    (function () {
+      let sourceFilter = "all";
+
+      window.AgentLeashMultiPage.mountMultiPageApp("audit", function (mount, sim, s, d, H) {
+        const off = s.bypassRules;
+        const visible =
+          sourceFilter === "all" ? s.rejections : s.rejections.filter((r) => r.source === sourceFilter);
+
+        mount.innerHTML = `
+          <section class="al-glass-panel mp-page-banner">
+            <div>
+              <h1 class="al-hero-greeting">Nhật ký bị từ chối &amp; 4 Lớp RuleEngine (Route <code class="mono" style="color:var(--flow-text);">/audit</code>)</h1>
+              <p style="font-size:0.8125rem;color:var(--sky-muted);margin-block-start:0.2rem;">
+                Gộp mọi yêu cầu bị chặn ngoài chuỗi (Rule Engine tiết kiệm gas) và bị revert trên chuỗi (AgentPolicy), kèm nút 1-click duyệt API quen.
+              </p>
+            </div>
+            <button type="button" id="au-test-attack" class="al-btn ${off ? "al-btn--danger" : ""}">
+              ${off ? "Thử gọi 0x1111…1111 (Contract chặn)" : "Thử gọi 0x1111…1111 (RuleEngine chặn)"}
+            </button>
+          </section>
+
+          <section class="mp-grid-4" aria-label="Trạng thái 4 lớp RuleEngine">
+            <div class="al-glass-panel" style="padding:1rem;">
+              <div style="font-size:0.75rem;color:var(--sky-muted);">Lớp 1 · Trần Sandbox</div>
+              <strong class="mono" style="font-size:1rem;color:var(--sandbox-text);">${H.formatUsdc(s.sandboxPerTxCapUnits)} USDC/lần</strong>
+              <p style="font-size:0.75rem;color:var(--sky-muted);margin-block-start:0.25rem;">Luôn khóa trần trên contract kể cả khi RuleEngine bị tắt.</p>
+            </div>
+            <div class="al-glass-panel" style="padding:1rem;">
+              <div style="font-size:0.75rem;color:var(--sky-muted);">Lớp 2 · Chống SSRF</div>
+              <strong style="font-size:1rem;color:${off ? "var(--danger-text)" : "var(--trusted-text)"};">${off ? "Đang bỏ qua (--bypass-rules)" : "Đang bảo vệ URL"}</strong>
+              <p style="font-size:0.75rem;color:var(--sky-muted);margin-block-start:0.25rem;">Chặn IP nội bộ, domain giả mạo và scheme không an toàn.</p>
+            </div>
+            <div class="al-glass-panel" style="padding:1rem;">
+              <div style="font-size:0.75rem;color:var(--sky-muted);">Lớp 3 · Rate Limit</div>
+              <strong style="font-size:1rem;color:${off ? "var(--danger-text)" : "var(--flow-text)"};">${off ? "Đang bỏ qua" : "Tối đa 5 lần / phút"}</strong>
+              <p style="font-size:0.75rem;color:var(--sky-muted);margin-block-start:0.25rem;">Chặn vòng lặp vô hạn và mua trùng dữ liệu vừa mua.</p>
+            </div>
+            <div class="al-glass-panel" style="padding:1rem;">
+              <div style="font-size:0.75rem;color:var(--sky-muted);">Lớp 4 · Khớp giá 402</div>
+              <strong style="font-size:1rem;color:${off ? "var(--danger-text)" : "var(--trusted-text)"};">${off ? "Đang bỏ qua" : "Strict payTo & Price"}</strong>
+              <p style="font-size:0.75rem;color:var(--sky-muted);margin-block-start:0.25rem;">Đảm bảo hóa đơn HTTP 402 khớp đúng người bán đã đăng ký.</p>
+            </div>
+          </section>
+
+          <section class="al-glass-panel mp-card">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.75rem;">
+              <h2 class="al-panel-title">Danh sách sự kiện bị chặn (${s.rejections.length})</h2>
+              <div class="al-pill-tabs" role="group" aria-label="Lọc theo lớp chặn">
+                <button type="button" class="al-pill-tab" data-au-filter="all" aria-selected="${sourceFilter === "all"}">Tất cả (${s.rejections.length})</button>
+                <button type="button" class="al-pill-tab" data-au-filter="contract" aria-selected="${sourceFilter === "contract"}">Contract (${s.rejections.filter((x) => x.source === "contract").length})</button>
+                <button type="button" class="al-pill-tab" data-au-filter="rule-engine" aria-selected="${sourceFilter === "rule-engine"}">Rule Engine (${s.rejections.filter((x) => x.source === "rule-engine").length})</button>
+              </div>
+            </div>
+
+            <ul class="al-list">
+              ${visible
+                .map((r) => {
+                  const isContract = r.source === "contract";
+                  const nowWl = r.payTo && s.whitelist[r.payTo.toLowerCase()] === true;
+                  const canPromote = r.payTo && !nowWl && r.payTo.toLowerCase() !== H.ADDRESSES.attackerTarget.toLowerCase();
+                  return `
+                  <li style="padding-block:0.85rem;display:flex;flex-direction:column;gap:0.4rem;">
+                    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;">
+                      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;">
+                        <span class="al-chip ${isContract ? "al-chip--danger" : "al-chip--sandbox"}">
+                          ${isContract ? H.ICONS.shieldBan : H.ICONS.alert}
+                          <span>${isContract ? "Contract chặn" : "Rule engine chặn"}</span>
+                        </span>
+                        <strong>${r.title}</strong>
+                      </div>
+                      <span class="mono tabular-nums" style="font-size:0.75rem;color:var(--sky-muted);">${r.time}</span>
+                    </div>
+                    <p style="font-size:0.8125rem;color:var(--sky-muted);">${r.detail}</p>
+                    <div class="mono tabular-nums" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.7rem;font-size:0.75rem;color:var(--sky-muted);">
+                      <span>API: ${r.api}</span>
+                      ${r.payTo ? `<span>→ ${H.shortAddr(r.payTo)}</span>` : ""}
+                      ${r.amountUnits ? `<span style="color:var(--sky-text);">${H.formatUsdc(r.amountUnits)} USDC</span>` : ""}
+                      <code style="padding:0.1rem 0.45rem;border-radius:5px;background:rgba(5,13,27,0.85);color:var(--sky-text);">${r.code}</code>
+                      ${r.bypassRules ? `<span style="color:var(--danger-text);font-family:var(--font-sans);font-weight:600;">--bypass-rules</span>` : ""}
+                    </div>
+                    ${
+                      canPromote
+                        ? `<div><button type="button" class="al-btn al-btn--promote" data-au-promote="${r.payTo}" ${!s.authenticated ? "disabled" : ""} style="min-block-size:2rem;padding:0.2rem 0.65rem;">${H.ICONS.shieldCheck} Chuyển thành API quen</button></div>`
+                        : ""
+                    }
+                  </li>`;
+                })
+                .join("")}
+            </ul>
+          </section>
+        `;
+
+        document.getElementById("au-test-attack").addEventListener("click", () => {
+          sim.runDemoSequence();
+        });
+        mount.querySelectorAll("[data-au-filter]").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            sourceFilter = btn.dataset.auFilter;
+            sim.notify();
+          }),
+        );
+        mount.querySelectorAll("[data-au-promote]").forEach((btn) =>
+          btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.auPromote, true)),
+        );
+      });
+    })();
+  </script>
+</body>
+</html>

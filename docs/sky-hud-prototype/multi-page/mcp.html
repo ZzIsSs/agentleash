@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Route /mcp — MCP Gateway Bên A – Bên B | AgentLeash Multi-Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../hud-tokens.css">
+  <link rel="stylesheet" href="./mp-shell.css">
+</head>
+<body>
+  <div id="mp-root"></div>
+
+  <script src="../hud-sim.js"></script>
+  <script src="./mp-shell.js"></script>
+  <script>
+    (function () {
+      let lastMcpOutput = `// Bấm nút bên phải để mô phỏng tool MCP từ Antigravity / Claude Code (Bên A).\n// Kết quả chi tiêu hoặc chặn sẽ tự đồng bộ sang /flows, /policies và /audit!`;
+
+      window.AgentLeashMultiPage.mountMultiPageApp("mcp", function (mount, sim, s, d, H) {
+        const isFlightWhitelisted = s.whitelist[H.ADDRESSES.flightSandbox.toLowerCase()] === true;
+
+        mount.innerHTML = `
+          <section class="al-glass-panel mp-page-banner">
+            <div>
+              <h1 class="al-hero-greeting">Cổng MCP Bên A – Bên B (Route <code class="mono" style="color:var(--flow-text);">/mcp</code>)</h1>
+              <p style="font-size:0.8125rem;color:var(--sky-muted);margin-block-start:0.2rem;">
+                Cấu hình 1 lệnh cho Claude Code / Antigravity (<code class="mono">agent/src/mcp.ts</code>) và kiểm thử trực tiếp tool MCP đồng bộ với các trang khác.
+              </p>
+            </div>
+            <span class="al-chip al-chip--flow">stdio + DASHBOARD_URL hint</span>
+          </section>
+
+          <div class="mp-grid-2">
+            <!-- Left: 1-command MCP Setup -->
+            <section class="al-glass-panel mp-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+                <h2 class="al-panel-title">Cài đặt 1 lệnh vào Bên A</h2>
+                <button type="button" id="mcp-copy-cmd" class="al-btn" style="min-block-size:2rem;padding:0.2rem 0.65rem;">Chép lệnh</button>
+              </div>
+              <pre id="mcp-setup-code" class="mp-code-block">npx agentleash-mcp setup --policy ${s.activePolicy}</pre>
+
+              <div class="al-inset-well" style="padding:0.85rem;display:flex;flex-direction:column;gap:0.45rem;">
+                <strong style="font-size:0.8125rem;">Cấu hình tự ghi vào <code class="mono">.mcp.json</code></strong>
+                <pre class="mp-code-block" style="margin:0;">{
+  "mcpServers": {
+    "agentleash": {
+      "command": "node",
+      "args": ["agent/dist/mcp.js"],
+      "env": {
+        "POLICY_ADDRESS": "${s.activePolicy}",
+        "DASHBOARD_URL": "https://agentleash-two.vercel.app"
+      }
+    }
+  }
+}</pre>
+              </div>
+            </section>
+
+            <!-- Right: Live Cross-Page MCP Tool Simulator -->
+            <section class="al-glass-panel mp-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+                <h2 class="al-panel-title">Thử gọi MCP Tool (đồng bộ sang /flows &amp; /audit)</h2>
+                <span class="al-chip ${isFlightWhitelisted ? "al-chip--trusted" : "al-chip--sandbox"}">
+                  Chuyến bay: ${isFlightWhitelisted ? "Whitelist" : "Sandbox"}
+                </span>
+              </div>
+
+              <div style="display:flex;flex-wrap:wrap;gap:0.6rem;">
+                <button type="button" id="mcp-call-unknown" class="al-btn al-btn--promote">
+                  Gọi test_unknown_api (0.0005 USDC)
+                </button>
+                <button type="button" id="mcp-call-trusted" class="al-btn al-btn--primary">
+                  Gọi call_trusted_api (Thời tiết 0.001)
+                </button>
+              </div>
+
+              <pre id="mcp-live-output" class="mp-code-block" style="min-block-size:200px;">${lastMcpOutput}</pre>
+
+              <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;font-size:0.78rem;color:var(--sky-muted);">
+                <span>Thử bấm 1 nút trên rồi chuyển sang <a href="./flows.html" style="color:var(--flow);">/flows</a> để thấy dữ liệu giữ nguyên!</span>
+                ${
+                  !isFlightWhitelisted
+                    ? `<button type="button" id="mcp-promote-flight" class="al-btn al-btn--promote" ${!s.authenticated ? "disabled" : ""} style="min-block-size:2rem;">1-click Chuyển Chuyến bay thành API quen</button>`
+                    : ""
+                }
+              </div>
+            </section>
+          </div>
+        `;
+
+        document.getElementById("mcp-copy-cmd").addEventListener("click", async () => {
+          const btn = document.getElementById("mcp-copy-cmd");
+          try {
+            await navigator.clipboard.writeText(document.getElementById("mcp-setup-code").textContent);
+            btn.textContent = "Đã chép";
+            setTimeout(() => (btn.textContent = "Chép lệnh"), 1600);
+          } catch {}
+        });
+
+        document.getElementById("mcp-call-unknown").addEventListener("click", () => {
+          const beforeSpends = sim.state.spends.length;
+          sim.runSandboxProbe();
+          const ok = sim.state.spends.length > beforeSpends;
+          lastMcpOutput = JSON.stringify(
+            ok
+              ? {
+                  ok: true,
+                  tool: "test_unknown_api",
+                  tier: isFlightWhitelisted ? "WHITELIST" : "SANDBOX",
+                  paidUsdc: "0.0005",
+                  payTo: H.ADDRESSES.flightSandbox,
+                  hint: "Đã ghi vào sổ chi tiêu. Mở /flows hoặc /policies để duyệt thành API quen.",
+                }
+              : {
+                  ok: false,
+                  tool: "test_unknown_api",
+                  error: sim.state.paused ? "PausedError" : "ExceedsSandboxDailyCap",
+                  hint: "Kiểm tra nguyên nhân chặn tại /audit.",
+                },
+            null,
+            2,
+          );
+          sim.notify();
+        });
+
+        document.getElementById("mcp-call-trusted").addEventListener("click", () => {
+          sim.runDemoSequence();
+          lastMcpOutput = JSON.stringify(
+            {
+              tool: "call_trusted_api",
+              status: "DISPATCHED_TO_POLICY",
+              policy: s.activePolicy,
+              hint: "Đã chạy lượt mua x402 Whitelist. Chuyển sang /flows hoặc /audit để xem kết quả on-chain.",
+            },
+            null,
+            2,
+          );
+          sim.notify();
+        });
+
+        const promBtn = document.getElementById("mcp-promote-flight");
+        if (promBtn) {
+          promBtn.addEventListener("click", () => sim.toggleWhitelist(H.ADDRESSES.flightSandbox, true));
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

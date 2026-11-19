@@ -3,10 +3,12 @@
 // Chép từ starter kit ../privy-agent-wallet/src/app/providers.tsx, chỉ giữ Fuji.
 import { PrivyProvider } from "@privy-io/react-auth";
 import { avalancheFuji } from "viem/chains";
+import { ConsoleProvider } from "@/components/ConsoleProvider";
+import { ConsoleShell } from "@/components/ConsoleShell";
 import { APP_ID_STATE, PRIVY_APP_ID } from "@/lib/app-id";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Thiếu app ID hợp lệ thì không nạp Privy; page.tsx hiện hướng dẫn cấu hình.
+  // Thiếu app ID hợp lệ thì không nạp Privy; page.tsx và các route hiện hướng dẫn cấu hình.
   if (APP_ID_STATE !== "ok") return <>{children}</>;
   return (
     <PrivyProvider
@@ -19,7 +21,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         embeddedWallets: { ethereum: { createOnLogin: "all-users" } },
       }}
     >
-      {children}
+      <ConsoleProvider>
+        <ConsoleShell>{children}</ConsoleShell>
+      </ConsoleProvider>
     </PrivyProvider>
   );
 }
