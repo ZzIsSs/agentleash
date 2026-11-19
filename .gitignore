@@ -27,3 +27,6 @@ Thumbs.db
 
 # Log chạy agent (audit.json chứa dữ liệu mỗi lần demo)
 agent/logs/
+
+# Thư mục làm việc của công cụ thiết kế Impeccable (cache, ảnh review, đường dẫn máy cá nhân)
+.impeccable/

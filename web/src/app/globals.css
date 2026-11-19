@@ -1,36 +1,229 @@
 @import "tailwindcss";
 
-/* Dark Mode đã chốt (docs/HUONG_DAN_CHUAN_BI_FIGMA.md mục 4): nền #020617, thẻ #0F172A.
-   Màu trạng thái: xanh lá = Whitelist, vàng = Sandbox, cyan = dòng tiền, đỏ = Kill switch / bị chặn. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Palette Dark Mode Operate (DESIGN.md):
+   Nền #020617, thẻ #0f172a, vùng lồng #131c31.
+   4 màu trạng thái: Whitelist (xanh lá), Sandbox (vàng), Dòng tiền x402 (cyan), Kill switch / Bị chặn (đỏ). */
 :root {
   --background: #020617;
   --card: #0f172a;
+  --surface-inset: #131c31;
+  --surface-elevated: #18233a;
   --border: #1e293b;
-  --foreground: #e2e8f0;
+  --border-control: #5b6f8e;
+  --foreground: #f1f5f9;
   --muted: #94a3b8;
+
   --trusted: #22c55e;
+  --trusted-text: #4ade80;
   --sandbox: #eab308;
+  --sandbox-text: #facc15;
   --flow: #22d3ee;
+  --flow-text: #67e8f9;
   --danger: #ef4444;
+  --danger-solid: #dc2626;
+  --danger-text: #fca5a5;
+
   color-scheme: dark;
+  accent-color: var(--flow);
+  scrollbar-color: #334155 #020617;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-card: var(--card);
+  --color-surface-inset: var(--surface-inset);
+  --color-surface-elevated: var(--surface-elevated);
   --color-border: var(--border);
+  --color-border-control: var(--border-control);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+
   --color-trusted: var(--trusted);
+  --color-trusted-text: var(--trusted-text);
   --color-sandbox: var(--sandbox);
+  --color-sandbox-text: var(--sandbox-text);
   --color-flow: var(--flow);
+  --color-flow-text: var(--flow-text);
   --color-danger: var(--danger);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-danger-solid: var(--danger-solid);
+  --color-danger-text: var(--danger-text);
+
+  --font-sans: var(--font-be-vietnam-pro), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@media (pointer: fine) {
+  html {
+    overscroll-behavior: none;
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-x: clip;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+#main-dashboard {
+  scroll-margin-top: 2rem;
+}
+
+:where(a, button, input, select, summary) {
+  touch-action: manipulation;
+}
+
+::selection {
+  background: rgba(34, 211, 238, 0.24);
+  color: #f8fafc;
+}
+
+:where(a, button, input, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--flow);
+  outline-offset: 2px;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbar mảnh theo palette tối cho danh sách dòng tiền / nhật ký */
+.al-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+
+@supports not (scrollbar-color: auto) {
+  .al-scroll {
+    scrollbar-width: auto;
+  }
+  .al-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .al-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .al-scroll::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 9999px;
+  }
+}
+
+/* Native modal dialog containment */
+dialog:modal {
+  margin: auto;
+  max-width: min(28rem, calc(100vw - 2rem));
+  width: 100%;
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+/* Native left-edge modal drawer for mobile multi-page navigation */
+dialog.al-nav-drawer:modal {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+  margin: 0;
+  inline-size: min(20rem, 86dvw);
+  max-inline-size: none;
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Accessible native switch control with consistent cross-browser track */
+.al-switch {
+  appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #1e293b;
+  border: 1px solid var(--border-control);
+  cursor: pointer;
+  transition: background-color 150ms cubic-bezier(0.2, 0, 0, 1), border-color 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.al-switch::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #cbd5e1;
+  transition: transform 150ms cubic-bezier(0.2, 0, 0, 1), background-color 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.al-switch:checked {
+  background: var(--danger-solid);
+  border-color: var(--danger);
+}
+
+.al-switch:checked::before {
+  transform: translateX(20px);
+  background: #ffffff;
+}
+
+.al-switch:focus-visible {
+  outline: 2px solid var(--flow);
+  outline-offset: 3px;
+}
+
+/* Tab active underline in forced colors and normal mode */
+.al-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  border-block-end: 2px solid var(--flow);
+}
+
+@media (forced-colors: active) {
+  .al-tab[aria-selected="true"]::after {
+    border-block-end: 3px solid Highlight;
+  }
+  .al-switch {
+    appearance: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

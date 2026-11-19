@@ -120,7 +120,7 @@ Không làm bản chạy trên L1 riêng.
 
 - ✅ README: sơ đồ kiến trúc, địa chỉ contract, cách chạy trong 3 lệnh (`README.md`).
 - ✅ Script nạp dữ liệu mẫu cho demo (`scripts/seed-demo.mjs`, đã chạy kiểm tra Fuji & 4 dịch vụ local).
-- Deploy web (ví dụ Vercel), ghi tài khoản test cho giám khảo.
+- ~~Deploy web (ví dụ Vercel), ghi tài khoản test cho giám khảo.~~ Bỏ (20/11): demo chạy local, ô *Live app* trên form để trống.
 - Quay video cùng Giang theo kịch bản trong SPEC, có câu khai chu kỳ 120 giây (`DEMO_PERIOD_SECONDS=120`) ngay đầu (luật 6).
 - Nộp trước trưa 21/11, để nửa ngày còn lại dự phòng.
 
@@ -147,5 +147,5 @@ Giang đánh dấu ở đây hoặc trên trang Notion theo dõi tiến độ.
 - [x] 15/11: đã chốt thư viện web (Privy `@privy-io/react-auth` + `viem` thuần, bỏ `wagmi`)
 - [x] 16/11 (dời từ 18/11): xong GĐ 3c (`setCaps`, sơ đồ dòng tiền SVG) và chạy trọn 7 bước kịch bản demo thật trên Fuji
 - [x] 18/11 (dời từ 19/11): xong phần nên có (tạo policy qua factory, công tắc `--bypass-rules`, ERC-8004 NFT `#305`; kèm nút 1-click **Chuyển thành API quen** & MCP `stdio` `agent/src/mcp.ts`)
-- [ ] 19/11: README (`✅` xong), web deploy (`✅` kiểm 18/11 trên `agentleash-two.vercel.app`, chế độ khách + chủ ví Khóa/Mở khóa thật; 19/11 gộp PR #14 & PR #15: Upstash tùy chọn, ô thêm whitelist địa chỉ, `setup:mcp`, agent `49/49`, web `86/86`) · 20/11: video
+- [ ] 19/11: README (`✅` xong), PR #14 & PR #15 (`✅` ô thêm whitelist địa chỉ, Upstash tùy chọn, `setup:mcp`), web deploy (bỏ từ 20/11, không dùng Vercel nữa; demo chạy local) · 20/11: video
 - [ ] 21/11 trước trưa: đã nộp

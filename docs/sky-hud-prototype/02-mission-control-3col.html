@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>PA 2: Mission Control 3 Cột (SKY Style) — AgentLeash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hud-tokens.css">
+  <style>
+    .mc-app {
+      display: flex;
+      flex-direction: column;
+      min-block-size: 100dvh;
+    }
+
+    /* Chỉ khóa 100dvh trên màn hình lớn đủ cao (tránh cắt nút trên laptop 1366x768) */
+    @media (min-width: 1280px) and (min-height: 820px) {
+      .mc-app {
+        block-size: 100dvh;
+        overflow: hidden;
+      }
+      .mc-stage {
+        flex: 1;
+        min-block-size: 0;
+        overflow: hidden;
+      }
+      .mc-col-left,
+      .mc-col-right {
+        min-block-size: 0;
+        overflow: hidden;
+      }
+    }
+
+    .mc-stage {
+      max-inline-size: 1720px;
+      inline-size: 100%;
+      margin-inline: auto;
+      padding: 1rem 1.25rem 1.25rem;
+      display: grid;
+      gap: 1.25rem;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "center"
+        "left"
+        "right";
+    }
+
+    /* Tablet (768px - 1239px): Left + Center trên hàng 1, Right kéo rộng hàng 2 giống SKY */
+    @media (min-width: 768px) {
+      .mc-stage {
+        grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+        grid-template-areas:
+          "left center"
+          "right right";
+      }
+    }
+
+    /* Desktop (>= 1240px): 3 cột bất đối xứng [360px | 1fr | 500px] */
+    @media (min-width: 1240px) {
+      .mc-stage {
+        grid-template-columns: minmax(0, 360px) minmax(0, 1fr) minmax(0, 500px);
+        grid-template-areas: "left center right";
+      }
+    }
+
+    .mc-col-left {
+      grid-area: left;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      min-inline-size: 0;
+    }
+
+    .mc-col-center {
+      grid-area: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      min-inline-size: 0;
+      position: relative;
+    }
+
+    .mc-col-right {
+      grid-area: right;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      min-inline-size: 0;
+    }
+
+    .mc-card {
+      padding: 1rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .mc-orb-stage {
+      position: relative;
+      inline-size: min(260px, 68vw);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      margin-block-start: 0.25rem;
+    }
+
+    .mc-orb-canvas {
+      position: absolute;
+      inset: 0;
+      inline-size: 100%;
+      block-size: 100%;
+      display: block;
+    }
+
+    .mc-orb-badge {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      padding: 0.6rem 0.95rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(122, 222, 255, 0.25);
+      background: rgba(4, 13, 27, 0.72);
+      backdrop-filter: blur(6px);
+      text-align: center;
+    }
+
+    .mc-motion-toggle {
+      position: absolute;
+      inset-block-start: 0.25rem;
+      inset-inline-end: 0;
+      z-index: 3;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(122, 222, 255, 0.16);
+      background: rgba(6, 15, 29, 0.75);
+      color: var(--sky-muted);
+      font-family: inherit;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .mc-motion-toggle:hover {
+      color: var(--sky-text);
+      border-color: rgba(122, 222, 255, 0.35);
+    }
+
+    .mc-rule-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .mc-rule-tile {
+      padding: 0.55rem 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      font-size: 0.75rem;
+    }
+
+    .mc-kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+    }
+
+    @media (max-width: 520px) {
+      .mc-kpi-strip {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .mc-kpi-box {
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .mc-insight-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      max-inline-size: 100%;
+      padding: 0.45rem 0.9rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(122, 222, 255, 0.18);
+      background: rgba(7, 18, 36, 0.78);
+      font-size: 0.78rem;
+      color: var(--sky-muted);
+    }
+
+    .mc-readiness-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 1rem;
+      align-items: center;
+    }
+
+    @media (max-width: 480px) {
+      .mc-readiness-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mc-app">
+    <a href="#main-center" class="al-skip-link">Chuyển tới trung tâm điều khiển Leash Core</a>
+
+    <div class="al-proto-ribbon">
+      <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+        <span class="al-chip al-chip--flow">PA 2 · MISSION CONTROL 3 CỘT</span>
+        <span>Bố cục kiểu SKY · Phím <span class="kbd">Ctrl</span>+<span class="kbd">K</span></span>
+      </div>
+      <nav class="al-proto-nav" aria-label="Chuyển giữa các bản mô phỏng">
+        <a class="al-proto-link" href="./index.html">Cổng so sánh</a>
+        <a class="al-proto-link" href="./01-hud-glass-skin.html">PA 1: HUD Glass Skin</a>
+        <a class="al-proto-link" href="./02-mission-control-3col.html" aria-current="page">PA 2: Mission Control 3 Cột</a>
+        <a class="al-proto-link" href="./03-mobile-and-states.html">Watch &amp; Trạng thái</a>
+        <a class="al-proto-link" href="./04-ben-a-ben-b-mcp.html">MCP Bên A – Bên B</a>
+        <a class="al-proto-link" href="./multi-page/index.html">Nhiều trang (5 routes)</a>
+      </nav>
+    </div>
+
+    <!-- Compact HUD Header -->
+    <header class="al-hud-header">
+      <div class="al-brand">
+        <svg viewBox="0 0 28 28" width="30" height="30" fill="none" aria-hidden="true">
+          <rect x="2" y="2" width="24" height="24" rx="7" fill="#0d1e38" stroke="rgba(122,222,255,0.35)" stroke-width="1.25"/>
+          <path d="M14 6.25L20 8.75V13.6C20 17.35 17.45 20.65 14 21.75C10.55 20.65 8 17.35 8 13.6V8.75L14 6.25Z" stroke="#22d3ee" stroke-width="1.6" stroke-linejoin="round"/>
+          <circle cx="14" cy="13.5" r="2.25" fill="#22c55e"/>
+          <path d="M14 15.75V18.5" stroke="#22d3ee" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="al-brand-title" translate="no">Agent<span>Leash</span></div>
+          <div class="al-brand-sub">x402 Guardrail Console</div>
+        </div>
+        <span class="al-pill al-pill--amber">
+          <span class="al-dot al-dot--sandbox al-dot--live" aria-hidden="true"></span>
+          <span>DEMO: 120s (thực tế: 24h)</span>
+        </span>
+      </div>
+
+      <div class="al-hud-cluster" id="mc-header-right"></div>
+    </header>
+
+    <div id="mc-tx-mount" style="max-inline-size:1720px;inline-size:100%;margin-inline:auto;padding-inline:1.25rem;"></div>
+
+    <!-- 3-Column Mission Control Stage -->
+    <main class="mc-stage">
+      <!-- CỘT TRÁI (360px): Policy & Identity + Nhật ký bị từ chối + 4 Lớp RuleEngine -->
+      <aside class="mc-col-left" aria-label="Danh tính policy, nhật ký từ chối và rule engine">
+        <section class="al-glass-panel mc-card" id="mc-identity-card"></section>
+        <section class="al-glass-panel mc-card" id="mc-rejections-card" style="flex:1;min-block-size:0;"></section>
+        <section class="al-glass-panel mc-card" id="mc-rules-card"></section>
+      </aside>
+
+      <!-- CỘT GIỮA (1fr): Leash Core -->
+      <section id="main-center" tabindex="-1" class="mc-col-center" aria-label="Trung tâm Leash Core">
+        <div class="mc-orb-stage">
+          <button type="button" id="mc-motion-toggle" class="mc-motion-toggle">Tạm dừng hiệu ứng</button>
+          <canvas id="mc-core-canvas" class="mc-orb-canvas" aria-hidden="true"></canvas>
+          <div class="mc-orb-badge" id="mc-orb-badge"></div>
+        </div>
+
+        <div style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
+          <h1 class="al-hero-greeting" id="mc-hero-greeting">Policy đang bảo vệ ví.</h1>
+          <p class="mono tabular-nums" style="font-size:0.8125rem;color:var(--sky-muted);" id="mc-hero-sub"></p>
+
+          <!-- Telemetry Waveform SVG -->
+          <svg viewBox="0 0 240 28" width="220" height="26" aria-hidden="true" style="margin-block:0.15rem;">
+            <path id="mc-wave-path" d="M 0 14 L 58 14 L 72 6 L 86 22 L 100 10 L 114 18 L 128 14 L 154 14 L 166 8 L 178 20 L 190 14 L 240 14"
+              fill="none" stroke="rgba(94, 234, 212, 0.6)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+
+        <!-- SKY 88px Circular CTA + Gradient Pills -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.85rem;">
+          <button type="button" id="mc-core-run" class="al-core-cta">
+            <span id="mc-core-icon"></span>
+            <span id="mc-core-label">Chạy Demo</span>
+          </button>
+
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:0.65rem;">
+            <label class="al-gradient-pill" id="mc-bypass-pill" style="cursor:pointer;">
+              <input id="mc-chk-bypass" type="checkbox" switch role="switch" class="al-switch">
+              <span>Giả lập bị hack (<code class="mono" style="color:var(--sandbox-text);">--bypass-rules</code>)</span>
+            </label>
+
+            <button type="button" id="mc-open-cmd" class="al-gradient-pill" title="Mở bảng lệnh nhanh">
+              <span>Lệnh nhanh</span>
+              <span class="kbd">Ctrl K</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bottom Insight Pill -->
+        <div id="mc-insight-mount" style="min-block-size:2.3rem;display:flex;align-items:center;justify-content:center;inline-size:100%;"></div>
+      </section>
+
+      <!-- CỘT PHẢI (500px): Guardrail Readiness + Panel Đa Tab + Dải 3 KPI Đáy -->
+      <section class="mc-col-right" aria-label="Sức khỏe hạn mức và chi tiết dòng tiền">
+        <section class="al-glass-panel mc-card" id="mc-readiness-card"></section>
+
+        <section class="al-glass-panel mc-card" style="flex:1;min-block-size:0;">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;">
+            <span class="al-hud-heading">Chi tiết vận hành</span>
+            <div role="tablist" aria-label="Chi tiết AgentLeash" class="al-pill-tabs">
+              <button type="button" role="tab" id="mc-tab-flow" aria-selected="true" tabindex="0" class="al-pill-tab">Dòng tiền</button>
+              <button type="button" role="tab" id="mc-tab-wl" aria-selected="false" tabindex="-1" class="al-pill-tab">Whitelist</button>
+              <button type="button" role="tab" id="mc-tab-caps" aria-selected="false" tabindex="-1" class="al-pill-tab">Hạn mức</button>
+              <button type="button" role="tab" id="mc-tab-erc" aria-selected="false" tabindex="-1" class="al-pill-tab">ERC-8004</button>
+            </div>
+          </div>
+
+          <div role="tabpanel" aria-labelledby="mc-tab-flow" tabindex="0" style="flex:1;min-block-size:0;display:flex;flex-direction:column;">
+            <div id="mc-panel-flow" style="display:flex;flex-direction:column;gap:0.75rem;flex:1;min-block-size:0;"></div>
+          </div>
+          <div role="tabpanel" aria-labelledby="mc-tab-wl" hidden="until-found">
+            <div id="mc-panel-wl" style="display:flex;flex-direction:column;gap:0.65rem;"></div>
+          </div>
+          <div role="tabpanel" aria-labelledby="mc-tab-caps" hidden="until-found">
+            <div id="mc-panel-caps"></div>
+          </div>
+          <div role="tabpanel" aria-labelledby="mc-tab-erc" hidden="until-found">
+            <div id="mc-panel-erc"></div>
+          </div>
+        </section>
+
+        <div class="mc-kpi-strip" id="mc-kpi-strip"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Native <dialog> Kill Switch -->
+  <dialog id="mc-kill-dialog" class="al-dialog al-dialog--danger" aria-labelledby="mc-kill-title">
+    <form method="dialog" style="padding:1.35rem 1.5rem;display:flex;flex-direction:column;gap:1rem;">
+      <div style="display:flex;align-items:flex-start;gap:0.85rem;">
+        <div id="mc-kill-icon" style="inline-size:2.5rem;block-size:2.5rem;border-radius:10px;display:grid;place-items:center;flex-shrink:0;"></div>
+        <div>
+          <h2 id="mc-kill-title" style="font-size:1rem;font-weight:700;"></h2>
+          <p id="mc-kill-desc" style="font-size:0.8125rem;color:var(--sky-muted);margin-block-start:0.25rem;"></p>
+        </div>
+      </div>
+      <div class="al-inset-well mono" style="padding:0.55rem 0.75rem;font-size:0.75rem;color:var(--sky-muted);word-break:break-all;" id="mc-kill-policy"></div>
+      <div style="display:flex;justify-content:flex-end;gap:0.625rem;">
+        <button type="submit" value="cancel" autofocus class="al-btn">Hủy</button>
+        <button type="submit" value="confirm" id="mc-kill-confirm" class="al-btn al-btn--danger">Xác nhận</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- SKY-inspired Ctrl+K Quick Command Modal (ONLY opened on user trigger, never on load) -->
+  <dialog id="mc-cmd-dialog" closedby="any" class="al-dialog al-dialog--gradient" aria-labelledby="mc-cmd-title">
+    <div style="padding:1.25rem 1.35rem;display:flex;flex-direction:column;gap:0.85rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+        <h2 id="mc-cmd-title" style="font-size:0.95rem;font-weight:600;">Lệnh nhanh &amp; Mô phỏng CLI / MCP</h2>
+        <button type="button" id="mc-cmd-close" class="al-btn" style="min-block-size:1.9rem;padding:0.2rem 0.65rem;">Esc</button>
+      </div>
+      <div class="al-inset-well mono" style="padding:0.65rem 0.85rem;font-size:0.75rem;color:var(--flow-text);overflow-x:auto;">
+        npm run demo:mock -- --policy 0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.5rem;">
+        <button type="button" class="al-btn al-btn--promote" data-cmd="run-demo">Chạy Agent Đà Lạt (mock)</button>
+        <button type="button" class="al-btn" data-cmd="probe-sandbox">Thử API lạ Sandbox (0.0005)</button>
+        <button type="button" class="al-btn" data-cmd="reset-cycle">Hồi hạn mức chu kỳ 120s</button>
+        <button type="button" class="al-btn" data-cmd="switch-policy">Đổi qua Policy #2 (Bot Research)</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="./hud-sim.js"></script>
+  <script>
+    (function () {
+      const H = window.AgentLeashHud;
+      const killDialog = document.getElementById("mc-kill-dialog");
+      const cmdDialog = document.getElementById("mc-cmd-dialog");
+
+      H.initTabs(document);
+      H.initDialogs(document);
+
+      const sim = H.createSimulation(render);
+
+      H.initLeashCoreCanvas(
+        document.getElementById("mc-core-canvas"),
+        () => (sim.state.paused ? "paused" : sim.state.bypassRules ? "hack" : "active"),
+        document.getElementById("mc-motion-toggle"),
+      );
+
+      /* Ctrl+K / Cmd+K shortcut */
+      window.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          if (!cmdDialog.open) cmdDialog.showModal();
+          else cmdDialog.close();
+        }
+      });
+
+      document.getElementById("mc-open-cmd").addEventListener("click", () => cmdDialog.showModal());
+      document.getElementById("mc-cmd-close").addEventListener("click", () => cmdDialog.close());
+      cmdDialog.querySelectorAll("[data-cmd]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const cmd = btn.dataset.cmd;
+          cmdDialog.close();
+          if (cmd === "run-demo") sim.runDemoSequence();
+          else if (cmd === "probe-sandbox") sim.runSandboxProbe();
+          else if (cmd === "reset-cycle") sim.resetCycle();
+          else if (cmd === "switch-policy") {
+            const next =
+              sim.state.activePolicy === H.ADDRESSES.policyMain ? H.ADDRESSES.policyAlt : H.ADDRESSES.policyMain;
+            sim.switchPolicy(next);
+          }
+        });
+      });
+
+      function openKillDialog() {
+        const pausing = !sim.state.paused;
+        document.getElementById("mc-kill-title").textContent = pausing
+          ? "Khóa khẩn cấp toàn bộ policy?"
+          : "Mở khóa hoạt động policy?";
+        document.getElementById("mc-kill-desc").textContent = pausing
+          ? "Mọi khoản chi tiếp theo và các digest đã duyệt nhưng chưa settle đều bị chặn ngay."
+          : "Agent được phép xin chi trở lại trong phần hạn mức còn lại.";
+        document.getElementById("mc-kill-policy").textContent = "Policy: " + sim.state.activePolicy;
+        const icon = document.getElementById("mc-kill-icon");
+        icon.innerHTML = pausing ? H.ICONS.lock : H.ICONS.unlock;
+        icon.style.background = pausing ? "rgba(239,68,68,0.14)" : "rgba(34,197,94,0.14)";
+        icon.style.color = pausing ? "var(--danger-text)" : "var(--trusted-text)";
+        const btn = document.getElementById("mc-kill-confirm");
+        btn.textContent = pausing ? "Xác nhận khóa ngay" : "Mở khóa policy";
+        btn.className = pausing ? "al-btn al-btn--danger" : "al-btn al-btn--trusted";
+        killDialog.showModal();
+      }
+
+      killDialog.addEventListener("close", () => {
+        const val = killDialog.returnValue;
+        killDialog.returnValue = "";
+        if (val === "confirm") sim.togglePause(!sim.state.paused);
+      });
+
+      document.getElementById("mc-core-run").addEventListener("click", () => sim.runDemoSequence());
+      document.getElementById("mc-chk-bypass").addEventListener("change", (e) => sim.setBypassRules(e.target.checked));
+
+      function renderHeader(s) {
+        const mount = document.getElementById("mc-header-right");
+        mount.innerHTML = `
+          <span class="al-pill"><span class="al-dot al-dot--trusted"></span>Fuji</span>
+          <a href="${H.addressUrl(s.activePolicy)}" target="_blank" rel="noreferrer" class="al-pill mono" style="color:var(--flow);">${H.shortAddr(s.activePolicy)} ${H.ICONS.arrowUpRight}</a>
+          <span class="al-pill mono tabular-nums" style="color:var(--sky-text);font-weight:600;">${H.formatUsdc(s.balanceUnits)} USDC</span>
+          ${
+            s.authenticated
+              ? `<button type="button" id="mc-btn-auth" class="al-pill" style="cursor:pointer;" title="Bấm để chuyển sang chế độ Khách">${s.userEmail}</button>`
+              : `<button type="button" id="mc-btn-auth" class="al-btn al-btn--primary" style="min-block-size:2rem;padding:0.25rem 0.75rem;">Đăng nhập Privy</button>`
+          }
+          <button type="button" id="mc-btn-kill" ${!s.authenticated ? "disabled" : ""} class="al-btn ${s.paused ? "al-btn--trusted" : "al-btn--danger"}" style="min-block-size:2.15rem;">
+            ${s.paused ? H.ICONS.unlock : H.ICONS.lock}
+            <span>${s.paused ? "MỞ KHÓA" : "KHÓA KHẨN CẤP"}</span>
+          </button>
+        `;
+        document.getElementById("mc-btn-auth").addEventListener("click", sim.toggleAuth);
+        document.getElementById("mc-btn-kill").addEventListener("click", openKillDialog);
+      }
+
+      function renderTxBanner(s) {
+        const mount = document.getElementById("mc-tx-mount");
+        if (!s.txBanner) {
+          mount.innerHTML = "";
+          return;
+        }
+        const b = s.txBanner;
+        mount.innerHTML = `
+          <div role="status" aria-live="polite" class="al-glass-panel" style="margin-block-start:0.75rem;padding:0.55rem 1rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;border-color:${b.phase === "done" ? "rgba(34,197,94,0.45)" : "rgba(34,211,238,0.45)"};">
+            <span style="display:inline-flex;align-items:center;gap:0.5rem;font-size:0.8125rem;font-weight:600;">
+              ${b.phase === "done" ? H.ICONS.check : `<span class="al-dot al-dot--flow al-dot--live"></span>`}
+              ${b.label} · ${b.phase === "signing" ? "Đang ký Privy…" : b.phase === "pending" ? "Chờ xác nhận Fuji…" : "Hoàn tất"}
+            </span>
+            ${b.hash ? `<a href="${H.txUrl(b.hash)}" target="_blank" rel="noreferrer" class="mono" style="font-size:0.75rem;color:var(--flow);text-decoration:none;">${H.shortAddr(b.hash)} · Snowscan</a>` : ""}
+          </div>
+        `;
+      }
+
+      function renderLeft(s) {
+        /* 1. Policy & Identity */
+        const idCard = document.getElementById("mc-identity-card");
+        idCard.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+            <span class="al-hud-heading">Policy &amp; Danh tính</span>
+            <span class="al-chip ${s.paused ? "al-chip--danger" : "al-chip--trusted"}">${s.paused ? "PAUSED" : "ACTIVE"}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+            <div style="min-inline-size:0;">
+              <div style="font-weight:600;font-size:0.9375rem;">${s.activePolicy === H.ADDRESSES.policyMain ? "Bot Du Lịch (Demo)" : "Bot Research"}</div>
+              <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">Ví Agent: ${H.shortAddr(H.ADDRESSES.agent)}</div>
+            </div>
+            <button type="button" id="mc-switch-policy-btn" class="al-btn" style="min-block-size:2rem;padding:0.25rem 0.65rem;">Đổi Policy</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
+            <span class="al-chip al-chip--trusted">${H.ICONS.badge} ERC-8004 #305</span>
+            <span class="al-chip al-chip--neutral mono">Block ${s.blockNumber}</span>
+          </div>
+        `;
+        document.getElementById("mc-switch-policy-btn").addEventListener("click", () => {
+          sim.switchPolicy(s.activePolicy === H.ADDRESSES.policyMain ? H.ADDRESSES.policyAlt : H.ADDRESSES.policyMain);
+        });
+
+        /* 2. Nhật ký bị từ chối (luôn giữ 1-click Chuyển thành API quen) */
+        const rejCard = document.getElementById("mc-rejections-card");
+        rejCard.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+            <span class="al-hud-heading" style="color:var(--danger-text);">${H.ICONS.shieldBan} Nhật ký bị từ chối</span>
+            <span class="al-chip al-chip--danger tabular-nums">${s.rejections.length} lần</span>
+          </div>
+          <ul class="al-list al-scroll" style="flex:1;max-block-size:13.5rem;padding-inline-end:0.35rem;">
+            ${s.rejections
+              .slice(0, 6)
+              .map((r) => {
+                const isContract = r.source === "contract";
+                const nowWl = r.payTo && s.whitelist[r.payTo.toLowerCase()] === true;
+                const canPromote = r.payTo && !nowWl && r.payTo.toLowerCase() !== H.ADDRESSES.attackerTarget.toLowerCase();
+                return `
+                  <li style="padding-block:0.55rem;display:flex;flex-direction:column;gap:0.3rem;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem;">
+                      <span class="al-chip ${isContract ? "al-chip--danger" : "al-chip--sandbox"}">${isContract ? "Contract" : "RuleEngine"}</span>
+                      <span class="mono tabular-nums" style="font-size:0.75rem;color:var(--sky-muted);">${r.time}</span>
+                    </div>
+                    <strong style="font-size:0.8125rem;">${r.title}</strong>
+                    <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">${r.code} · ${r.api}</div>
+                    ${
+                      canPromote
+                        ? `<div><button type="button" class="al-btn al-btn--promote" data-mc-promote="${r.payTo}" ${!s.authenticated ? "disabled" : ""} style="min-block-size:1.95rem;padding:0.2rem 0.6rem;font-size:0.75rem;">${H.ICONS.shieldCheck} Chuyển thành API quen</button></div>`
+                        : ""
+                    }
+                  </li>
+                `;
+              })
+              .join("")}
+          </ul>
+        `;
+        rejCard.querySelectorAll("[data-mc-promote]").forEach((btn) =>
+          btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.mcPromote, true)),
+        );
+
+        /* 3. 4 Lớp RuleEngine */
+        const rulesCard = document.getElementById("mc-rules-card");
+        const off = s.bypassRules;
+        rulesCard.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+            <span class="al-hud-heading">4 Lớp RuleEngine</span>
+            <span class="al-chip ${off ? "al-chip--danger" : "al-chip--trusted"}">${off ? "Đang bỏ qua (Hack)" : "Đang bật"}</span>
+          </div>
+          <div class="mc-rule-grid">
+            <div class="al-inset-well mc-rule-tile">
+              <span style="color:var(--sky-muted);">1. Trần Sandbox</span>
+              <strong class="mono" style="color:var(--sandbox-text);">${H.formatUsdc(s.sandboxPerTxCapUnits)} USDC/lần</strong>
+            </div>
+            <div class="al-inset-well mc-rule-tile">
+              <span style="color:var(--sky-muted);">2. Kiểm tra SSRF</span>
+              <strong style="color:${off ? "var(--danger-text)" : "var(--trusted-text)"};">${off ? "Tắt (Contract chặn)" : "Chặn URL nội bộ"}</strong>
+            </div>
+            <div class="al-inset-well mc-rule-tile">
+              <span style="color:var(--sky-muted);">3. Rate Limit</span>
+              <strong style="color:${off ? "var(--danger-text)" : "var(--flow-text)"};">${off ? "Bị vượt qua" : "Tối đa 5 lần/phút"}</strong>
+            </div>
+            <div class="al-inset-well mc-rule-tile">
+              <span style="color:var(--sky-muted);">4. Khớp giá 402</span>
+              <strong style="color:${off ? "var(--danger-text)" : "var(--trusted-text)"};">${off ? "Bị vượt qua" : "Strict payTo"}</strong>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderCenter(s, d) {
+        const badge = document.getElementById("mc-orb-badge");
+        badge.innerHTML = `
+          <span class="mono" style="font-size:0.75rem;color:${s.paused ? "var(--danger-text)" : s.bypassRules ? "var(--sandbox-text)" : "var(--flow-text)"};font-weight:600;">
+            ${s.paused ? "LOCKED · ERC-1271 OFF" : s.bypassRules ? "SANDBOX SHIELD ACTIVE" : "LEASH CORE · x402"}
+          </span>
+          <span style="font-size:0.75rem;color:var(--sky-muted);">Agent ↔ AgentPolicy ↔ API</span>
+        `;
+
+        const greeting = document.getElementById("mc-hero-greeting");
+        const sub = document.getElementById("mc-hero-sub");
+        const wave = document.getElementById("mc-wave-path");
+        const cta = document.getElementById("mc-core-run");
+        const ctaIcon = document.getElementById("mc-core-icon");
+        const ctaLabel = document.getElementById("mc-core-label");
+
+        if (s.paused) {
+          greeting.textContent = "Policy đã khóa khẩn cấp.";
+          wave.setAttribute("stroke", "rgba(239, 68, 68, 0.7)");
+          wave.setAttribute("d", "M 0 14 L 240 14");
+        } else if (s.bypassRules) {
+          greeting.textContent = "Cảnh báo: Rule Engine đang tắt.";
+          wave.setAttribute("stroke", "rgba(250, 204, 21, 0.75)");
+          wave.setAttribute("d", "M 0 14 L 58 14 L 72 4 L 86 24 L 100 4 L 114 24 L 128 14 L 240 14");
+        } else {
+          greeting.textContent = "Policy đang bảo vệ ví.";
+          wave.setAttribute("stroke", "rgba(94, 234, 212, 0.65)");
+          wave.setAttribute("d", "M 0 14 L 58 14 L 72 6 L 86 22 L 100 10 L 114 18 L 128 14 L 154 14 L 166 8 L 178 20 L 190 14 L 240 14");
+        }
+
+        sub.textContent = `Chi được ngay: ${H.formatUsdc(d.spendableNow)} USDC · Hồi sau ${H.formatCountdown(s.secondsToReset)}`;
+
+        cta.disabled = s.runningDemo;
+        cta.className = `al-core-cta ${s.paused ? "al-core-cta--paused" : s.bypassRules ? "al-core-cta--hack" : ""}`;
+        ctaIcon.innerHTML = s.bypassRules ? H.ICONS.alert : H.ICONS.play;
+        ctaLabel.textContent = s.runningDemo ? "Đang chạy…" : s.bypassRules ? "Thử Hack" : "Chạy Demo";
+
+        const chk = document.getElementById("mc-chk-bypass");
+        chk.checked = s.bypassRules;
+        chk.setAttribute("aria-checked", String(s.bypassRules));
+        document.getElementById("mc-bypass-pill").classList.toggle("al-gradient-pill--danger", s.bypassRules);
+
+        const insMount = document.getElementById("mc-insight-mount");
+        if (!s.insight.visible) {
+          insMount.innerHTML = "";
+        } else {
+          insMount.innerHTML = `
+            <div class="mc-insight-pill">
+              <span class="al-dot al-dot--flow"></span>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.insight.text}</span>
+              ${s.insight.txHash ? `<a href="${H.txUrl(s.insight.txHash)}" target="_blank" rel="noreferrer" style="color:var(--flow);text-decoration:none;white-space:nowrap;">Snowscan ${H.ICONS.arrowUpRight}</a>` : ""}
+              <button type="button" id="mc-dismiss-insight" aria-label="Ẩn thông báo nhanh" style="border:0;background:transparent;color:var(--sky-muted);cursor:pointer;font-size:0.875rem;padding:0 0.25rem;">×</button>
+            </div>
+          `;
+          document.getElementById("mc-dismiss-insight").addEventListener("click", sim.dismissInsight);
+        }
+      }
+
+      function renderRight(s, d) {
+        /* 1. Guardrail Readiness */
+        const readiness = document.getElementById("mc-readiness-card");
+        const r = 42;
+        const c = 2 * Math.PI * r;
+        const pct = Math.max(0, Math.min(1, d.spendableRatio));
+        const dashOffset = c * (1 - pct);
+        const wlRemainPct = Math.round((d.remainingDaily / s.dailyCapUnits) * 100);
+        const sbRemainPct = Math.round((d.remainingSandbox / s.sandboxDailyCapUnits) * 100);
+        const statusLabel = s.paused ? "Đã khóa" : d.remainingDaily === 0 ? "Chạm trần chu kỳ" : "An toàn";
+
+        readiness.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+            <span class="al-hud-heading">Guardrail Readiness</span>
+            <span class="mono tabular-nums" style="font-size:0.78rem;color:var(--sky-muted);">Hồi chu kỳ: <strong style="color:var(--sky-text);">${H.formatCountdown(s.secondsToReset)}</strong></span>
+          </div>
+
+          <div class="mc-readiness-row">
+            <div style="position:relative;inline-size:108px;block-size:108px;display:grid;place-items:center;margin-inline:auto;">
+              <svg viewBox="0 0 104 104" width="108" height="108" aria-hidden="true">
+                <circle cx="52" cy="52" r="${r}" fill="none" stroke="rgba(122,222,255,0.12)" stroke-width="7.5" />
+                <circle cx="52" cy="52" r="${r}" fill="none" stroke="${s.paused ? "#ef4444" : "#5eead4"}" stroke-width="7.5" stroke-linecap="round"
+                  stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${dashOffset.toFixed(1)}" transform="rotate(-90 52 52)" />
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+                <strong class="mono tabular-nums" style="font-size:0.95rem;color:${s.paused ? "var(--danger-text)" : "var(--flow-text)"};">${H.formatUsdc(d.spendableNow)}</strong>
+                <span style="font-size:0.7rem;color:var(--sky-muted);">USDC sẵn chi</span>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:0.65rem;min-inline-size:0;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                <span style="font-weight:600;color:${s.paused ? "var(--danger-text)" : "var(--sky-accent)"};">${statusLabel}</span>
+                <button type="button" id="mc-reset-btn" class="al-btn" style="min-block-size:1.85rem;padding:0.2rem 0.6rem;font-size:0.75rem;">Hồi chu kỳ</button>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-block-end:0.25rem;">
+                  <span>Tầng 1 Whitelist</span>
+                  <span class="mono tabular-nums" style="color:var(--trusted-text);">${H.formatUsdc(d.remainingDaily)} / ${H.formatUsdc(s.dailyCapUnits)}</span>
+                </div>
+                <div class="al-meter-track"><div class="al-meter-fill al-meter-fill--trusted" style="inline-size:${wlRemainPct}%;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-block-end:0.25rem;">
+                  <span>Tầng 2 Sandbox</span>
+                  <span class="mono tabular-nums" style="color:var(--sandbox-text);">${H.formatUsdc(d.remainingSandbox)} / ${H.formatUsdc(s.sandboxDailyCapUnits)}</span>
+                </div>
+                <div class="al-meter-track"><div class="al-meter-fill al-meter-fill--sandbox" style="inline-size:${sbRemainPct}%;"></div></div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("mc-reset-btn").addEventListener("click", sim.resetCycle);
+
+        /* 2. Multi-Tab Panel */
+        const summary = H.summarizeSpendFlows(s.spends);
+        const flowPanel = document.getElementById("mc-panel-flow");
+        flowPanel.innerHTML = `
+          <div class="al-inset-well" style="padding:0.65rem;">
+            ${H.renderSpendFlowSvg(summary, { paused: s.paused })}
+          </div>
+          <ul class="al-list al-scroll" style="flex:1;max-block-size:10.5rem;padding-inline-end:0.35rem;">
+            ${s.spends
+              .map((sp) => {
+                const nowWl = s.whitelist[sp.payTo.toLowerCase()] === true;
+                return `
+                  <li style="padding-block:0.5rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.45rem;">
+                    <div style="min-inline-size:0;">
+                      <div style="display:flex;align-items:center;gap:0.4rem;">
+                        <strong style="font-size:0.8125rem;">${sp.name}</strong>
+                        <span class="al-chip ${sp.isSandbox ? "al-chip--sandbox" : "al-chip--trusted"}">${sp.isSandbox ? "Sandbox" : "Whitelist"}</span>
+                      </div>
+                      <div class="mono tabular-nums" style="font-size:0.75rem;color:var(--sky-muted);">${sp.time} · <a href="${H.txUrl(sp.txHash)}" target="_blank" rel="noreferrer" style="color:var(--flow);text-decoration:none;">Snowscan</a></div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      ${
+                        sp.isSandbox && !nowWl
+                          ? `<button type="button" class="al-btn al-btn--promote" data-mc-fpromote="${sp.payTo}" ${!s.authenticated ? "disabled" : ""} style="min-block-size:1.85rem;padding:0.2rem 0.55rem;font-size:0.75rem;">Chuyển thành API quen</button>`
+                          : ""
+                      }
+                      <strong class="mono tabular-nums" style="color:var(--flow-text);">−${H.formatUsdc(sp.amountUnits)}</strong>
+                    </div>
+                  </li>
+                `;
+              })
+              .join("")}
+          </ul>
+        `;
+        flowPanel.querySelectorAll("[data-mc-fpromote]").forEach((btn) =>
+          btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.mcFpromote, true)),
+        );
+
+        const wlPanel = document.getElementById("mc-panel-wl");
+        const sellers = [
+          { addr: H.ADDRESSES.weatherSeller, name: "API Thời tiết" },
+          { addr: H.ADDRESSES.ratesSeller, name: "API Tỷ giá" },
+          { addr: H.ADDRESSES.flightSandbox, name: "API Dự báo Chuyến bay" },
+        ];
+        wlPanel.innerHTML = `
+          <ul class="al-list">
+            ${sellers
+              .map((item) => {
+                const allowed = s.whitelist[item.addr.toLowerCase()] === true;
+                return `
+                  <li style="padding-block:0.55rem;display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+                    <div>
+                      <div style="font-weight:600;font-size:0.8125rem;">${item.name}</div>
+                      <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">${H.shortAddr(item.addr)}</div>
+                    </div>
+                    <button type="button" class="al-btn" data-mc-wl="${item.addr}" data-mc-next="${!allowed}" ${!s.authenticated ? "disabled" : ""} style="min-block-size:2rem;padding:0.25rem 0.65rem;">
+                      ${allowed ? "Gỡ Whitelist" : "Đưa vào Whitelist"}
+                    </button>
+                  </li>
+                `;
+              })
+              .join("")}
+          </ul>
+        `;
+        wlPanel.querySelectorAll("[data-mc-wl]").forEach((btn) =>
+          btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.mcWl, btn.dataset.mcNext === "true")),
+        );
+
+        document.getElementById("mc-panel-caps").innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.6rem;font-size:0.8125rem;">
+            <div class="al-inset-well" style="padding:0.65rem;">
+              <div style="color:var(--trusted-text);font-weight:600;">Whitelist / lần</div>
+              <div class="mono tabular-nums" style="font-size:1rem;margin-block-start:0.2rem;">${H.formatUsdc(s.perTxCapUnits)} USDC</div>
+            </div>
+            <div class="al-inset-well" style="padding:0.65rem;">
+              <div style="color:var(--trusted-text);font-weight:600;">Whitelist / chu kỳ</div>
+              <div class="mono tabular-nums" style="font-size:1rem;margin-block-start:0.2rem;">${H.formatUsdc(s.dailyCapUnits)} USDC</div>
+            </div>
+            <div class="al-inset-well" style="padding:0.65rem;">
+              <div style="color:var(--sandbox-text);font-weight:600;">Sandbox / lần</div>
+              <div class="mono tabular-nums" style="font-size:1rem;margin-block-start:0.2rem;">${H.formatUsdc(s.sandboxPerTxCapUnits)} USDC</div>
+            </div>
+            <div class="al-inset-well" style="padding:0.65rem;">
+              <div style="color:var(--sandbox-text);font-weight:600;">Sandbox / chu kỳ</div>
+              <div class="mono tabular-nums" style="font-size:1rem;margin-block-start:0.2rem;">${H.formatUsdc(s.sandboxDailyCapUnits)} USDC</div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById("mc-panel-erc").innerHTML = `
+          <div class="al-inset-well" style="padding:0.85rem;display:flex;flex-direction:column;gap:0.45rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <span class="al-chip al-chip--trusted">NFT #305</span>
+              <strong>AgentLeash · x402 Fuji Agent</strong>
+            </div>
+            <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">Registry: ${H.shortAddr(H.ADDRESSES.erc8004Registry)}</div>
+            <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">Factory: ${H.shortAddr(H.ADDRESSES.factory)}</div>
+          </div>
+        `;
+
+        /* 3. Bottom 3-KPI Strip */
+        document.getElementById("mc-kpi-strip").innerHTML = `
+          <div class="al-glass-panel mc-kpi-box">
+            <span style="font-size:0.75rem;color:var(--sky-muted);">Số dư Policy</span>
+            <strong class="mono tabular-nums" style="font-size:1.05rem;">${H.formatUsdc(s.balanceUnits)} USDC</strong>
+          </div>
+          <div class="al-glass-panel mc-kpi-box">
+            <span style="font-size:0.75rem;color:var(--sky-muted);">Đã chi chu kỳ</span>
+            <strong class="mono tabular-nums" style="font-size:1.05rem;color:var(--flow-text);">${H.formatUsdc(s.spentUnits)} USDC</strong>
+          </div>
+          <div class="al-glass-panel mc-kpi-box">
+            <span style="font-size:0.75rem;color:var(--sky-muted);">Đã chặn</span>
+            <strong class="mono tabular-nums" style="font-size:1.05rem;color:var(--danger-text);">${s.rejections.length} lần</strong>
+          </div>
+        `;
+      }
+
+      function render(s, d) {
+        renderHeader(s);
+        renderTxBanner(s);
+        renderLeft(s);
+        renderCenter(s, d);
+        renderRight(s, d);
+      }
+
+      sim.notify();
+    })();
+  </script>
+</body>
+</html>

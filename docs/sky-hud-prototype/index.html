@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>AgentLeash × SKY HUD — Cổng thử nghiệm giao diện (Nguyên &amp; Giang)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hud-tokens.css">
+  <style>
+    .hub-shell {
+      max-inline-size: 1320px;
+      margin-inline: auto;
+      padding: 1.5rem 1.25rem 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .hub-hero {
+      padding: 1.75rem 2rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .hub-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .hub-card {
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+
+    .hub-card:hover {
+      border-color: var(--glass-border-strong);
+      transform: translateY(-2px);
+    }
+
+    .hub-wireframe {
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: 1px solid rgba(122, 222, 255, 0.12);
+      background: rgba(3, 10, 21, 0.85);
+      display: grid;
+      gap: 0.35rem;
+      min-block-size: 108px;
+    }
+
+    .hub-wf-box {
+      border-radius: 6px;
+      border: 1px dashed rgba(122, 222, 255, 0.28);
+      background: rgba(13, 31, 54, 0.65);
+      padding: 0.35rem 0.5rem;
+      font-size: 0.75rem;
+      color: var(--sky-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .hub-wf-box--core {
+      border-style: solid;
+      border-color: rgba(94, 234, 212, 0.55);
+      background: radial-gradient(circle, rgba(34, 211, 238, 0.2), rgba(7, 18, 36, 0.8));
+      color: var(--flow-text);
+    }
+
+    .hub-table-wrap {
+      overflow-x: auto;
+    }
+
+    .hub-table {
+      inline-size: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .hub-table th,
+    .hub-table td {
+      text-align: start;
+      padding: 0.75rem 0.9rem;
+      border-block-end: 1px solid var(--divider-hairline);
+      vertical-align: top;
+    }
+
+    .hub-table th {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--sky-label);
+      background: rgba(5, 13, 27, 0.55);
+    }
+
+    @media (max-width: 900px) {
+      .hub-hero {
+        grid-template-columns: 1fr;
+        padding: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-hub" class="al-skip-link">Chuyển tới cổng thử nghiệm</a>
+
+  <div class="al-proto-ribbon">
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+      <span class="al-chip al-chip--sandbox">THỬ NGHIỆM UI · CHƯA ÁP DỤNG VÀO DỰ ÁN</span>
+      <span>Nguồn phân tích: <code class="mono" style="color:var(--flow-text)">PHAN_TICH_FRONTEND_SKY_REFERENCE.md</code></span>
+    </div>
+    <nav class="al-proto-nav" aria-label="Chuyển giữa các bản mô phỏng">
+      <a class="al-proto-link" href="./index.html" aria-current="page">Cổng so sánh</a>
+      <a class="al-proto-link" href="./01-hud-glass-skin.html">PA 1: HUD Glass Skin</a>
+      <a class="al-proto-link" href="./02-mission-control-3col.html">PA 2: Mission Control 3 Cột</a>
+      <a class="al-proto-link" href="./03-mobile-and-states.html">Watch &amp; Trạng thái</a>
+      <a class="al-proto-link" href="./04-ben-a-ben-b-mcp.html">MCP Bên A – Bên B</a>
+      <a class="al-proto-link" href="./multi-page/index.html">Nhiều trang (5 routes)</a>
+    </nav>
+  </div>
+
+  <main id="main-hub" class="hub-shell">
+    <section class="al-glass-panel hub-hero">
+      <div style="display:flex;flex-direction:column;gap:0.85rem;">
+        <div class="al-brand">
+          <svg viewBox="0 0 28 28" width="34" height="34" fill="none" aria-hidden="true">
+            <rect x="2" y="2" width="24" height="24" rx="7" fill="#0d1e38" stroke="rgba(122,222,255,0.35)" stroke-width="1.25"/>
+            <path d="M14 6.25L20 8.75V13.6C20 17.35 17.45 20.65 14 21.75C10.55 20.65 8 17.35 8 13.6V8.75L14 6.25Z" stroke="#22d3ee" stroke-width="1.6" stroke-linejoin="round"/>
+            <circle cx="14" cy="13.5" r="2.25" fill="#22c55e"/>
+            <path d="M14 15.75V18.5" stroke="#22d3ee" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <div>
+            <div class="al-brand-title">Agent<span>Leash</span> · SKY HUD Sandbox</div>
+            <div class="al-brand-sub">Avalanche Team1 Vietnam UniHack 2026 · Dành cho Nguyên &amp; Giang duyệt trực quan</div>
+          </div>
+        </div>
+        <h1 class="al-hero-greeting">Mô phỏng phong cách Mission Control HUD cho AgentLeash</h1>
+        <p style="color:var(--sky-muted);max-inline-size:66ch;">
+          Loạt file HTML độc lập này áp dụng ngôn ngữ kính mờ sâu, ánh sáng kiểm soát và bố cục Console của SKY (<code class="mono" style="color:var(--flow-text)">nasa.taquangkhoi.com</code>) lên dữ liệu thật của AgentLeash trên Fuji, nhưng <strong>không đụng vào mã nguồn chính</strong> (<code class="mono">web/</code>, <code class="mono">contracts/</code>, <code class="mono">agent/</code>). Mọi nút bấm đều mô phỏng tương tác trực tiếp để 2 bạn kiểm tra trên trình duyệt.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;padding-top:0.25rem;">
+          <a href="./02-mission-control-3col.html" class="al-gradient-pill" style="text-decoration:none;">
+            <span>Mở thử Phương án 2 (3 cột SKY)</span>
+          </a>
+          <a href="./01-hud-glass-skin.html" class="al-btn al-btn--promote">
+            <span>Mở thử Phương án 1 (4 panel an toàn)</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="al-inset-well" style="padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:0.7rem;">
+        <div class="al-hud-heading">Cách thử nghiệm nhanh (giả lập sống)</div>
+        <ul class="al-list" style="font-size:0.8125rem;color:var(--sky-muted);">
+          <li style="padding-block:0.45rem;display:flex;justify-content:space-between;gap:0.5rem;">
+            <span>1. Bấm <strong style="color:var(--flow-text)">Chạy Agent Đà Lạt</strong></span>
+            <span class="mono" style="color:var(--trusted-text)">Tụt hạn mức → ExceedsDailyCap</span>
+          </li>
+          <li style="padding-block:0.45rem;display:flex;justify-content:space-between;gap:0.5rem;">
+            <span>2. Bật <strong style="color:var(--sandbox-text)">--bypass-rules</strong></span>
+            <span class="mono" style="color:var(--danger-text)">Contract chặn Sandbox</span>
+          </li>
+          <li style="padding-block:0.45rem;display:flex;justify-content:space-between;gap:0.5rem;">
+            <span>3. Bấm <strong style="color:var(--flow-text)">Chuyển thành API quen</strong></span>
+            <span class="mono" style="color:var(--trusted-text)">1-click Whitelist</span>
+          </li>
+          <li style="padding-block:0.45rem;display:flex;justify-content:space-between;gap:0.5rem;">
+            <span>4. Bấm <strong style="color:var(--danger-text)">KHÓA KHẨN CẤP</strong></span>
+            <span class="mono" style="color:var(--danger-text)">Dialog + PausedError</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="hub-cards" aria-label="Danh sách các file HTML mô phỏng">
+      <article class="al-glass-panel hub-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <h2 class="al-panel-title">Phương án 1 · HUD Glass Skin</h2>
+          <span class="al-chip al-chip--trusted">An toàn 21/11</span>
+        </div>
+        <div class="hub-wireframe" style="grid-template-columns:5fr 7fr;grid-template-rows:auto auto auto;">
+          <div class="hub-wf-box" style="grid-column:1 / -1;">Header HUD + Thanh Demo 7 bước (nút gradient)</div>
+          <div class="hub-wf-box">Tổng quan + Radial Ring</div>
+          <div class="hub-wf-box">Dòng tiền x402 (SVG phát sáng)</div>
+          <div class="hub-wf-box">Policy &amp; 3 Tabs</div>
+          <div class="hub-wf-box">Nhật ký bị từ chối + 1-click</div>
+        </div>
+        <p style="font-size:0.8125rem;color:var(--sky-muted);flex:1;">
+          Giữ nguyên cấu trúc 4 panel của <code class="mono">Dashboard.tsx</code> và bộ test hiện tại, chỉ nâng cấp nền radial sâu, card kính mờ viền ice-cyan và vòng SVG hạn mức.
+        </p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <span class="mono" style="font-size:0.75rem;color:var(--sky-subtle);">01-hud-glass-skin.html</span>
+          <a href="./01-hud-glass-skin.html" class="al-btn al-btn--primary">Xem mô phỏng</a>
+        </div>
+      </article>
+
+      <article class="al-glass-panel hub-card" style="border-color:rgba(94, 234, 212, 0.35);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <h2 class="al-panel-title">Phương án 2 · Mission Control 3 Cột</h2>
+          <span class="al-chip al-chip--flow">Giống SKY nhất</span>
+        </div>
+        <div class="hub-wireframe" style="grid-template-columns:1fr 1.15fr 1.35fr;">
+          <div class="hub-wf-box" style="flex-direction:column;gap:4px;">
+            <span>Policy + ERC-8004</span>
+            <span>Bị từ chối (1-click)</span>
+            <span>4 Lớp RuleEngine</span>
+          </div>
+          <div class="hub-wf-box hub-wf-box--core" style="flex-direction:column;gap:4px;">
+            <span>Leash Core Canvas</span>
+            <span>Nút tròn 88px</span>
+            <span>Pill --bypass-rules</span>
+          </div>
+          <div class="hub-wf-box" style="flex-direction:column;gap:4px;">
+            <span>Radial Ring Readiness</span>
+            <span>Tabs: Dòng tiền / WL / Cap</span>
+            <span>Dải 3 KPI đáy</span>
+          </div>
+        </div>
+        <p style="font-size:0.8125rem;color:var(--sky-muted);flex:1;">
+          Cụm Leash Core nằm giữa màn hình với hạt quỹ đạo 2D nhẹ (không Three.js), nút tròn phát sáng, phím tắt <span class="kbd">Ctrl</span>+<span class="kbd">K</span> và thanh Insight đáy.
+        </p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <span class="mono" style="font-size:0.75rem;color:var(--sky-subtle);">02-mission-control-3col.html</span>
+          <a href="./02-mission-control-3col.html" class="al-btn al-btn--primary">Xem mô phỏng</a>
+        </div>
+      </article>
+
+      <article class="al-glass-panel hub-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <h2 class="al-panel-title">Mobile Watch &amp; Ma trận Trạng thái</h2>
+          <span class="al-chip al-chip--neutral">Responsive + States</span>
+        </div>
+        <div class="hub-wireframe" style="grid-template-columns:1fr 1.3fr;">
+          <div class="hub-wf-box" style="flex-direction:column;gap:4px;">
+            <span>Khung 390×844</span>
+            <span>Carousel 3 trang</span>
+            <span>● ○ ○</span>
+          </div>
+          <div class="hub-wf-box" style="flex-direction:column;gap:4px;">
+            <span>Active · Hack · Paused</span>
+            <span>TxBanner 3 bước Privy</span>
+            <span>Policy Switcher Dialog</span>
+          </div>
+        </div>
+        <p style="font-size:0.8125rem;color:var(--sky-muted);flex:1;">
+          Thử nghiệm kiểu Watch Carousel cho điện thoại của SKY kết hợp bộ kiểm tra 4 trạng thái sống (Bình thường, Bị hack, Đã khóa khẩn cấp, Ký Privy) để Giang dễ hình dung.
+        </p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <span class="mono" style="font-size:0.75rem;color:var(--sky-subtle);">03-mobile-and-states.html</span>
+          <a href="./03-mobile-and-states.html" class="al-btn al-btn--primary">Xem mô phỏng</a>
+        </div>
+      </article>
+
+      <article class="al-glass-panel hub-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <h2 class="al-panel-title">Mô phỏng Bên A – Bên B (MCP Gateway)</h2>
+          <span class="al-chip al-chip--sandbox">Kịch bản Pitch</span>
+        </div>
+        <div class="hub-wireframe" style="grid-template-columns:1fr 1fr;">
+          <div class="hub-wf-box" style="flex-direction:column;gap:4px;">
+            <span>Bên A: Antigravity / Claude</span>
+            <span>MCP call x402 API mới</span>
+            <span>Trả link Dashboard</span>
+          </div>
+          <div class="hub-wf-box" style="flex-direction:column;gap:4px;">
+            <span>Bên B: AgentLeash HUD</span>
+            <span>4 Lớp RuleEngine</span>
+            <span>1-click API quen</span>
+          </div>
+        </div>
+        <p style="font-size:0.8125rem;color:var(--sky-muted);flex:1;">
+          Minh họa trọn vẹn định hướng từ <code class="mono">CLAUDE.md</code>: AI bên A tự thử API lạ qua 4 lớp bảo vệ rồi gửi link cho chủ ví bên B bấm 1-click duyệt lên Whitelist.
+        </p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <span class="mono" style="font-size:0.75rem;color:var(--sky-subtle);">04-ben-a-ben-b-mcp.html</span>
+          <a href="./04-ben-a-ben-b-mcp.html" class="al-btn al-btn--primary">Xem mô phỏng</a>
+        </div>
+      </article>
+
+      <article class="al-glass-panel hub-card" style="border-color:rgba(34, 211, 238, 0.4);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <h2 class="al-panel-title">Bản Chia Nhiều Trang (5 Routes)</h2>
+          <span class="al-chip al-chip--flow">Cho Nguyên · App Router</span>
+        </div>
+        <div class="hub-wireframe" style="grid-template-columns:0.8fr 1.6fr;">
+          <div class="hub-wf-box" style="flex-direction:column;gap:3px;">
+            <span>/ Tổng quan</span>
+            <span>/flows</span>
+            <span>/policies</span>
+            <span>/audit · /mcp</span>
+          </div>
+          <div class="hub-wf-box hub-wf-box--core" style="flex-direction:column;gap:4px;">
+            <span>5 file HTML tách biệt</span>
+            <span>Header + Kill Switch ghim cố định</span>
+            <span>Đồng bộ state qua sessionStorage</span>
+          </div>
+        </div>
+        <p style="font-size:0.8125rem;color:var(--sky-muted);flex:1;">
+          Kiến trúc đa trang tách <code class="mono">/</code>, <code class="mono">/flows</code>, <code class="mono">/policies</code>, <code class="mono">/audit</code>, <code class="mono">/mcp</code> kèm Sidebar trái (desktop) và Popover Menu (mobile), mô phỏng đúng Next.js App Router + Privy.
+        </p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <span class="mono" style="font-size:0.75rem;color:var(--sky-subtle);">multi-page/index.html</span>
+          <a href="./multi-page/index.html" class="al-btn al-btn--primary">Mở 5 trang</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="al-glass-panel" style="padding:1.35rem 1.5rem;display:flex;flex-direction:column;gap:0.9rem;">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
+        <h2 class="al-panel-title">Đối chiếu 5 bẫy của SKY đã xử lý trong loạt file thử nghiệm</h2>
+        <span class="mono" style="font-size:0.75rem;color:var(--sky-muted);">Theo mục 6 tài liệu PHAN_TICH_FRONTEND_SKY_REFERENCE.md</span>
+      </div>
+      <div class="hub-table-wrap">
+        <table class="hub-table">
+          <thead>
+            <tr>
+              <th>Điểm cần tránh từ SKY</th>
+              <th>Cách đã áp dụng trong mô phỏng AgentLeash</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Ẩn nút sống còn của UniHack</strong></td>
+              <td>Nút đỏ đặc <strong style="color:var(--danger-text)">KHÓA KHẨN CẤP</strong> (<code class="mono">#dc2626</code>), nhãn <strong style="color:var(--sandbox-text)">DEMO: chu kỳ 120s</strong> và nút 1-click <strong style="color:var(--flow-text)">Chuyển thành API quen</strong> luôn hiển thị trực tiếp, không giấu vào menu phụ.</td>
+            </tr>
+            <tr>
+              <td><strong>2. Modal chặn ngay khi vừa mở trang</strong></td>
+              <td>Bỏ hẳn modal <code class="mono">CREW ROSTER</code> lúc load. Dashboard sống hiện ra ngay từ giây đầu tiên; hộp chọn Policy / <code class="mono">Ctrl+K</code> chỉ mở khi người dùng bấm.</td>
+            </tr>
+            <tr>
+              <td><strong>3. Khóa <code>overflow-hidden</code> cứng trên laptop</strong></td>
+              <td>Khung chính dùng <code class="mono">min-block-size: 100dvh</code>; chỉ khóa chiều cao desktop khi đủ rộng/cao và luôn gắn vùng cuộn <code class="mono">.al-scroll</code> riêng cho danh sách khoản chi &amp; nhật ký bị chặn để laptop <code class="mono">1366×768</code> không mất nút.</td>
+            </tr>
+            <tr>
+              <td><strong>4. Cỡ chữ nhỏ <code>8.5px–9.5px</code> &amp; thiếu dấu Việt</strong></td>
+              <td>Giữ <code class="mono">Be Vietnam Pro</code> + <code class="mono">JetBrains Mono</code> (<code class="mono">tabular-nums</code>), giữ cỡ chữ tối thiểu <code class="mono">12px</code> cho nhãn/badge và <code class="mono">13px–14px</code> cho nội dung chiếu máy chiếu.</td>
+            </tr>
+            <tr>
+              <td><strong>5. Cài Three.js nặng &amp; route rỗng 404</strong></td>
+              <td>Không dùng Three.js. Cụm Leash Core dùng SVG + 2D Canvas nhẹ dưới 150 dòng có nút <em>Tạm dừng hiệu ứng</em> (WCAG 2.2.2) và tôn trọng <code class="mono">prefers-reduced-motion</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

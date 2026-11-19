@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Route /policies — Policy &amp; Luật 2 tầng | AgentLeash Multi-Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../hud-tokens.css">
+  <link rel="stylesheet" href="./mp-shell.css">
+</head>
+<body>
+  <div id="mp-root"></div>
+
+  <script src="../hud-sim.js"></script>
+  <script src="./mp-shell.js"></script>
+  <script>
+    window.AgentLeashMultiPage.mountMultiPageApp("policies", function (mount, sim, s, d, H) {
+      const baseSellers = [
+        { addr: H.ADDRESSES.weatherSeller, name: "API Thời tiết" },
+        { addr: H.ADDRESSES.ratesSeller, name: "API Tỷ giá" },
+        { addr: H.ADDRESSES.flightSandbox, name: "API Dự báo Chuyến bay" },
+      ];
+      const baseLower = new Set(baseSellers.map((x) => x.addr.toLowerCase()));
+      const extraSellers = Object.keys(s.whitelist)
+        .filter((addr) => !baseLower.has(addr.toLowerCase()))
+        .map((addr) => ({ addr, name: "API quen đã thêm" }));
+      const allSellers = [...baseSellers, ...extraSellers];
+
+      mount.innerHTML = `
+        <section class="al-glass-panel mp-page-banner">
+          <div>
+            <h1 class="al-hero-greeting">Policy, Whitelist &amp; Hạn mức 2 tầng (Route <code class="mono" style="color:var(--flow-text);">/policies</code>)</h1>
+            <p style="font-size:0.8125rem;color:var(--sky-muted);margin-block-start:0.2rem;">
+              Tách riêng trang cấu hình giúp mọi ô nhập hạn mức và danh sách địa chỉ thoáng rộng, không bị nén vào 1 góc dashboard.
+            </p>
+          </div>
+          <span class="al-chip ${s.authenticated ? "al-chip--trusted" : "al-chip--neutral"}">
+            ${s.authenticated ? "Ví chủ Privy sẵn sàng ký" : "Chế độ Khách (chỉ xem)"}
+          </span>
+        </section>
+
+        <div class="mp-grid-2">
+          <!-- Card 1: Whitelist API -->
+          <section class="al-glass-panel mp-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+              <h2 class="al-panel-title">Danh sách API tin cậy (Tầng 1)</h2>
+              <span style="font-size:0.75rem;color:var(--sky-muted);">Ngoài danh sách → áp trần Sandbox</span>
+            </div>
+
+            <ul class="al-list" style="border-block:1px solid var(--divider-hairline);">
+              ${allSellers
+                .map((item) => {
+                  const allowed = s.whitelist[item.addr.toLowerCase()] === true;
+                  return `
+                  <li style="padding-block:0.65rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;">
+                    <div>
+                      <div style="font-weight:600;">${item.name}</div>
+                      <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">${item.addr}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                      <span class="al-chip ${allowed ? "al-chip--trusted" : "al-chip--sandbox"}">${allowed ? "Whitelist" : "Sandbox"}</span>
+                      <button type="button" class="al-btn" data-pl-toggle="${item.addr}" data-pl-next="${!allowed}" ${!s.authenticated ? "disabled" : ""} style="min-block-size:2rem;padding:0.2rem 0.65rem;">
+                        ${allowed ? "Gỡ" : "Thêm"}
+                      </button>
+                    </div>
+                  </li>`;
+                })
+                .join("")}
+            </ul>
+
+            <form id="pl-add-wl-form" class="al-inset-well" style="padding:0.85rem;display:flex;flex-direction:column;gap:0.5rem;">
+              <label for="pl-wl-input" style="font-size:0.78rem;font-weight:600;">Thêm địa chỉ nhận tiền (<code class="mono" style="color:var(--flow-text);">payTo</code>)</label>
+              <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                <input id="pl-wl-input" type="text" class="al-input mono" placeholder="0x1234… (40 ký tự hex)" ${!s.authenticated ? "disabled" : ""} style="flex:1;min-inline-size:200px;">
+                <button type="submit" class="al-btn al-btn--primary" ${!s.authenticated ? "disabled" : ""}>Thêm Whitelist</button>
+              </div>
+              <p id="pl-wl-msg" style="font-size:0.75rem;color:var(--sky-muted);">Ký <code class="mono">setWhitelist</code> bằng ví chủ Privy.</p>
+            </form>
+          </section>
+
+          <!-- Card 2: Hạn mức 2 tầng (setCaps) -->
+          <section class="al-glass-panel mp-card">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;">
+              <h2 class="al-panel-title">Hạn mức 2 tầng (<code class="mono" style="color:var(--flow-text);">setCaps</code>)</h2>
+              <button type="button" id="pl-fill-demo" class="al-btn" ${!s.authenticated ? "disabled" : ""} style="min-block-size:2rem;padding:0.2rem 0.65rem;">Mặc định demo</button>
+            </div>
+
+            <form id="pl-caps-form" style="display:flex;flex-direction:column;gap:0.85rem;">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;">
+                <fieldset class="al-inset-well" style="margin:0;padding:0.85rem;display:flex;flex-direction:column;gap:0.6rem;">
+                  <legend style="font-size:0.75rem;font-weight:600;color:var(--trusted-text);padding-inline:0.3rem;">Tầng 1 · Whitelist</legend>
+                  <label style="font-size:0.75rem;color:var(--sky-muted);">Mỗi lần (USDC)
+                    <input id="pl-per-tx" type="text" class="al-input mono tabular-nums" value="${H.formatUsdc(s.perTxCapUnits)}" ${!s.authenticated ? "disabled" : ""} style="margin-block-start:0.25rem;">
+                  </label>
+                  <label style="font-size:0.75rem;color:var(--sky-muted);">Chu kỳ (chung 2 tầng)
+                    <input id="pl-daily" type="text" class="al-input mono tabular-nums" value="${H.formatUsdc(s.dailyCapUnits)}" ${!s.authenticated ? "disabled" : ""} style="margin-block-start:0.25rem;">
+                  </label>
+                </fieldset>
+
+                <fieldset class="al-inset-well" style="margin:0;padding:0.85rem;display:flex;flex-direction:column;gap:0.6rem;">
+                  <legend style="font-size:0.75rem;font-weight:600;color:var(--sandbox-text);padding-inline:0.3rem;">Tầng 2 · Sandbox</legend>
+                  <label style="font-size:0.75rem;color:var(--sky-muted);">Mỗi lần (USDC)
+                    <input id="pl-sb-per-tx" type="text" class="al-input mono tabular-nums" value="${H.formatUsdc(s.sandboxPerTxCapUnits)}" ${!s.authenticated ? "disabled" : ""} style="margin-block-start:0.25rem;">
+                  </label>
+                  <label style="font-size:0.75rem;color:var(--sky-muted);">Chu kỳ (USDC)
+                    <input id="pl-sb-daily" type="text" class="al-input mono tabular-nums" value="${H.formatUsdc(s.sandboxDailyCapUnits)}" ${!s.authenticated ? "disabled" : ""} style="margin-block-start:0.25rem;">
+                  </label>
+                </fieldset>
+              </div>
+              <p id="pl-caps-err" style="font-size:0.75rem;color:var(--sky-muted);">Ràng buộc on-chain: mỗi lần ≤ chu kỳ, và Sandbox chu kỳ ≤ Whitelist chu kỳ.</p>
+              <div style="display:flex;justify-content:flex-end;">
+                <button type="submit" class="al-btn al-btn--primary" ${!s.authenticated ? "disabled" : ""}>Lưu hạn mức lên chuỗi</button>
+              </div>
+            </form>
+          </section>
+        </div>
+
+        <!-- Card 3: Factory & ERC-8004 -->
+        <section class="al-glass-panel mp-card">
+          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;">
+            <h2 class="al-panel-title">Chuyển Policy &amp; Hộ chiếu ERC-8004</h2>
+            <span class="mono" style="font-size:0.75rem;color:var(--sky-muted);">Factory: ${H.shortAddr(H.ADDRESSES.factory)}</span>
+          </div>
+          <div class="mp-grid-2">
+            <div class="al-inset-well" style="padding:0.9rem;display:flex;flex-direction:column;gap:0.55rem;">
+              <label for="pl-policy-select" style="font-size:0.78rem;font-weight:600;">Chọn AgentPolicy đang theo dõi</label>
+              <select id="pl-policy-select" class="al-select mono">
+                <option value="${H.ADDRESSES.policyMain}" ${s.activePolicy === H.ADDRESSES.policyMain ? "selected" : ""}>Bot Du Lịch · ${H.ADDRESSES.policyMain}</option>
+                <option value="${H.ADDRESSES.policyAlt}" ${s.activePolicy === H.ADDRESSES.policyAlt ? "selected" : ""}>Bot Research · ${H.ADDRESSES.policyAlt}</option>
+              </select>
+            </div>
+            <div class="al-inset-well" style="padding:0.9rem;display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+              <div>
+                <div style="display:flex;align-items:center;gap:0.45rem;">
+                  <span class="al-chip al-chip--trusted">${H.ICONS.badge} ID #305</span>
+                  <strong>AgentLeash · x402 Fuji Agent</strong>
+                </div>
+                <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);margin-block-start:0.25rem;">Registry: ${H.ADDRESSES.erc8004Registry}</div>
+              </div>
+              <a href="${H.addressUrl(H.ADDRESSES.erc8004Registry)}" target="_blank" rel="noreferrer" class="al-btn">Xem Snowscan ${H.ICONS.arrowUpRight}</a>
+            </div>
+          </div>
+        </section>
+      `;
+
+      mount.querySelectorAll("[data-pl-toggle]").forEach((btn) =>
+        btn.addEventListener("click", () => sim.toggleWhitelist(btn.dataset.plToggle, btn.dataset.plNext === "true")),
+      );
+
+      document.getElementById("pl-add-wl-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const val = document.getElementById("pl-wl-input").value.trim();
+        const msg = document.getElementById("pl-wl-msg");
+        if (!/^0x[a-fA-F0-9]{40}$/.test(val)) {
+          msg.style.color = "var(--danger-text)";
+          msg.textContent = "Lỗi: Địa chỉ payTo phải có định dạng 0x + 40 ký tự hex.";
+          return;
+        }
+        sim.toggleWhitelist(val, true);
+      });
+
+      document.getElementById("pl-fill-demo").addEventListener("click", () => {
+        document.getElementById("pl-per-tx").value = "0.002";
+        document.getElementById("pl-daily").value = "0.003";
+        document.getElementById("pl-sb-per-tx").value = "0.0005";
+        document.getElementById("pl-sb-daily").value = "0.001";
+      });
+
+      document.getElementById("pl-caps-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const toUnits = (id) => Math.round(parseFloat(document.getElementById(id).value || "NaN") * 1_000_000);
+        const perTx = toUnits("pl-per-tx");
+        const daily = toUnits("pl-daily");
+        const sbPerTx = toUnits("pl-sb-per-tx");
+        const sbDaily = toUnits("pl-sb-daily");
+        const err = document.getElementById("pl-caps-err");
+
+        if ([perTx, daily, sbPerTx, sbDaily].some((v) => Number.isNaN(v) || v < 0)) {
+          err.style.color = "var(--danger-text)";
+          err.textContent = "Lỗi: Vui lòng nhập số USDC hợp lệ không âm.";
+          return;
+        }
+        if (perTx > daily || sbPerTx > sbDaily || sbDaily > daily) {
+          err.style.color = "var(--danger-text)";
+          err.textContent = "Lỗi ràng buộc: Trần mỗi lần phải ≤ chu kỳ, và Sandbox chu kỳ phải ≤ Whitelist chu kỳ.";
+          return;
+        }
+        sim.updateCaps({
+          perTxCapUnits: perTx,
+          dailyCapUnits: daily,
+          sandboxPerTxCapUnits: sbPerTx,
+          sandboxDailyCapUnits: sbDaily,
+        });
+      });
+
+      document.getElementById("pl-policy-select").addEventListener("change", (e) => sim.switchPolicy(e.target.value));
+    });
+  </script>
+</body>
+</html>

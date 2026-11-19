@@ -261,6 +261,72 @@ describe("summarizeSpendFlows", () => {
       sandboxAmount: 500n,
     });
   });
+
+  it("tách API mới đã whitelist thành node riêng màu xanh với tên alias và giữ khoản Sandbox cũ", () => {
+    const flightSeller = "0x3333333333333333333333333333333333333333" as const;
+    const newApi = "0x4444444444444444444444444444444444444444" as const;
+    const n1 = ("0x" + "01".repeat(32)) as Hex;
+    const n2 = ("0x" + "02".repeat(32)) as Hex;
+    const n3 = ("0x" + "03".repeat(32)) as Hex;
+
+    const spends = mergeSpends(
+      [],
+      [
+        authorizedLog({ block: 1n, index: 0, amount: 1000n, payTo: WEATHER_SELLER_ADDRESS, sandbox: false, nonce: n1 }),
+        authorizedLog({ block: 2n, index: 0, amount: 500n, payTo: flightSeller, sandbox: true, nonce: n2 }),
+        authorizedLog({ block: 3n, index: 0, amount: 500n, payTo: STRANGER, sandbox: true, nonce: n3 }),
+      ],
+    );
+
+    const summary = summarizeSpendFlows(spends, {
+      whitelist: {
+        [WEATHER_SELLER_ADDRESS]: true,
+        [flightSeller.toUpperCase()]: true,
+        [newApi]: true,
+        [STRANGER]: false,
+      },
+      aliases: {
+        [flightSeller]: "API Chuyến bay",
+        [newApi]: "API Khách sạn",
+      },
+    });
+
+    expect(summary.totalAmount).toBe(2000n);
+    expect(summary.nodes.map((n) => n.id)).toEqual([
+      "weather",
+      "rates",
+      `trusted:${flightSeller}`,
+      `trusted:${newApi}`,
+      "unknown",
+    ]);
+
+    const flightNode = summary.nodes[2];
+    expect(flightNode).toMatchObject({
+      label: "API Chuyến bay",
+      tier: "trusted",
+      amount: 500n,
+      sandboxAmount: 500n,
+      trustedAmount: 0n,
+      count: 1,
+    });
+
+    const hotelNode = summary.nodes[3];
+    expect(hotelNode).toMatchObject({
+      label: "API Khách sạn",
+      tier: "trusted",
+      amount: 0n,
+      count: 0,
+      strokeWidth: 1.5,
+    });
+
+    const unknownNode = summary.nodes[4];
+    expect(unknownNode).toMatchObject({
+      id: "unknown",
+      label: "Địa chỉ lạ",
+      tier: "sandbox",
+      amount: 500n,
+    });
+  });
 });
 
 describe("extractWhitelistTargets & initialRpcScanFrom", () => {

@@ -97,8 +97,9 @@
 ## Slide 12 — Bằng chứng kiểm thử & Bước tiếp theo
 - **Đã chạy & kiểm chứng thật trước ngày nộp:**
   - **Smart Contracts (Foundry):** **29/29 tests pass** (unit + invariant fuzz 128.000 calls + fork Fuji với Circle USDC thật); `AgentPolicyFactory` (`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`) & `AgentPolicy` đã deploy & verified trên Fuji.
-  - **Web Dashboard:** **86/86 vitest tests pass**, `tsc --noEmit`, `eslint` & `next build` sạch (gồm nút 1-click **Chuyển thành API quen**, ô **Thêm API quen bằng địa chỉ**, và tùy chọn đọc mục *Bị từ chối* qua Upstash Redis khi cấu hình).
-  - **Agent, Rule Engine & MCP Gateway (`agent/src/mcp.ts`):** **49/49 vitest tests pass**, `tsc --noEmit` sạch, chạy thông suốt với x402 Facilitator & 2 API Seller trên Fuji (trả link Dashboard khi cần chủ ví duyệt, đã thử thật Khóa/Mở khóa qua bản Vercel `https://agentleash-two.vercel.app`, hỗ trợ 1 lệnh `npm --prefix agent run setup:mcp` cho Claude Code & Antigravity).
+  - **Web Dashboard:** **91/91 vitest tests pass**, `tsc --noEmit`, `eslint` & `next build` sạch (gồm nút 1-click **Chuyển thành API quen** và ô **Thêm API quen bằng địa chỉ**).
+  - **Agent, Rule Engine & MCP Gateway (`agent/src/mcp.ts`):** **49/49 vitest tests pass**, `tsc --noEmit` sạch, chạy thông suốt với x402 Facilitator & 2 API Seller trên Fuji (trả link Dashboard local khi cần chủ ví duyệt Khóa/Mở khóa, whitelist).
+  - **1 lệnh setup:** `npm --prefix agent run setup:mcp` tự ghi cấu hình MCP cho Claude Code / Antigravity, người dùng không phải sửa tay `.json`.
 - **Mở rộng sau 21/11 (Mức phức tạp — Remote MCP đa người dùng thuần x402):**
   - **Hoàn thiện chuẩn danh tính & uy tín ERC-8004** (registry `0x8004A818BFB912233c491871b3d84c89A494BD9e` trên Fuji) để xếp hạng độ tin cậy của API x402 & AI Agent.
   - **Nâng cấp lên Remote MCP Cloud (`Streamable HTTP` + OAuth Privy + DB dùng chung + Plugin Marketplace):** Cài 1 chạm trên IDE như Canva/Notion/Figma không cần Node/.env local, hỗ trợ HTTP `POST`/headers/body, siết SSRF production, sổ ánh xạ `URL ↔ payTo` và chấm chất lượng output.

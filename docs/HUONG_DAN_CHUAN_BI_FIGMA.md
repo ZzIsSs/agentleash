@@ -1,5 +1,7 @@
 # Hướng dẫn chuẩn bị tài liệu & quyết định UI/UX trước khi đưa vào Figma (AgentLeash)
 
+> ⚠️ **Lỗi thời (20/11/2026):** Tài liệu viết khi `web/` còn là khung trống. UI thật đã làm thẳng trong code (khung điều khiển 5 trang, xem [DESIGN.md](../DESIGN.md) và [PRODUCT.md](../PRODUCT.md)). Figma giờ chỉ dùng làm mockup cho slide và sơ đồ FigJam. Giữ file này để tra lịch sử quyết định.
+
 > **Dành cho:** Nguyên  
 > **Cập nhật:** Đã chốt các phương án **1B (Hạn mức 2 tầng)**, **2 (gợi ý)**, **3 (2 bản so sánh)**, **4 (Dark Mode — Nền tối)**, **5 (có sơ đồ dòng tiền)**, **6 (tài khoản Figma)**, **7 (đã đưa sơ đồ lên FigJam)** — chỉ còn tên/logo nếu muốn bổ sung sau.  
 > **Bảng FigJam đã tạo sẵn:** [AgentLeash — Luồng hoạt động & So sánh 2 bố cục UI](https://www.figma.com/board/lUMYemD6G4EiO4H3dcP7uj)

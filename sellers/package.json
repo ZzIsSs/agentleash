@@ -6,6 +6,7 @@
   "scripts": {
     "start:weather": "node --env-file=../.env weather.mjs",
     "start:rates": "node --env-file=../.env rates.mjs",
+    "start:news": "node --env-file=../.env news.mjs",
     "start:spike": "node --env-file=../.env spike-server.mjs"
   },
   "dependencies": {

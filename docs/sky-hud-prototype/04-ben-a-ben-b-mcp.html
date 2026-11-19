@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Mô phỏng Bên A – Bên B (x402 MCP Gateway) — AgentLeash × SKY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./hud-tokens.css">
+  <style>
+    .ab-shell {
+      max-inline-size: 1480px;
+      margin-inline: auto;
+      padding: 1.25rem 1.25rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+    }
+
+    .ab-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      gap: 1.25rem;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1024px) {
+      .ab-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .ab-col {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .ab-terminal {
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(122, 222, 255, 0.16);
+      background: rgba(2, 8, 18, 0.92);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.55;
+      color: var(--sky-text);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      overflow-x: auto;
+      flex: 1;
+      min-block-size: 260px;
+    }
+
+    .ab-stepper {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.65rem;
+    }
+
+    .ab-step-btn {
+      padding: 0.65rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(122, 222, 255, 0.16);
+      background: rgba(8, 19, 38, 0.8);
+      color: var(--sky-text);
+      font-family: inherit;
+      font-size: 0.8125rem;
+      text-align: start;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      transition: border-color 150ms ease, background-color 150ms ease;
+    }
+
+    .ab-step-btn:hover {
+      border-color: rgba(122, 222, 255, 0.42);
+      background: rgba(13, 31, 58, 0.9);
+    }
+
+    .ab-step-btn[aria-current="step"] {
+      border-color: rgba(94, 234, 212, 0.65);
+      background: rgba(16, 42, 72, 0.88);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 16px rgba(1, 8, 18, 0.45);
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-ab" class="al-skip-link">Chuyển tới mô phỏng Bên A và Bên B</a>
+
+  <div class="al-proto-ribbon">
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+      <span class="al-chip al-chip--sandbox">MÔ HÌNH BÊN A – BÊN B (MCP GATEWAY)</span>
+      <span>Minh họa AI coding agent (Bên A) gọi x402 API qua cổng AgentLeash HUD (Bên B)</span>
+    </div>
+    <nav class="al-proto-nav" aria-label="Chuyển giữa các bản mô phỏng">
+      <a class="al-proto-link" href="./index.html">Cổng so sánh</a>
+      <a class="al-proto-link" href="./01-hud-glass-skin.html">PA 1: HUD Glass Skin</a>
+      <a class="al-proto-link" href="./02-mission-control-3col.html">PA 2: Mission Control 3 Cột</a>
+      <a class="al-proto-link" href="./03-mobile-and-states.html">Watch &amp; Trạng thái</a>
+      <a class="al-proto-link" href="./04-ben-a-ben-b-mcp.html" aria-current="page">MCP Bên A – Bên B</a>
+      <a class="al-proto-link" href="./multi-page/index.html">Nhiều trang (5 routes)</a>
+    </nav>
+  </div>
+
+  <main id="main-ab" class="ab-shell">
+    <section class="al-glass-panel" style="padding:1.25rem;display:flex;flex-direction:column;gap:0.9rem;">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
+        <div>
+          <h1 class="al-hero-greeting">Luồng Bên A (IDE / Agent) ↔ Bên B (AgentLeash HUD)</h1>
+          <p style="font-size:0.8125rem;color:var(--sky-muted);margin-block-start:0.2rem;">
+            Bấm từng bước bên dưới để thấy cách AI bên A thử nghiệm API x402 mới trong giới hạn Sandbox an toàn, nhận <code class="mono" style="color:var(--flow-text)">DASHBOARD_URL</code> trong <code class="mono">hint</code>, và chủ ví bên B bấm 1-click duyệt lên Whitelist.
+          </p>
+        </div>
+        <button type="button" id="ab-reset" class="al-btn">Đặt lại kịch bản</button>
+      </div>
+
+      <div class="ab-stepper" role="group" aria-label="4 bước luồng Bên A - Bên B">
+        <button type="button" class="ab-step-btn" data-ab-step="1" aria-current="step">
+          <span class="mono" style="font-size:0.75rem;color:var(--sandbox-text);">Bước 1 · Bên A gọi thử API lạ</span>
+          <strong>test_unknown_api (0.0005 USDC)</strong>
+        </button>
+        <button type="button" class="ab-step-btn" data-ab-step="2">
+          <span class="mono" style="font-size:0.75rem;color:var(--danger-text);">Bước 2 · Bên A đòi chi lớn hơn Sandbox</span>
+          <strong>Contract chặn 0.001 USDC lạ</strong>
+        </button>
+        <button type="button" class="ab-step-btn" data-ab-step="3">
+          <span class="mono" style="font-size:0.75rem;color:var(--flow-text);">Bước 3 · Chủ ví duyệt ở Bên B</span>
+          <strong>1-click Chuyển thành API quen</strong>
+        </button>
+        <button type="button" class="ab-step-btn" data-ab-step="4">
+          <span class="mono" style="font-size:0.75rem;color:var(--trusted-text);">Bước 4 · Bên A chạy chính thức</span>
+          <strong>call_trusted_api (Tầng 1 WL)</strong>
+        </button>
+      </div>
+    </section>
+
+    <div class="ab-split">
+      <!-- BÊN A: IDE / Claude Code / Antigravity MCP Client -->
+      <section class="al-glass-panel ab-col" aria-label="Bên A: AI Coding Agent MCP Client">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <div>
+            <span class="al-hud-heading">Bên A · AI Coding Agent</span>
+            <h2 class="al-panel-title" style="margin-block-start:0.2rem;">Antigravity / Claude Code (MCP Client)</h2>
+          </div>
+          <span class="al-chip al-chip--neutral mono">agent/src/mcp.ts</span>
+        </div>
+
+        <div class="al-inset-well" style="padding:0.75rem;font-size:0.8125rem;color:var(--sky-muted);">
+          Bên A <strong>không giữ private key</strong>. Mọi yêu cầu gọi API x402 đều đi qua MCP tool của AgentLeash (<code class="mono" style="color:var(--flow-text);">test_unknown_api</code> / <code class="mono" style="color:var(--flow-text);">call_trusted_api</code>).
+        </div>
+
+        <pre class="ab-terminal" id="ab-mcp-log"></pre>
+
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--sky-muted);">
+          <span>4 lớp RuleEngine: Sandbox Cap · SSRF Safe · Rate Limit · Giá 402</span>
+          <span class="al-chip al-chip--flow">DASHBOARD_URL kèm trong hint</span>
+        </div>
+      </section>
+
+      <!-- BÊN B: AgentLeash HUD Dashboard -->
+      <section class="al-glass-panel ab-col" aria-label="Bên B: AgentLeash HUD Guardrail">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <div>
+            <span class="al-hud-heading">Bên B · AgentLeash Guardrail HUD</span>
+            <h2 class="al-panel-title" style="margin-block-start:0.2rem;">Dashboard Chủ Ví (Privy + AgentPolicy)</h2>
+          </div>
+          <span class="al-chip al-chip--trusted">Fuji Testnet</span>
+        </div>
+
+        <div id="ab-hud-view" style="display:flex;flex-direction:column;gap:0.85rem;flex:1;"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="./hud-sim.js"></script>
+  <script>
+    (function () {
+      const H = window.AgentLeashHud;
+      let currentStep = 1;
+      let flightWhitelisted = false;
+      let sandboxUsed = 500;
+      let trustedUsed = 1000;
+      let lastEventText = "API Dự báo Chuyến bay vừa thử chi 0.0005 USDC ở tầng Sandbox.";
+      let blockedCount = 0;
+
+      const stepBtns = document.querySelectorAll("[data-ab-step]");
+
+      function setStep(step) {
+        currentStep = step;
+        stepBtns.forEach((b) => {
+          const n = Number(b.dataset.abStep);
+          b.setAttribute("aria-current", n === step ? "step" : "false");
+        });
+
+        if (step === 1) {
+          flightWhitelisted = false;
+          sandboxUsed = 500;
+          trustedUsed = 1000;
+          blockedCount = 0;
+          lastEventText = "Đã thử thành công 1 lượt 0.0005 USDC ở tầng Sandbox.";
+        } else if (step === 2) {
+          flightWhitelisted = false;
+          sandboxUsed = 500;
+          trustedUsed = 1000;
+          blockedCount = 1;
+          lastEventText = "Bị contract chặn ExceedsSandboxPerTxCap khi đòi 0.001 USDC ngoài Whitelist.";
+        } else if (step === 3) {
+          flightWhitelisted = true;
+          blockedCount = 1;
+          lastEventText = "Chủ ví đã bấm 1-click 'Chuyển thành API quen' → nâng cấp lên Tầng 1 Whitelist.";
+        } else if (step === 4) {
+          flightWhitelisted = true;
+          trustedUsed = 2000;
+          lastEventText = "Bên A gọi call_trusted_api thành công 0.001 USDC qua Tầng 1 Whitelist!";
+        }
+        render();
+      }
+
+      stepBtns.forEach((btn) => btn.addEventListener("click", () => setStep(Number(btn.dataset.abStep))));
+      document.getElementById("ab-reset").addEventListener("click", () => setStep(1));
+
+      function render() {
+        const logEl = document.getElementById("ab-mcp-log");
+        const logs = {
+          1: `> MCP Tool: test_unknown_api({ url: "https://api.flight-oracle.xyz/v1/quote" })
+[RuleEngine] 1/4 SSRF Check: HTTPS hợp lệ (không phải IP nội bộ)
+[RuleEngine] 2/4 Rate Limit: OK (1/5 lượt/phút)
+[HTTP 402]   payTo = ${H.ADDRESSES.flightSandbox} | price = 0.0005 USDC
+[AgentPolicy] authorize() -> Tầng 2 SANDBOX OK (0.0005 <= 0.0005 cap)
+[x402 Settle] ERC-1271 + EIP-3009 USDC thành công!
+{
+  "ok": true,
+  "tier": "SANDBOX",
+  "paidUsdc": "0.0005",
+  "data": { "route": "SGN -> DLI", "priceVnd": 1450000 },
+  "hint": "API lạ chạy tốt. Mở Dashboard để bấm 1-click Chuyển thành API quen: https://agentleash-two.vercel.app"
+}`,
+          2: `> MCP Tool: test_unknown_api({ url: "https://api.flight-oracle.xyz/v1/full-matrix" })
+[HTTP 402]   payTo = ${H.ADDRESSES.flightSandbox} | price = 0.001 USDC
+[AgentPolicy] authorize() REVERT: ExceedsSandboxPerTxCap (0.001 > 0.0005)
+{
+  "ok": false,
+  "error": "ExceedsSandboxPerTxCap",
+  "hint": "API này chưa nằm trong Whitelist nên bị giới hạn 0.0005 USDC/lần. Gửi chủ ví duyệt tại https://agentleash-two.vercel.app"
+}`,
+          3: `// Đang chờ chủ ví ở Bên B (AgentLeash HUD) xác nhận...
+// Chủ ví vừa ký setWhitelist(${H.ADDRESSES.flightSandbox}, true) qua Privy Email!
+[Event] WhitelistChanged(target=${H.shortAddr(H.ADDRESSES.flightSandbox)}, allowed=true)
+[Status] Địa chỉ đã được nâng cấp từ Sandbox → Tầng 1 Whitelist.`,
+          4: `> MCP Tool: call_trusted_api({ url: "https://api.flight-oracle.xyz/v1/full-matrix" })
+[HTTP 402]   payTo = ${H.ADDRESSES.flightSandbox} | price = 0.001 USDC
+[AgentPolicy] authorize() -> Tầng 1 WHITELIST OK (0.001 <= 0.002 perTxCap)
+[x402 Settle] ERC-1271 + EIP-3009 USDC thành công!
+{
+  "ok": true,
+  "tier": "WHITELIST",
+  "paidUsdc": "0.001",
+  "data": { "matrix": "30-day Da Lat fare forecast", "status": "verified" }
+}`,
+        };
+        logEl.textContent = logs[currentStep];
+
+        const totalSpent = trustedUsed + (flightWhitelisted ? sandboxUsed : sandboxUsed);
+        const remainWl = Math.max(0, 3000 - totalSpent);
+        const remainSb = Math.min(remainWl, Math.max(0, 1000 - sandboxUsed));
+
+        const hud = document.getElementById("ab-hud-view");
+        hud.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.75rem;">
+            <div class="al-inset-well" style="padding:0.75rem;">
+              <div style="font-size:0.75rem;color:var(--sky-muted);">Tầng 1 Whitelist còn</div>
+              <strong class="mono tabular-nums" style="font-size:1.1rem;color:var(--trusted-text);">${H.formatUsdc(remainWl)} / 0.003 USDC</strong>
+            </div>
+            <div class="al-inset-well" style="padding:0.75rem;">
+              <div style="font-size:0.75rem;color:var(--sky-muted);">Tầng 2 Sandbox còn</div>
+              <strong class="mono tabular-nums" style="font-size:1.1rem;color:var(--sandbox-text);">${H.formatUsdc(remainSb)} / 0.001 USDC</strong>
+            </div>
+          </div>
+
+          <div class="al-inset-well" style="padding:0.85rem;display:flex;flex-direction:column;gap:0.55rem;border-color:${flightWhitelisted ? "rgba(34,197,94,0.4)" : "rgba(234,179,8,0.4)"};">
+            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;">
+              <div>
+                <strong>API Dự báo Chuyến bay</strong>
+                <div class="mono" style="font-size:0.75rem;color:var(--sky-muted);">${H.shortAddr(H.ADDRESSES.flightSandbox)}</div>
+              </div>
+              <span class="al-chip ${flightWhitelisted ? "al-chip--trusted" : "al-chip--sandbox"}">
+                ${flightWhitelisted ? "Whitelist (Tầng 1)" : "Sandbox (API lạ)"}
+              </span>
+            </div>
+            <p style="font-size:0.8125rem;color:var(--sky-muted);">${lastEventText}</p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center;">
+              ${
+                flightWhitelisted
+                  ? `<span class="al-chip al-chip--trusted">${H.ICONS.check} Đã thành API quen · Bên A được chi tới 0.002 USDC/lần</span>`
+                  : `<button type="button" id="ab-promote-btn" class="al-gradient-pill" style="min-block-size:2.4rem;padding:0.35rem 1rem;font-size:0.8125rem;">${H.ICONS.shieldCheck} 1-click Chuyển thành API quen</button>`
+              }
+            </div>
+          </div>
+
+          <div class="al-inset-well" style="padding:0.85rem;display:flex;flex-direction:column;gap:0.45rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="al-hud-heading">Trạng thái luồng MCP</span>
+              <span class="mono tabular-nums" style="font-size:0.75rem;color:${blockedCount > 0 ? "var(--danger-text)" : "var(--sky-muted)"};">${blockedCount} lần bị chặn</span>
+            </div>
+            <ul class="al-list" style="font-size:0.8rem;">
+              <li style="padding-block:0.4rem;display:flex;justify-content:space-between;">
+                <span>1. Thử nghiệm API lạ ở trần Sandbox (0.0005)</span>
+                <span class="mono" style="color:var(--trusted-text);">PASS</span>
+              </li>
+              <li style="padding-block:0.4rem;display:flex;justify-content:space-between;">
+                <span>2. Chặn tự động khi API lạ đòi 0.001 USDC</span>
+                <span class="mono" style="color:${currentStep >= 2 ? "var(--danger-text)" : "var(--sky-muted)"};">${currentStep >= 2 ? "BLOCKED (OK)" : "Chờ thử"}</span>
+              </li>
+              <li style="padding-block:0.4rem;display:flex;justify-content:space-between;">
+                <span>3. Chủ ví duyệt 1-click trên AgentLeash HUD</span>
+                <span class="mono" style="color:${flightWhitelisted ? "var(--trusted-text)" : "var(--sky-muted)"};">${flightWhitelisted ? "APPROVED" : "Đang chờ"}</span>
+              </li>
+              <li style="padding-block:0.4rem;display:flex;justify-content:space-between;">
+                <span>4. Bên A chạy chính thức ở Tầng 1 Whitelist</span>
+                <span class="mono" style="color:${currentStep === 4 ? "var(--trusted-text)" : "var(--sky-muted)"};">${currentStep === 4 ? "SETTLED 0.001" : "Chưa chạy"}</span>
+              </li>
+            </ul>
+          </div>
+        `;
+
+        const promoteBtn = document.getElementById("ab-promote-btn");
+        if (promoteBtn) {
+          promoteBtn.addEventListener("click", () => setStep(3));
+        }
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

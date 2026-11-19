@@ -1,5 +1,6 @@
-import { decodeEventLog, getAddress, toEventSelector, type Address, type Hex } from "viem";
+import { decodeEventLog, getAddress, isAddress, toEventSelector, zeroAddress, type Address, type Hex } from "viem";
 import { policyEventsAbi } from "./abi";
+import { shortAddress } from "./chain";
 
 /** Một khoản chi đã được policy duyệt (event Authorized). */
 export type Spend = {
@@ -171,12 +172,10 @@ export function initialRpcScanFrom(
 ): bigint {
   const span = size * BigInt(maxChunks);
   const floor = latest >= span ? latest - span + 1n : 0n;
-  let maxRoutescanBlock: bigint | null = null;
-  for (const log of routescanLogs) {
-    if (log.blockNumber !== null && (maxRoutescanBlock === null || log.blockNumber > maxRoutescanBlock)) {
-      maxRoutescanBlock = log.blockNumber;
-    }
-  }
+  const maxRoutescanBlock = routescanLogs.reduce<bigint | null>(
+    (max, log) => (log.blockNumber !== null && (max === null || log.blockNumber > max) ? log.blockNumber : max),
+    null,
+  );
   if (maxRoutescanBlock === null) return floor;
   const afterRoutescan = maxRoutescanBlock + 1n;
   return afterRoutescan > floor ? afterRoutescan : floor;
@@ -214,11 +213,12 @@ export const totalSpent = (spends: readonly Spend[]): bigint =>
 
 export type FlowTier = "trusted" | "sandbox" | "mixed" | "idle";
 
-export type FlowTargetId = "weather" | "rates" | "unknown";
+export type FlowTargetId = "weather" | "rates" | "unknown" | `trusted:${string}`;
 
 export type FlowNodeSummary = {
   id: FlowTargetId;
   label: string;
+  payTo?: Address;
   amount: bigint;
   trustedAmount: bigint;
   sandboxAmount: bigint;
@@ -233,22 +233,83 @@ export type FlowNodeSummary = {
 export type SpendFlowSummary = {
   totalAmount: bigint;
   totalCount: number;
-  nodes: readonly [FlowNodeSummary, FlowNodeSummary, FlowNodeSummary];
+  nodes: readonly FlowNodeSummary[];
+};
+
+export type SummarizeSpendFlowsOptions = {
+  whitelist?: Record<string, boolean> | null;
+  aliases?: Record<string, string> | null;
+};
+
+type FlowBucket = {
+  label: string;
+  payTo?: Address;
+  amount: bigint;
+  trustedAmount: bigint;
+  sandboxAmount: bigint;
+  count: number;
 };
 
 /**
  * Gom tổng USDC đã chi (loại khoản đã released) từ danh sách `spends` để vẽ sơ đồ Agent → Policy → API.
- * Phân thành 3 nhánh: Thời tiết, Tỷ giá và Địa chỉ lạ; giữ rõ phần Whitelist vs Sandbox.
+ * Luôn giữ Thời tiết, Tỷ giá và Địa chỉ lạ; các địa chỉ ngoài `KNOWN_SELLERS` nhưng đã whitelist (`whitelist[addr] === true`)
+ * được tách thành node riêng màu xanh (`tier: "trusted"`) kèm tên alias nếu có.
  */
-export function summarizeSpendFlows(spends: readonly Spend[]): SpendFlowSummary {
-  const buckets: Record<
-    FlowTargetId,
-    { label: string; amount: bigint; trustedAmount: bigint; sandboxAmount: bigint; count: number }
-  > = {
-    weather: { label: "Thời tiết", amount: 0n, trustedAmount: 0n, sandboxAmount: 0n, count: 0 },
-    rates: { label: "Tỷ giá", amount: 0n, trustedAmount: 0n, sandboxAmount: 0n, count: 0 },
-    unknown: { label: "Địa chỉ lạ", amount: 0n, trustedAmount: 0n, sandboxAmount: 0n, count: 0 },
+export function summarizeSpendFlows(
+  spends: readonly Spend[],
+  options?: SummarizeSpendFlowsOptions,
+): SpendFlowSummary {
+  const weatherBucket: FlowBucket = {
+    label: "Thời tiết",
+    amount: 0n,
+    trustedAmount: 0n,
+    sandboxAmount: 0n,
+    count: 0,
   };
+  const ratesBucket: FlowBucket = {
+    label: "Tỷ giá",
+    amount: 0n,
+    trustedAmount: 0n,
+    sandboxAmount: 0n,
+    count: 0,
+  };
+  const unknownBucket: FlowBucket = {
+    label: "Địa chỉ lạ",
+    amount: 0n,
+    trustedAmount: 0n,
+    sandboxAmount: 0n,
+    count: 0,
+  };
+
+  const aliasMap = new Map<string, string>();
+  if (options?.aliases) {
+    for (const [rawAddr, rawAlias] of Object.entries(options.aliases)) {
+      const trimmed = typeof rawAlias === "string" ? rawAlias.trim().replace(/\s+/g, " ") : "";
+      if (trimmed) aliasMap.set(rawAddr.trim().toLowerCase(), trimmed);
+    }
+  }
+
+  const customBuckets = new Map<string, FlowBucket>();
+  if (options?.whitelist) {
+    for (const [rawAddr, allowed] of Object.entries(options.whitelist)) {
+      if (!allowed) continue;
+      const lowerRaw = rawAddr.trim().toLowerCase();
+      if (!isAddress(lowerRaw, { strict: false })) continue;
+      const checksum = getAddress(lowerRaw);
+      if (checksum === zeroAddress) continue;
+      const lower = checksum.toLowerCase();
+      if (lower === WEATHER_SELLER_ADDRESS || lower === RATES_SELLER_ADDRESS) continue;
+      if (customBuckets.has(lower)) continue;
+      customBuckets.set(lower, {
+        label: aliasMap.get(lower) ?? shortAddress(checksum),
+        payTo: checksum,
+        amount: 0n,
+        trustedAmount: 0n,
+        sandboxAmount: 0n,
+        count: 0,
+      });
+    }
+  }
 
   let totalAmount = 0n;
   let totalCount = 0;
@@ -256,32 +317,41 @@ export function summarizeSpendFlows(spends: readonly Spend[]): SpendFlowSummary 
   for (const s of spends) {
     if (s.released) continue;
     const addr = s.payTo.toLowerCase();
-    const key: FlowTargetId =
-      addr === WEATHER_SELLER_ADDRESS ? "weather" : addr === RATES_SELLER_ADDRESS ? "rates" : "unknown";
-    const b = buckets[key];
-    b.amount += s.amount;
-    b.count += 1;
-    if (s.isSandbox) b.sandboxAmount += s.amount;
-    else b.trustedAmount += s.amount;
+    const bucket =
+      addr === WEATHER_SELLER_ADDRESS
+        ? weatherBucket
+        : addr === RATES_SELLER_ADDRESS
+          ? ratesBucket
+          : (customBuckets.get(addr) ?? unknownBucket);
+
+    bucket.amount += s.amount;
+    bucket.count += 1;
+    if (s.isSandbox) bucket.sandboxAmount += s.amount;
+    else bucket.trustedAmount += s.amount;
     totalAmount += s.amount;
     totalCount += 1;
   }
 
-  const buildNode = (id: FlowTargetId): FlowNodeSummary => {
-    const b = buckets[id];
+  const finalizeNode = (
+    id: FlowTargetId,
+    b: FlowBucket,
+    forcedTier?: FlowTier,
+  ): FlowNodeSummary => {
     const tier: FlowTier =
-      b.amount === 0n
+      forcedTier ??
+      (b.amount === 0n
         ? "idle"
         : b.sandboxAmount === 0n
           ? "trusted"
           : b.trustedAmount === 0n
             ? "sandbox"
-            : "mixed";
+            : "mixed");
     const share = totalAmount === 0n || b.amount === 0n ? 0 : Number((b.amount * 10_000n) / totalAmount) / 10_000;
     const strokeWidth = b.amount === 0n ? 1.5 : Number((2.5 + share * 6).toFixed(2));
     return {
       id,
       label: b.label,
+      ...(b.payTo ? { payTo: b.payTo } : {}),
       amount: b.amount,
       trustedAmount: b.trustedAmount,
       sandboxAmount: b.sandboxAmount,
@@ -292,9 +362,22 @@ export function summarizeSpendFlows(spends: readonly Spend[]): SpendFlowSummary 
     };
   };
 
+  const customNodes = [...customBuckets.entries()]
+    .map(([lower, b]) => finalizeNode(`trusted:${lower}`, b, "trusted"))
+    .sort((a, b) => {
+      if (a.amount !== b.amount) return a.amount > b.amount ? -1 : 1;
+      const byName = a.label.localeCompare(b.label, "vi");
+      return byName !== 0 ? byName : a.id.localeCompare(b.id);
+    });
+
   return {
     totalAmount,
     totalCount,
-    nodes: [buildNode("weather"), buildNode("rates"), buildNode("unknown")],
+    nodes: [
+      finalizeNode("weather", weatherBucket),
+      finalizeNode("rates", ratesBucket),
+      ...customNodes,
+      finalizeNode("unknown", unknownBucket),
+    ],
   };
 }
