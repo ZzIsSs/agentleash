@@ -24,6 +24,8 @@
 | MCP | 3 tool `test_unknown_api`, `call_trusted_api`, `get_policy_status`; cài bằng `npm --prefix agent run setup:mcp` | README |
 | Triển khai | Không có bản online (bỏ Vercel 20/11), demo chạy local, ô *Live app* để trống | CLAUDE.md |
 
+**Kiểu chữ:** toàn bộ chữ dùng font Gentium Plus (hỗ trợ đủ dấu tiếng Việt). Các ô nội dung (đoạn văn, cột, mục lục, dòng khai báo trên bìa) để cỡ 24; tiêu đề và tiêu đề cột giữ cỡ của mẫu.
+
 Dòng nhãn nhỏ ở góc mỗi trang (template ghi "LARANA, INC.") đổi thành `AGENTLEASH`. Tiêu đề cột trên slide dùng font Retropix chữ hoa, ô hẹp, nên chỉ giữ 1 đến 2 từ cho khỏi xuống dòng; phần giải thích nằm ở nội dung cột.
 
 Trên Canva mới chỉ trang 1 có speaker note. Speaker note của các trang khác nằm trong file này; nếu cần đọc khi trình chiếu thì dán vào ô Notes của từng trang.
