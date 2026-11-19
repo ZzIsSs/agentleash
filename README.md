@@ -31,7 +31,7 @@ flowchart LR
 2. **Sử dụng API quen & chuyển đổi 1-click:** Chủ ví xem danh sách các giao dịch/từ chối mà Bên A đã thử ngay trên Dashboard và bấm chọn **Chuyển thành API quen** (`setWhitelist`) để cấp hạn mức Trusted.
 3. **Định vị tập trung thuần x402:** Giai đoạn đầu tập trung 100% vào thanh toán chuẩn **x402** (USDC trên Avalanche) cho dev / AI agent builders để kiến trúc gọn, đồng nhất và bảo mật on-chain tuyệt đối; dài hạn có thể cân nhắc bổ sung lớp mở rộng hỗ trợ API truyền thống nếu phục vụ thêm người dùng non-tech phổ thông.
 
-> **Ranh giới bản nộp UniHack (21/11/2026):** Toàn bộ kiến trúc ví chính sách 2 tầng (`AgentPolicy`), Rule Engine, 2 API x402, CLI agent, Dashboard quản trị và bản MCP local (`agent/src/mcp.ts` trả kèm `DASHBOARD_URL`, cùng 1 lệnh setup tự ghi cấu hình để không phải sửa tay `.json`) nằm trong phạm vi nộp. Phần **phức tạp** để nâng cấp lên **Remote MCP đa người dùng** (Cloud `Streamable HTTP` + OAuth Privy + Session Key từng user + DB dùng chung với Vercel + Plugin Marketplace, cùng `POST`/body, siết SSRF IP nội bộ production và sổ `URL ↔ payTo` + chấm output) là **hướng phát triển tiếp theo sau 21/11** (chi tiết tại [docs/SPEC.md](docs/SPEC.md#L223)).
+> **Ranh giới bản nộp UniHack (21/11/2026):** Toàn bộ kiến trúc ví chính sách 2 tầng (`AgentPolicy`), Rule Engine, 2 API x402, CLI agent, Dashboard quản trị (cùng ô **Thêm API quen bằng địa chỉ** và tùy chọn đồng bộ mục *Bị từ chối* qua Upstash Redis cho bản Vercel) và bản MCP local (`agent/src/mcp.ts` trả kèm `DASHBOARD_URL`, kèm lệnh `npm --prefix agent run setup:mcp` tự cấu hình cho Claude Code & Antigravity) nằm trong phạm vi nộp. Phần **phức tạp** để nâng cấp lên **Remote MCP đa người dùng** (Cloud `Streamable HTTP` + OAuth Privy + Session Key từng user + DB đa người dùng với Vercel + Plugin Marketplace, cùng `POST`/body, siết SSRF IP nội bộ production và sổ `URL ↔ payTo` + chấm output) là **hướng phát triển tiếp theo sau 21/11** (chi tiết tại [docs/SPEC.md](docs/SPEC.md#L223)).
 
 ---
 
@@ -110,9 +110,9 @@ node --env-file=.env scripts/seed-demo.mjs && npm --prefix agent run demo:mock
 - `call_trusted_api`: Gọi API trong danh mục Trusted (`weather`, `rates`) hoặc API vừa được chủ ví bấm **Chuyển thành API quen** (`setWhitelist`) trên Dashboard.
 - `get_policy_status`: Xem nhanh số dư USDC, hạn mức Trusted/Sandbox còn lại và trạng thái Kill Switch.
 
-> **Phân quyền (Luật 3 & 4):** MCP tuyệt đối không giữ khóa `owner`. Khi gặp `NOT_WHITELISTED`, vượt hạn mức hoặc `PausedError`, trường `hint` sẽ trả kèm sẵn đường link `DASHBOARD_URL` (mặc định `http://localhost:3000`; khi chạy online đổi sang `https://agentleash-two.vercel.app` trong `.env` hoặc mục `env` của `.mcp.json`) để chủ ví mở ra ký bằng Privy.
+> **Phân quyền (Luật 3 & 4):** MCP tuyệt đối không giữ khóa `owner`. Khi gặp `NOT_WHITELISTED`, vượt hạn mức hoặc `PausedError`, trường `hint` sẽ trả kèm sẵn đường link `DASHBOARD_URL` (mặc định `http://localhost:3000`; khi chạy online đổi sang `https://agentleash-two.vercel.app` trong `.env` hoặc mục `env` trong cấu hình MCP của agent) để chủ ví mở ra ký bằng Privy.
 >
-> Bản Vercel đọc dữ liệu on-chain nên ký được Mở khóa, `setCaps`, Gỡ/Thêm 2 API whitelist và nút **Chuyển thành API quen** cho các khoản đã có trong Dòng tiền. Riêng mục **Bị từ chối** chỉ có khi Dashboard chạy cùng máy với agent (đọc `agent/logs/audit.json`), nên muốn duyệt một địa chỉ bị contract từ chối thì dùng `http://localhost:3000`.
+> Bản Vercel đọc dữ liệu on-chain và ký được Mở khóa, `setCaps`, Gỡ/Thêm 2 API whitelist, nút **Chuyển thành API quen**, lẫn ô **Thêm API quen bằng địa chỉ (payTo)** ở bảng `[3]` để dán địa chỉ lấy từ gợi ý MCP. Mục **Bị từ chối** cũng hiển thị trên bản Vercel nếu bật đồng bộ Upstash Redis (xem mục **Bản online trên Vercel** bên dưới); nếu chưa bật Upstash thì dùng `http://localhost:3000` để xem trực tiếp `agent/logs/audit.json` trên máy.
 
 Chạy thử trực tiếp:
 
