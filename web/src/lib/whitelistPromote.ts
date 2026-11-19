@@ -72,6 +72,38 @@ export function getExtraWhitelistedAddresses(whitelist: Record<string, boolean> 
   return out;
 }
 
+export type WhitelistInputCheck =
+  | { ok: true; address: Address; error: null }
+  | { ok: false; address: null; error: string | null };
+
+/**
+ * Kiểm tra ô "Thêm API quen bằng địa chỉ" ở bảng [3]: dùng được cả trên bản Vercel, nơi mục Bị từ chối
+ * có thể trống, để chủ ví dán địa chỉ `payTo` (ví dụ lấy từ gợi ý MCP) rồi ký `setWhitelist`.
+ * Ô trống trả `error: null` (chưa nhập, không báo lỗi).
+ */
+export function parseWhitelistInput(
+  raw: string,
+  whitelist: Record<string, boolean> | null,
+  policy?: Address | null,
+): WhitelistInputCheck {
+  const value = raw.trim();
+  if (!value) return { ok: false, address: null, error: null };
+  if (!isAddress(value, { strict: false })) {
+    return { ok: false, address: null, error: "Địa chỉ không hợp lệ (cần dạng 0x + 40 ký tự hex)." };
+  }
+  const address = getAddress(value);
+  if (address === zeroAddress) {
+    return { ok: false, address: null, error: "Không thêm được địa chỉ 0x0." };
+  }
+  if (policy && address.toLowerCase() === policy.toLowerCase()) {
+    return { ok: false, address: null, error: "Đây là địa chỉ policy, không phải địa chỉ nhận tiền của API." };
+  }
+  if (whitelist?.[address.toLowerCase()] === true) {
+    return { ok: false, address: null, error: "Địa chỉ này đã nằm trong whitelist." };
+  }
+  return { ok: true, address, error: null };
+}
+
 /** Kiểm tra một khoản chi ở bảng Dòng tiền có phải API lạ / thuộc nhóm Sandbox hay không. */
 export function isUnknownOrSandboxSpend(
   spend: Pick<Spend, "payTo" | "isSandbox">,

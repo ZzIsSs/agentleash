@@ -10,6 +10,7 @@ import {
   getPromoteButtonState,
   isUnknownOrSandboxRejection,
   isUnknownOrSandboxSpend,
+  parseWhitelistInput,
 } from "./whitelistPromote";
 
 const POLICY = "0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177" as Address;
@@ -233,5 +234,38 @@ describe("whitelistPromote helpers", () => {
 
     const merged = collectWhitelistCandidates([], [], [OTHER_UNKNOWN]);
     expect(merged.map((a) => a.toLowerCase())).toContain(OTHER_UNKNOWN.toLowerCase());
+  });
+});
+
+describe("parseWhitelistInput — ô Thêm API quen bằng địa chỉ (bảng [3])", () => {
+  const whitelist = {
+    [WEATHER_SELLER_ADDRESS.toLowerCase()]: true,
+    [STRANGER.toLowerCase()]: false,
+  };
+
+  it("ô trống không báo lỗi và không cho bấm", () => {
+    expect(parseWhitelistInput("", whitelist, POLICY)).toEqual({ ok: false, address: null, error: null });
+    expect(parseWhitelistInput("   ", whitelist, POLICY)).toEqual({ ok: false, address: null, error: null });
+  });
+
+  it("nhận địa chỉ hợp lệ, cắt khoảng trắng và chuẩn hóa checksum (kể cả dán chữ thường)", () => {
+    const res = parseWhitelistInput(`  ${STRANGER}  `, whitelist, POLICY);
+    expect(res).toEqual({ ok: true, address: STRANGER, error: null });
+
+    const lower = parseWhitelistInput(OWNER.toLowerCase(), whitelist, POLICY);
+    expect(lower.ok).toBe(true);
+    expect(lower.address).toBe(OWNER);
+  });
+
+  it("chặn địa chỉ sai định dạng, 0x0, địa chỉ policy và địa chỉ đã whitelist", () => {
+    expect(parseWhitelistInput("0x1234", whitelist, POLICY).error).toMatch(/không hợp lệ/);
+    expect(parseWhitelistInput("không phải địa chỉ", whitelist, POLICY).error).toMatch(/không hợp lệ/);
+    expect(parseWhitelistInput(zeroAddress, whitelist, POLICY).error).toMatch(/0x0/);
+    expect(parseWhitelistInput(POLICY.toLowerCase(), whitelist, POLICY).error).toMatch(/địa chỉ policy/);
+    expect(parseWhitelistInput(WEATHER_SELLER_ADDRESS, whitelist, POLICY).error).toMatch(/đã nằm trong whitelist/);
+  });
+
+  it("vẫn dùng được khi chưa đọc xong whitelist (null) hoặc không truyền policy", () => {
+    expect(parseWhitelistInput(OTHER_UNKNOWN, null).ok).toBe(true);
   });
 });

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { queueAuditSync } from "./auditSync.ts";
 
 export type AuditEventStatus =
   | "ALLOWED"
@@ -93,6 +94,9 @@ export function appendAuditLog(
   const current = readAuditLogs(filePath);
   current.push(entry);
   writeFileSync(filePath, JSON.stringify(current, null, 2) + "\n", "utf-8");
+
+  // Tùy chọn: đẩy lượt bị chặn lên Upstash để Dashboard Vercel thấy mục Bị từ chối (không chặn luồng chi).
+  queueAuditSync(entry);
 
   return entry;
 }

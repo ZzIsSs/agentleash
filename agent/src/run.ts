@@ -9,6 +9,7 @@ import {
   x402Client,
 } from "@x402/fetch";
 import { appendAuditLog, DEFAULT_AUDIT_LOG_PATH } from "./log.ts";
+import { flushAuditSync } from "./auditSync.ts";
 import { runLlmAgentLoop, type AgentToolCall, type ToolExecutionOutcome } from "./llm.ts";
 import { createMockLlmClient } from "./mockLlm.ts";
 import {
@@ -571,8 +572,11 @@ const isEntrypoint =
   process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isEntrypoint) {
-  main().catch((err) => {
-    console.error("[Fatal Error]", err?.message || err);
-    process.exit(1);
-  });
+  main()
+    .then(() => flushAuditSync())
+    .catch(async (err) => {
+      console.error("[Fatal Error]", err?.message || err);
+      await flushAuditSync();
+      process.exit(1);
+    });
 }
