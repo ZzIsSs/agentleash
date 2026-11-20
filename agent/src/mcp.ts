@@ -30,7 +30,7 @@ import {
 import { unwrapKnownError } from "./run.ts";
 
 const NETWORK_ID = "eip155:43113";
-const SNOWSCAN_EXPLORER = "https://testnet.snowscan.xyz";
+const SNOWSCAN_EXPLORER = "https://testnet.snowtrace.io";
 export const DEFAULT_DASHBOARD_URL = "http://localhost:3000";
 
 export interface McpPaymentContext {

@@ -60,10 +60,10 @@ flowchart LR
 
 | Thành phần | Địa chỉ On-Chain | Trạng thái |
 |---|---|---|
-| **AgentPolicyFactory** | [`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`](https://testnet.snowscan.xyz/address/0x369251fc256d8ae3b25f66fe1c4b3114a06ba864) | ✅ Verified trên Snowscan |
-| **AgentPolicy Demo (chu kỳ 120s)** | [`0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177`](https://testnet.snowscan.xyz/address/0x62ea5e422b3ef66174b6dd6aa855f1f036894177) | Tạo từ web qua Factory, chủ là ví Privy `0x80a8…d58A` |
-| **USDC Testnet (`FiatTokenV2_2`)** | [`0x5425890298aed601595a70AB815c96711a31Bc65`](https://testnet.snowscan.xyz/address/0x5425890298aed601595a70AB815c96711a31Bc65) | Circle Official (hỗ trợ ERC-1271 & EIP-3009) |
-| **ERC-8004 Identity Registry** | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.snowscan.xyz/address/0x8004a818bfb912233c491871b3d84c89a494bd9e) | `AgentIdentity` (`AGENT`) |
+| **AgentPolicyFactory** | [`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`](https://testnet.snowtrace.io/address/0x369251fc256d8ae3b25f66fe1c4b3114a06ba864) | ✅ Verified trên Snowtrace |
+| **AgentPolicy Demo (chu kỳ 120s)** | [`0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177`](https://testnet.snowtrace.io/address/0x62ea5e422b3ef66174b6dd6aa855f1f036894177) | Tạo từ web qua Factory, chủ là ví Privy `0x80a8…d58A` |
+| **USDC Testnet (`FiatTokenV2_2`)** | [`0x5425890298aed601595a70AB815c96711a31Bc65`](https://testnet.snowtrace.io/address/0x5425890298aed601595a70AB815c96711a31Bc65) | Circle Official (hỗ trợ ERC-1271 & EIP-3009) |
+| **ERC-8004 Identity Registry** | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.snowtrace.io/address/0x8004a818bfb912233c491871b3d84c89a494bd9e) | `AgentIdentity` (`AGENT`) |
 | **Ví Agent mẫu** | `0x0F8de357042E53bF0E647066F0Bb1a446133ef9D` | Chỉ giữ ít AVAX gas, không giữ USDC |
 | **Facilitator x402** | `http://localhost:4022` (mặc định tự host)<br>`https://facilitator.payai.network` (dự phòng) | Tương thích `eip155:43113` |
 
@@ -134,7 +134,7 @@ Cấu hình được ghi chỉ gồm đường dẫn tuyệt đối tới `node`
 
 ## Demo chạy local
 
-Bản nộp UniHack chạy hoàn toàn trên máy: Dashboard tại `http://localhost:3000`, Facilitator `4022`, 2 API Seller `4021`/`4023`, giao dịch thật trên Fuji. Nhóm **không duy trì bản online** (đã bỏ Vercel từ 20/11), nên ô *Live app* trên form nộp để trống; giám khảo kiểm chứng qua video demo, repo và các địa chỉ Snowscan ở trên.
+Bản nộp UniHack chạy hoàn toàn trên máy: Dashboard tại `http://localhost:3000`, Facilitator `4022`, 2 API Seller `4021`/`4023`, giao dịch thật trên Fuji. Nhóm **không duy trì bản online** (đã bỏ Vercel từ 20/11), nên ô *Live app* trên form nộp để trống; giám khảo kiểm chứng qua video demo, repo và các địa chỉ Snowtrace ở trên.
 
 - Dashboard đọc mục **Bị từ chối** từ `agent/logs/audit.json` trên cùng máy với agent. Trước khi quay, chạy `node --env-file=.env scripts/seed-demo.mjs --reset-logs` để danh sách trống.
 - Nút **Chạy Agent Đà Lạt** chỉ chạy trên `localhost`, vì khóa agent nằm trong `.env` của máy (Luật 3 & 4).
