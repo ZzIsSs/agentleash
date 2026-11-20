@@ -10,6 +10,8 @@
 > - Trang 18 (OUR TEAM) do Nguyên tự làm: tên, vai trò và ảnh thật của thành viên. Chưa xong thì không nộp, vì trang này đang còn ảnh người mẫu của template.
 > - Nên thay ảnh stock ở trang 13 (Demo) và trang 12 (Đã chạy thật) bằng ảnh chụp màn hình khung điều khiển thật, vì giám khảo vòng online chỉ đọc slide.
 
+Nguồn của từng thông tin trên slide và việc cần kiểm trước khi chỉnh: [SLIDES_NGUON.md](SLIDES_NGUON.md).
+
 **Số liệu dùng trong slide (kiểm lại ngày 20/11/2026):**
 
 | Mục | Giá trị | Nguồn |
