@@ -4,7 +4,7 @@ Ví cho AI agent có **"dây xích" on-chain** và **cổng kiểm thử & bảo
 
 **Một câu:** AI agent tự thanh toán API qua chuẩn HTTP **x402**, nhưng USDC nằm trong `AgentPolicy` contract của chủ sở hữu; agent chỉ được xin duyệt chi (`authorize`), smart contract mới là chốt chặn cuối theo hạn mức 2 tầng (Trusted / Sandbox), whitelist và Kill Switch — bảo vệ dev, AI agent builders và người dùng khi agent gọi các API x402 mới qua CLI hoặc MCP.
 
-> **Khai báo mô phỏng (Luật 6):** Bản demo rút ngắn chu kỳ hạn mức xuống **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và hai API Thời tiết / Tỷ giá trả dữ liệu mock. Lượt chạy agent trong video dùng LLM giả lập (`--mock-llm`) theo kịch bản cố định; thanh toán x402, `AgentPolicy`, ERC-1271/EIP-3009 và quản trị policy vẫn chạy thật trên **Avalanche Fuji**. Tích hợp Gemini thật có sẵn qua `npm --prefix agent run demo:gd2`.
+> **Khai báo mô phỏng (Luật 6):** Bản demo rút ngắn chu kỳ hạn mức xuống **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và ba API Thời tiết / Tỷ giá / Tin tức trả dữ liệu mock. Cảnh agent bị chiếm mã trong video là kịch bản giả lập (`--bypass-rules`, gửi tiền tới địa chỉ lạ `0x1111…`). Bên A trong video là Claude Code thật gọi MCP AgentLeash; thanh toán x402, `AgentPolicy`, ERC-1271/EIP-3009 và quản trị policy chạy thật trên **Avalanche Fuji**. CLI agent có thêm chế độ LLM giả lập (`--mock-llm`) để chạy thử không cần key, và tích hợp Gemini thật qua `npm --prefix agent run demo:gd2`.
 
 ---
 
@@ -60,10 +60,10 @@ flowchart LR
 
 | Thành phần | Địa chỉ On-Chain | Trạng thái |
 |---|---|---|
-| **AgentPolicyFactory** | [`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`](https://testnet.snowscan.xyz/address/0x369251fc256d8ae3b25f66fe1c4b3114a06ba864) | ✅ Verified trên Snowscan |
-| **AgentPolicy Demo (chu kỳ 120s)** | [`0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177`](https://testnet.snowscan.xyz/address/0x62ea5e422b3ef66174b6dd6aa855f1f036894177) | Tạo từ web qua Factory, chủ là ví Privy `0x80a8…d58A` |
-| **USDC Testnet (`FiatTokenV2_2`)** | [`0x5425890298aed601595a70AB815c96711a31Bc65`](https://testnet.snowscan.xyz/address/0x5425890298aed601595a70AB815c96711a31Bc65) | Circle Official (hỗ trợ ERC-1271 & EIP-3009) |
-| **ERC-8004 Identity Registry** | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.snowscan.xyz/address/0x8004a818bfb912233c491871b3d84c89a494bd9e) | `AgentIdentity` (`AGENT`) |
+| **AgentPolicyFactory** | [`0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864`](https://testnet.snowtrace.io/address/0x369251fc256d8ae3b25f66fe1c4b3114a06ba864) | ✅ Verified trên Snowtrace |
+| **AgentPolicy Demo (chu kỳ 120s)** | [`0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177`](https://testnet.snowtrace.io/address/0x62ea5e422b3ef66174b6dd6aa855f1f036894177) | Tạo từ web qua Factory, chủ là ví Privy `0x80a8…d58A` |
+| **USDC Testnet (`FiatTokenV2_2`)** | [`0x5425890298aed601595a70AB815c96711a31Bc65`](https://testnet.snowtrace.io/address/0x5425890298aed601595a70AB815c96711a31Bc65) | Circle Official (hỗ trợ ERC-1271 & EIP-3009) |
+| **ERC-8004 Identity Registry** | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.snowtrace.io/address/0x8004a818bfb912233c491871b3d84c89a494bd9e) | `AgentIdentity` (`AGENT`) |
 | **Ví Agent mẫu** | `0x0F8de357042E53bF0E647066F0Bb1a446133ef9D` | Chỉ giữ ít AVAX gas, không giữ USDC |
 | **Facilitator x402** | `http://localhost:4022` (mặc định tự host)<br>`https://facilitator.payai.network` (dự phòng) | Tương thích `eip155:43113` |
 
@@ -134,7 +134,7 @@ Cấu hình được ghi chỉ gồm đường dẫn tuyệt đối tới `node`
 
 ## Demo chạy local
 
-Bản nộp UniHack chạy hoàn toàn trên máy: Dashboard tại `http://localhost:3000`, Facilitator `4022`, 2 API Seller `4021`/`4023`, giao dịch thật trên Fuji. Nhóm **không duy trì bản online** (đã bỏ Vercel từ 20/11), nên ô *Live app* trên form nộp để trống; giám khảo kiểm chứng qua video demo, repo và các địa chỉ Snowscan ở trên.
+Bản nộp UniHack chạy hoàn toàn trên máy: Dashboard tại `http://localhost:3000`, Facilitator `4022`, 2 API Seller `4021`/`4023`, giao dịch thật trên Fuji. Nhóm **không duy trì bản online** (đã bỏ Vercel từ 20/11), nên ô *Live app* trên form nộp để trống; giám khảo kiểm chứng qua video demo, repo và các địa chỉ Snowtrace ở trên.
 
 - Dashboard đọc mục **Bị từ chối** từ `agent/logs/audit.json` trên cùng máy với agent. Trước khi quay, chạy `node --env-file=.env scripts/seed-demo.mjs --reset-logs` để danh sách trống.
 - Nút **Chạy Agent Đà Lạt** chỉ chạy trên `localhost`, vì khóa agent nằm trong `.env` của máy (Luật 3 & 4).

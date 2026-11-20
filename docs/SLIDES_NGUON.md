@@ -37,7 +37,11 @@
 | Repo `ZzIsSs/agentleash` đang công khai | `gh repo view` ngày 20/11 | Đã kiểm |
 | Mô hình Bên A – Bên B | [CLAUDE.md](../CLAUDE.md), [README.md:11-36](../README.md#L11-L36) | Theo tài liệu |
 | Luật 2, 3, 4, 5, 6, 8 và ba câu trả lời Luật 9 | [SPEC.md:209-219](SPEC.md#L209) | Theo tài liệu |
-| So sánh với Safe `AllowanceModule` | [SPEC.md:205-207](SPEC.md#L205) | Theo tài liệu (ghi là đã kiểm trước đó, phiên này chưa đọc lại mã Safe) |
+| So sánh với Safe (chỉ dùng trong Q&A, không chiếu) | [SPEC.md:205-207](SPEC.md#L205), báo cáo khảo sát Safe của Nguyên 20/11 (`staticcall` ở `SignatureChecker.sol#L63` của `circlefin/stablecoin-evm`) | Theo tài liệu |
+| Safe v1.5.0 ra 03/07/2025, AllowanceModule v1.0.0 ra 25/02/2026 | GitHub Releases `safe-global/safe-smart-account` và `safe-global/safe-modules` | Đã kiểm |
+| Owner của policy là địa chỉ gọi `createPolicy` (có thể là Safe) | [AgentPolicyFactory.sol:24-25](../contracts/src/AgentPolicyFactory.sol#L24-L25) | Đã kiểm |
+| "Luật chạy trước chữ ký": `authorize()` giữ chỗ hạn mức (cộng `spentInPeriod`), `isValidSignature` chỉ đọc | [AgentPolicy.sol:199-238](../contracts/src/AgentPolicy.sol#L199-L238), [AgentPolicy.sol:288-294](../contracts/src/AgentPolicy.sol#L288-L294) | Đã kiểm |
+| `release()` hoàn hạn mức khoản hết hạn chưa settle | [AgentPolicy.sol:246-284](../contracts/src/AgentPolicy.sol#L246-L284) | Đã kiểm |
 | Lộ trình sau 21/11 (Remote MCP, POST/body, SSRF, sổ URL ↔ payTo, ERC-8004) | [SPEC.md:223-246](SPEC.md#L223) | Lập luận (kế hoạch) |
 | Ba điểm gãy (prompt injection, vòng lặp, không có nút ngắt) | SLIDES.md bản 17/11, [README.md:13](../README.md#L13) | Lập luận |
 | Mô hình kinh doanh (SaaS theo đội, phí hạ tầng, khách hàng đầu tiên) | [SPEC.md:219](SPEC.md#L219), SLIDES.md bản 17/11 | Lập luận (kế hoạch) |
@@ -58,7 +62,7 @@
 | 7 Hai tầng chặn (sơ đồ) | Thứ tự kiểm tra, mã lỗi, hạn mức | `AgentPolicy.sol:199-240`, `rules.ts`, hạn mức đọc trên Fuji. Ảnh dựng từ [flows/2-hai-tang-chan.html](slides/flows/2-hai-tang-chan.html) |
 | 8 MCP Bên A – Bên B (sơ đồ) | Thử API lạ, bị chặn, chủ ví duyệt, gọi lại | `mcp.ts`, README mục MCP, `news.mjs`. Ảnh dựng từ [flows/3-mcp-ben-a-b.html](slides/flows/3-mcp-ben-a-b.html) |
 | 9 Vì sao on-chain? | Chỉ owner sửa luật, thiệt hại có trần, kiểm toán công khai | SPEC Luật 9; số 128.000 từ nhật ký 13/11 |
-| 10 So với Safe | AllowanceModule không có whitelist người nhận, không gắn ERC-1271 theo từng khoản | SPEC mục "Chưa chốt" ý 4 |
+| 10 Tính mới | Luật chạy trước chữ ký, hai tầng theo người nhận, MCP nâng API lạ thành API quen, `pause()` và `release()` | `AgentPolicy.sol`, `mcp.ts`. Phần so với Safe chuyển xuống phụ lục Q&A trong SLIDES.md |
 | 11 Vì sao Avalanche? | USDC ERC-1271 + EIP-3009, facilitator, phí thấp, nói thật về EVM khác | SPEC Luật 9, README bảng địa chỉ |
 | 12 Chạy thật | Số test, địa chỉ Factory, policy demo | Nhật ký 20/11 và 13/11, README |
 | 13 Demo | Lần thứ 4 `ExceedsDailyCap`, bypass `ExceedsSandboxPerTxCap`, `PausedError` | SPEC "Kịch bản demo", SLIDES.md bản 17/11 |
@@ -80,7 +84,8 @@
   - Bypass trả 0.001 USDC cho địa chỉ lạ, lớn hơn `sandboxPerTxCap` 0.0005, nên phải ra `ExceedsSandboxPerTxCap`.
   - API Tin tức 0.001 USDC cũng lớn hơn 0.0005, nên bị chặn lần đầu.
 - [ ] **Hạn mức và số dư** đọc ngày 20/11. Nếu đổi `setCaps` hoặc nạp thêm USDC trước khi quay video, sửa trang 7 (ảnh sơ đồ), trang 4 và trang 13 cho khớp.
-- [ ] **So sánh với Safe** (trang 10): nếu muốn chắc khi bị hỏi sâu, đọc lại `AllowanceModule.sol` của `safe-global/safe-modules`.
+- [ ] **Trang 10 trên Canva:** đổi tiêu đề thành TÍNH MỚI, thay 2 đoạn theo SLIDES.md, sửa mục lục trang 2 thành "05 Tính mới". Không còn chữ "Safe" trên slide.
+- [ ] **Q&A về Safe:** đọc phụ lục Q&A trong SLIDES.md trước buổi pitch. Nếu muốn chắc khi bị hỏi sâu, đọc lại `AllowanceModule.sol` của `safe-global/safe-modules`.
 - [ ] **Các câu lập luận** (phí gas thấp, mô hình kinh doanh, lộ trình): giữ cách nói "dự kiến", "hướng tới", tránh câu khiến giám khảo hiểu là đã có số liệu hoặc doanh thu.
 - [ ] **Mục lục (trang 2):** cân nhắc thêm dòng cho 3 trang sơ đồ nếu muốn khớp đúng từng trang.
 - [ ] **Trang 18 OUR TEAM:** chưa làm, đang còn ảnh người mẫu.

@@ -35,7 +35,7 @@ Hiện trạng code `agentleash/` **không vi phạm Luật 4**, mà giải tr�
 ## 3. Checklist các luật dễ bị trừ điểm khi quay video & pitch (Luật 3, 5, 6, 8, 9)
 
 - [ ] **Luật 6 — Khai báo giả lập NGAY Ở ĐẦU video demo & bài pitch:**
-  - Nói rõ ngay giây đầu tiên: bản demo rút ngắn chu kỳ hạn mức thành **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật để giám khảo thấy hạn mức hồi lại; 2 API Thời tiết / Tỷ giá trả dữ liệu mock; và lượt chạy trong video có dùng `--mock-llm` (đã ghi ở `README.md`, nhưng bắt buộc **nói rõ khi pitch/video**).
+  - Nói rõ ngay giây đầu tiên: bản demo rút ngắn chu kỳ hạn mức thành **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật để giám khảo thấy hạn mức hồi lại; 3 API Thời tiết / Tỷ giá / Tin tức trả dữ liệu mock; và cảnh agent bị chiếm mã là kịch bản giả lập (`--bypass-rules`), còn Bên A trong video là Claude Code thật gọi MCP (sửa 21/11: video không dùng `--mock-llm`; đã ghi ở `README.md`, nhưng bắt buộc **nói rõ khi pitch/video**).
 - [ ] **Luật 8 — Nhắc đúng giới hạn pháp lý Việt Nam (bỏ qua bị trừ điểm, nêu đúng được cộng điểm):**
   - Nhấn mạnh trong slide & lời pitch: **Crypto/USDC trên testnet không phải tiền pháp định tại Việt Nam**, doanh nghiệp trả lương nhân viên tại VN bắt buộc bằng **VND**, và AgentLeash **chỉ là lớp kiểm soát ngân sách kỹ thuật (technical guardrail / tool allowance)** chứ không cung cấp dịch vụ tư vấn tài chính có thu phí hay nắm giữ tiền hộ người dùng.
 - [ ] **Luật 9 — Trả lời sắc nét 3 câu hỏi bắt buộc:**

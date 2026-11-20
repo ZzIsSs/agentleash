@@ -39,12 +39,12 @@ Trên Canva mới chỉ trang 1 có speaker note. Speaker note của các trang 
 ## Trang 1 — Bìa (bố cục: tiêu đề lớn + dòng phụ)
 - **Tiêu đề:** AGENTLEASH
 - **Dòng phụ:** Dây xích on-chain cho ví AI agent · x402 trên Avalanche Fuji
-- **Dòng khai báo (Luật 6, hiện trên slide):** Khai báo mô phỏng: chu kỳ hạn mức rút còn 120 giây, API Thời tiết và Tỷ giá trả dữ liệu mock, video dùng LLM giả lập (--mock-llm). Contract, x402 và USDC chạy thật trên Avalanche Fuji.
+- **Dòng khai báo (Luật 6, hiện trên slide):** Khai báo mô phỏng: chu kỳ hạn mức rút còn 120 giây, API Thời tiết, Tỷ giá và Tin tức trả dữ liệu mock, cảnh agent bị chiếm mã là kịch bản giả lập (--bypass-rules). Contract, x402 và USDC chạy thật trên Avalanche Fuji; Bên A trong video là Claude Code thật gọi MCP. *(Sửa 21/11 theo video thật, thay câu "--mock-llm" cũ; trên Canva Nguyên đã đổi.)*
 - **Speaker note (đọc trong 15 giây đầu):**
-  > Trước khi bắt đầu, nhóm xin khai báo phần mô phỏng. Chu kỳ hạn mức được rút ngắn còn 120 giây thay cho 1 ngày (`DEMO_PERIOD_SECONDS=120`). Hai API Thời tiết và Tỷ giá trả dữ liệu mock. Lượt chạy agent trong video dùng LLM giả lập (`--mock-llm`) theo kịch bản cố định. Còn lại đều chạy thật trên Avalanche Fuji: `authorize`, `AgentPolicy`, chữ ký ERC-1271 và thanh toán USDC x402 (EIP-3009). Tích hợp Gemini thật có sẵn qua `demo:gd2`.
+  > Trước khi bắt đầu, nhóm xin khai báo phần mô phỏng. Chu kỳ hạn mức được rút ngắn còn 120 giây thay cho 1 ngày (`DEMO_PERIOD_SECONDS=120`). Ba API Thời tiết, Tỷ giá và Tin tức trả dữ liệu mock. Cảnh agent bị chiếm mã là kịch bản giả lập: bật `--bypass-rules` và trả tiền cho địa chỉ lạ `0x1111…`. Còn lại đều chạy thật trên Avalanche Fuji: `authorize`, `AgentPolicy`, chữ ký ERC-1271 và thanh toán USDC x402 (EIP-3009); Bên A trong video là Claude Code thật gọi MCP AgentLeash. Tích hợp Gemini thật có sẵn qua `demo:gd2`.
 
 ## Trang 2 — Mục lục (bố cục: tiêu đề + 2 cột chữ)
-- **Cột 1:** 01 Vấn đề · 02 Giải pháp · 03 Kiến trúc · 04 Vì sao on-chain? · 05 So với Safe · 06 Vì sao Avalanche? · 07 Đã chạy thật trên Fuji
+- **Cột 1:** 01 Vấn đề · 02 Giải pháp · 03 Kiến trúc · 04 Vì sao on-chain? · 05 Tính mới · 06 Vì sao Avalanche? · 07 Đã chạy thật trên Fuji
 - **Cột 2:** 08 Demo 3 khoảnh khắc · 09 MCP Gateway cho agent · 10 Tiền đến từ đâu? · 11 Tuân thủ pháp luật · 12 Lộ trình sau 21/11 · 13 Đội ngũ · 14 Thử ngay
 - **Speaker note:** Bài gồm 3 phần: vấn đề và giải pháp, 3 câu hỏi bắt buộc kèm bằng chứng chạy thật, cuối cùng là mô hình kinh doanh và lộ trình.
 
@@ -85,11 +85,12 @@ Trên Canva mới chỉ trang 1 có speaker note. Speaker note của các trang 
 - **Đoạn 2:** Thiệt hại có trần: agent bị chiếm cũng chỉ tiêu được phần hạn mức còn lại, đã kiểm bằng invariant fuzz 128.000 lượt gọi trong Foundry. Mọi khoản Authorized, Paused và chuyển USDC đều kiểm tra công khai được trên Snowtrace, không cần tin đội phát triển.
 - **Speaker note:** Đây là câu hỏi bắt buộc 1. Ba lý do: agent không tự sửa luật, thiệt hại có trần, và ai cũng kiểm toán được.
 
-## Trang 10 — So với Safe (bố cục mẫu ABOUT US nhân bản)
-- **Tiêu đề:** SO VỚI SAFE
-- **Đoạn 1:** Safe AllowanceModule chỉ giới hạn tổng lượng theo chu kỳ cho cặp (safe, delegate, token). Trong hạn mức, delegate gửi được tới bất kỳ địa chỉ nào: không có whitelist người nhận, không phân tầng API quen và API lạ.
-- **Đoạn 2:** AgentLeash gắn hạn mức vào từng khoản chi x402. authorize() băm EIP-712 đúng như USDC transferWithAuthorization, isValidSignature (ERC-1271) chỉ chấp nhận khoản đã duyệt, và pause() vô hiệu cả khoản đã duyệt nhưng chưa settle.
-- **Speaker note:** Trả lời trước câu hỏi "sao không dùng Safe". Safe là ví đa chữ ký rất tốt, nhưng không được thiết kế cho từng khoản micropayment x402 mà facilitator settle hộ.
+## Trang 10 — Tính mới (bố cục mẫu ABOUT US nhân bản)
+- **Tiêu đề:** TÍNH MỚI
+- **Đoạn 1 · Luật chạy trước chữ ký:** Mỗi khoản chi x402 phải được AgentPolicy duyệt on-chain thì mới có hiệu lực. authorize() kiểm whitelist, trần mỗi lượt và trần chu kỳ rồi giữ chỗ trong hạn mức; USDC chỉ chuyển khi isValidSignature (ERC-1271) xác nhận đúng khoản đã duyệt. Khoản không được settle thì release() trả lại hạn mức. Agent không giữ USDC và không có chữ ký chuyển tiền nào để bị đánh cắp.
+- **Đoạn 2 · Từ API lạ thành API quen:** Mỗi khoản chi tự rơi vào tầng Trusted hoặc Sandbox theo địa chỉ nhận. Coding agent (Claude Code, Antigravity) thử API x402 lạ qua MCP dưới trần Sandbox, chủ ví bấm 1 lần để nâng thành API quen. Kill Switch pause() vô hiệu ngay cả những khoản đã duyệt nhưng chưa settle.
+- **Speaker note:** Điểm đột phá là đảo thứ tự: luật chạy trước, chữ ký chỉ là bước xác nhận, giống phiếu chi trong doanh nghiệp phải được duyệt rồi kế toán mới chi. `authorize()` không lấy tiền, nó chỉ giữ chỗ trong hạn mức; tiền chỉ chuyển khi facilitator settle. Khi settle, USDC hỏi ví bằng lệnh chỉ đọc, nên hạn mức tích lũy chỉ có hiệu lực thật nếu được giữ chỗ từ trước. Phần còn lại biến cơ chế này thành sản phẩm: hai tầng theo người nhận, MCP cho coding agent, và nút ngắt có hiệu lực cả với khoản đã duyệt.
+- **Lưu ý (không dán vào Notes):** Trang này không nhắc Safe. Nếu giám khảo hỏi, dùng phụ lục Q&A cuối file.
 
 ## Trang 11 — Câu hỏi bắt buộc 2: Vì sao Avalanche? (bố cục mẫu VISION: tiêu đề + 4 cột)
 - **Tiêu đề:** VÌ SAO AVALANCHE?
@@ -155,12 +156,34 @@ Trên Canva mới chỉ trang 1 có speaker note. Speaker note của các trang 
 
 ---
 
+## Phụ lục — Q&A dự phòng: so với Safe (không chiếu)
+
+> Không nhắc Safe trong lúc pitch. Chỉ dùng khi giám khảo hỏi. Nguồn: báo cáo khảo sát Safe của Nguyên (20/11/2026), ngày phát hành lấy từ GitHub Releases của `safe-global`.
+
+**Câu gốc: "Sao không dùng Safe?" (trả lời trong 30 giây)**
+> Safe rất tốt để giữ kho và kiểm soát giao dịch on-chain, và owner của AgentPolicy có thể chính là một Safe, vì owner là địa chỉ gọi `createPolicy`. Nhưng x402 trả tiền bằng chữ ký EIP-3009: facilitator gọi USDC, rồi USDC hỏi ví qua `isValidSignature` bằng `staticcall` chỉ đọc. Ở bước đó không ví nào ghi được state, nên không cộng dồn được hạn mức. AgentLeash trừ hạn mức trong `authorize()` từ trước, nên `isValidSignature` chỉ còn đọc kết quả.
+
+**Câu hỏi nối tiếp:**
+
+| Giám khảo hỏi | Trả lời ngắn |
+|---|---|
+| "Safe có Spending Limit (AllowanceModule) mà?" | Có hạn mức theo chu kỳ, nhưng không lọc người nhận. Module chuyển tiền bằng giao dịch on-chain (`execTransactionFromModule`), không cấp chữ ký ERC-1271 cho từng khoản x402. |
+| "Zodiac Roles v2 có whitelist và phân tầng người nhận?" | Đúng, nhưng chỉ cho giao dịch on-chain. Chữ ký x402 không đi qua Roles: Fallback Handler mặc định của Safe chỉ chấp nhận chữ ký owner đủ ngưỡng hoặc message đã ghi on-chain. |
+| "Safe7579 + SmartSessions cho session key ký ERC-1271?" | Đúng, nhưng chữ ký vẫn được kiểm trong `staticcall`, nên không có trần tích lũy. Agent lộ khóa có thể ký nhiều khoản nhỏ, mỗi khoản dưới trần một lượt. Cách này còn cần chữ ký lồng ERC-7739, nhiều client x402 chưa hỗ trợ. |
+| "Safe v1.5.0 có Module Guard và ExtensibleFallbackHandler?" | v1.5.0 ra ngày 03/07/2025. Module Guard chỉ kiểm giao dịch on-chain đi qua module. Handler mới vẫn chạy trong `staticcall`. Kết luận không đổi. |
+| "Vậy viết module Safe làm giống vậy được không?" | Về lý thuyết được: module tự trừ hạn mức rồi DELEGATECALL `SignMessageLib`. Nhưng phải tự viết, cấp quyền DELEGATECALL nhạy cảm và chưa có audit. AgentPolicy làm đúng việc đó, gọn hơn và có test. |
+| "Mỗi khoản chi tốn một giao dịch `authorize`?" | Đánh đổi có chủ đích. Agent trả gas bằng ít AVAX, phí trên Avalanche thấp. Đổi lại, khoản nào cũng bị trừ hạn mức trước khi hợp lệ. |
+| "Contract chưa audit, chỉ có 1 owner?" | forge 29/29, gồm invariant fuzz 128.000 lượt gọi và fork Fuji với Circle USDC thật. Owner có thể là multisig hoặc Safe nếu tạo policy từ ví đó. |
+| "Fuji có Safe{Wallet} không?" | Hợp đồng Safe có trên Fuji, nhưng giao diện Safe{Wallet} và Transaction Service chỉ hỗ trợ C-Chain mainnet. Đây thêm một lý do để nhóm tự làm khung điều khiển. |
+
+---
+
 ## Phụ lục — Nội dung form nộp bài
 
 > Mỗi ô ≤ 800 ký tự. Ô *Live app* để trống vì không có bản online.
 
-### 1. `What it does` (702 ký tự / ≤ 800)
-> AgentLeash is a non-custodial spending policy wallet ("on-chain leash") and MCP gateway for AI agents that pay for APIs over HTTP x402 on Avalanche Fuji. The LLM (gemini-3.8-flash) only proposes tool calls and never holds keys. An off-chain RuleEngine checks catalog, payTo, price, rate limits and loops; then the owner's AgentPolicy contract approves each payment through ERC-1271 for Circle USDC EIP-3009. Even if the agent is hijacked, the contract enforces Trusted/Sandbox caps, a recipient whitelist and an owner Kill Switch. Coding agents such as Claude Code or Antigravity test unknown x402 APIs through 3 MCP tools, and the owner promotes them to trusted in one click on a Privy + viem console.
+### 1. `What it does` (710 ký tự / ≤ 800)
+> AgentLeash là ví chính sách chi tiêu non-custodial ("dây xích on-chain") kiêm cổng MCP cho AI agent trả tiền API qua HTTP x402 trên Avalanche Fuji. LLM (gemini-3.8-flash) chỉ đề xuất lệnh gọi công cụ và không bao giờ giữ khóa. RuleEngine off-chain kiểm tra danh mục, payTo, giá, tần suất gọi và vòng lặp; sau đó contract AgentPolicy của chủ ví duyệt từng khoản thanh toán qua ERC-1271 cho Circle USDC EIP-3009. Kể cả khi agent bị chiếm quyền, contract vẫn áp trần chi Trusted/Sandbox, whitelist người nhận và Kill Switch của chủ ví. Các agent lập trình như Claude Code hay Antigravity thử API x402 lạ qua 3 công cụ MCP, và chủ ví nâng API đó thành API quen chỉ bằng 1 cú bấm trên khung điều khiển Privy + viem.
 
-### 2. `Anything else for the judges` (710 ký tự / ≤ 800)
-> Demo disclosure (Rule 6): the budget window is shortened to 120s, the Weather/Rates APIs return mock data, and the agent run in the video uses --mock-llm. ERC-1271 + EIP-3009 USDC settlements are real on Avalanche Fuji. There is no hosted live app: everything runs locally (console :3000, facilitator :4022, paid APIs :4021/:4023/:4024). Verify on Snowtrace: Factory 0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864 (verified) and demo policy 0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177. Tests: forge 29/29 (incl. 128k-call invariant fuzz and a Fuji fork), agent vitest 49/49, web vitest 91/91. One-command MCP setup for Claude Code and Antigravity: npm --prefix agent run setup:mcp. The LLM never holds private keys.
+### 2. `Anything else for the judges` (781 ký tự / ≤ 800)
+> Khai báo mô phỏng (Luật 6): chu kỳ ngân sách rút còn 120 giây, API Thời tiết/Tỷ giá/Tin tức trả dữ liệu mock, cảnh agent bị chiếm mã là kịch bản giả lập (--bypass-rules). Bên A trong video là Claude Code thật gọi MCP. Thanh toán USDC qua ERC-1271 + EIP-3009 là thật trên Avalanche Fuji. Không có bản live app: mọi thứ chạy local (khung điều khiển :3000, facilitator :4022, API trả phí :4021/:4023/:4024). Kiểm chứng trên Snowtrace: Factory 0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864 (đã verify) và policy demo 0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177. Test: forge 29/29 (gồm invariant fuzz 128.000 lượt gọi và fork Fuji), agent vitest 49/49, web vitest 91/91. Cài MCP cho Claude Code và Antigravity bằng 1 lệnh: npm --prefix agent run setup:mcp. LLM không bao giờ giữ khóa riêng.
