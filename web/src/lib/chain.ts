@@ -3,7 +3,7 @@ import { avalancheFuji } from "viem/chains";
 
 // Chỉ dùng Fuji C-Chain (43113). Địa chỉ dưới đây đều công khai; env chỉ để ghi đè khi đổi policy.
 export const CHAIN = avalancheFuji;
-export const EXPLORER = "https://testnet.snowscan.xyz";
+export const EXPLORER = "https://testnet.snowtrace.io";
 
 const envAddress = (value: string | undefined, fallback: Address): Address =>
   value && value.trim() ? getAddress(value.trim()) : fallback;

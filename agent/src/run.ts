@@ -29,7 +29,7 @@ import {
 } from "./rules.ts";
 
 const NETWORK_ID = "eip155:43113";
-const EXPLORER = "https://testnet.snowscan.xyz";
+const EXPLORER = "https://testnet.snowtrace.io";
 const DEFAULT_PROMPT = "Tổng hợp thời tiết và tỷ giá cho chuyến đi Đà Lạt";
 
 const RULE_CODES = new Set<string>([
