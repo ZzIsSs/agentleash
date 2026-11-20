@@ -55,7 +55,9 @@ Ghi chú khi quay:
 
 **Claude làm:** bật dịch vụ, build web, seed; kiểm tra trước khi quay; quay màn hình bằng ffmpeg (đã có: ffmpeg 9.0.2 cài qua winget); chạy CLI ở cửa sổ terminal riêng cho lên hình; đóng vai **Bên A** gọi MCP ngay trong khung Claude Code của VS Code; viết lời thoại theo giây; dựng (cắt khoảng chờ, ghép, chữ Luật 6, phụ đề, ghép giọng).
 
-**Nguyên làm:** đăng nhập Privy bằng OTP **ngay trên hình** (take L, email chủ ví `0x80a8…d58A`); duyệt các giao dịch cần ký (whitelist, Kill Switch); bấm nút trên Dashboard nếu muốn cảnh tự nhiên; **thu giọng đọc** (máy chỉ có giọng TTS tiếng Anh David/Zira, không có tiếng Việt); upload YouTube Unlisted; mở link ở tab ẩn danh.
+**Nguyên làm:** đăng nhập Privy bằng OTP **ngay trên hình** (take L, email chủ ví `0x80a8…d58A`); duyệt các giao dịch cần ký (whitelist, Kill Switch); bấm nút trên Dashboard nếu muốn cảnh tự nhiên; duyệt bản dựng; upload YouTube Unlisted; mở link ở tab ẩn danh.
+
+**Khuê và Giang làm (chốt 21/11):** **thu giọng đọc** theo [LOI_THOAI_VIDEO.md](LOI_THOAI_VIDEO.md) (máy chỉ có giọng TTS tiếng Anh, không có tiếng Việt). Giang đọc phần mở đầu và phần kết, Khuê đọc phần demo; hai người có thể đổi cho nhau.
 
 ## 5. MCP `agentleash` (Bên A = Claude Code)
 
@@ -93,7 +95,8 @@ Ghi chú khi quay:
 3. [x] Làm sạch từng take (21/11): `../video_raw/clean/` có 11 clip (L, M, A, B1, B2, B3, C, D1, D2, E, E2; tổng ~208 s). Đã cắt mọi đoạn VS Code (kiểm tự động: 0 khung còn sót), cắt đoạn đứng yên dài, tua ×3 đoạn Bên A "Processing…" (×2 đoạn chờ ký ở B2), làm mờ email ở take L (ô nhập, gợi ý của Chrome, dòng "Please check…"). L và D1 chỉ giữ vùng Chrome 820×720; mốc cắt nằm trong `../video_raw/tools/build_clean.mjs`, dựng lại bằng `node tools/build_clean.mjs` trong `video_raw/`.
 4. [x] Bản ghép thử chưa có giọng (21/11): `../video_raw/draft_240/ban_nhap_2m40_chua_co_giong.mp4`, 2:39, 1920×1080. Cắt theo bảng ở mục 9; từng cảnh nằm trong `draft_240/segs/`; thẻ chữ (Luật 6, sơ đồ MCP, tóm tắt Luật 9 + 8, dải "MÔ PHỎNG" ở hook) là HTML trong `draft_240/cards/`, xuất PNG bằng Chrome headless. Dựng lại: `node tools/build_draft.mjs` trong `video_raw/`.
    - **Đã sửa (21/11):** câu khai Luật 6 cũ ghi "video dùng LLM giả lập (`--mock-llm`)" trong khi video thật dùng Claude Code thật làm Bên A và cảnh `demo:bypass` không gọi LLM. Đã đổi theo video thật ở `README.md`, `SLIDES.md` (dòng khai báo, speaker note, ô form), mục 1 file này và `ghichu.md`; Canva Nguyên đã tự đổi.
-5. [ ] Lời thoại theo cảnh → Nguyên thu giọng → chỉnh độ dài cảnh theo giọng → ghép tiếng → bản cuối.
+5. [x] Lời thoại 12 đoạn: [LOI_THOAI_VIDEO.md](LOI_THOAI_VIDEO.md) (21/11).
+6. [ ] Khuê và Giang thu giọng → Claude chỉnh độ dài cảnh theo giọng → ghép tiếng → Nguyên duyệt bản cuối.
 
 ## 9. Quy trình dựng (chốt 21/11)
 
@@ -122,8 +125,8 @@ Ghi chú khi quay:
 
 **Các bước:**
 
-1. **[Claude] Viết lời thoại theo đoạn**, khớp bảng ghép, đánh số `seg01…seg11`, kèm số giây mục tiêu cho mỗi đoạn.
-2. **[Nguyên] Thu giọng** từng đoạn thành file riêng (`seg01.m4a`/`.wav`), phòng yên tĩnh, để 1 giây lặng đầu và cuối; đọc lại đoạn nào vấp.
+1. **[Claude] Viết lời thoại theo đoạn** ([LOI_THOAI_VIDEO.md](LOI_THOAI_VIDEO.md)), khớp bảng ghép, đánh số `seg01…seg12`, kèm số giây mục tiêu cho mỗi đoạn.
+2. **[Khuê, Giang] Thu giọng** từng đoạn thành file riêng (`seg01_giang.m4a`…), phòng yên tĩnh, để 1 giây lặng đầu và cuối; đọc lại đoạn nào vấp.
 3. **[Claude] Chọn điểm cắt** cho từng cảnh: xem lại bản ghi (ảnh ghép khung hình), ghi `in/out` theo giây; độ dài cảnh lấy theo độ dài giọng đọc thật của đoạn đó.
 4. **[Claude] Làm thẻ chữ** (Luật 6, tiêu đề MCP, tóm tắt Luật 9 + 8, phụ đề nếu cần) bằng HTML → PNG qua Chrome headless (cùng cách `docs/slides/flows/render.sh`), font có dấu tiếng Việt.
 5. **[Claude] Cắt và chuẩn hóa từng đoạn** bằng ffmpeg: `-ss/-to`, crop/scale/pad theo khung chuẩn, `boxblur` vùng email ở take L (kèm `enable='between(t,a,b)'`), `setpts` để tua nhanh đoạn chờ, `-r 30`, xuất `segNN.mp4`.
