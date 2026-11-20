@@ -32,5 +32,6 @@ jobs:
 
       - name: Run Fuji Fork Integration Tests
         env:
-          FUJI_RPC_URL: https://api.avax-test.network/ext/bc/C/rpc
+          # api.avax-test.network trả HTTP 500 cho runner GitHub (21/11); publicnode chạy ổn
+          FUJI_RPC_URL: https://avalanche-fuji-c-chain-rpc.publicnode.com
         run: forge test --match-test "Fork" -vvv
