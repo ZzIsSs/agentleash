@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Hai tầng chặn</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Gentium+Plus:wght@400;700&display=block');
+html, body { margin: 0; background: transparent; }
+.stage { position: relative; width: 1760px; height: 780px; font-family: 'Gentium Plus', serif; color: #eaf6ff; }
+.node { position: absolute; box-sizing: border-box; border: 3px solid #5fd4ff; border-radius: 14px; background: rgba(5, 14, 34, .92); box-shadow: none; padding: 12px 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.node b { font-size: 28px; line-height: 1.15; }
+.node small { font-size: 21px; line-height: 1.3; color: #b9d3ea; }
+.node.chain { border-color: #ffc35c; box-shadow: none; }
+.node.bad { border-color: #ff6b7a; box-shadow: none; }
+.node.bad b { color: #ff9aa5; }
+.node.ok { border-color: #4be3a4; box-shadow: none; }
+.node.ok b { color: #8ff0c6; }
+.tag { position: absolute; box-sizing: border-box; border: 3px solid #ff6b7a; border-radius: 10px; background: rgba(34, 6, 14, .9); color: #ffb3bb; font-size: 19px; line-height: 1.3; text-align: center; padding: 6px 10px; }
+.note { position: absolute; font-size: 19px; line-height: 1.3; color: #9fbad6; text-align: center; }
+svg { position: absolute; left: 0; top: 0; }
+svg text { font-family: 'Gentium Plus', serif; font-size: 21px; fill: #eaf6ff; paint-order: stroke; stroke: rgba(4, 10, 26, .95); stroke-width: 6px; stroke-linejoin: round; }
+svg text.gold { fill: #ffd38a; }
+svg text.red { fill: #ff9aa5; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <svg width="1760" height="780" viewBox="0 0 1760 780">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5fd4ff"/></marker>
+      <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffc35c"/></marker>
+      <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ff6b7a"/></marker>
+      <marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4be3a4"/></marker>
+    </defs>
+    <g fill="none" stroke-width="3">
+      <!-- luồng chính -->
+      <path d="M220,380 H296" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <path d="M630,380 H686" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <path d="M950,380 H996" stroke="#ffc35c" marker-end="url(#g)"/>
+      <!-- agent bị chiếm bỏ qua tầng 1 -->
+      <path d="M110,320 V240 H820 V296" stroke="#ffc35c" stroke-dasharray="10 8" marker-end="url(#g)"/>
+      <!-- nhánh whitelist -->
+      <path d="M1080,300 V165 H1206" stroke="#ffc35c" marker-end="url(#g)"/>
+      <path d="M1080,460 V605 H1206" stroke="#ffc35c" marker-end="url(#g)"/>
+      <!-- tới duyệt -->
+      <path d="M1510,165 H1665 V296" stroke="#4be3a4" marker-end="url(#k)"/>
+      <path d="M1510,605 H1665 V464" stroke="#4be3a4" marker-end="url(#k)"/>
+      <!-- bị chặn -->
+      <path d="M465,485 V556" stroke="#ff6b7a" marker-end="url(#r)"/>
+      <path d="M820,460 V556" stroke="#ff6b7a" marker-end="url(#r)"/>
+      <path d="M1360,90 V76" stroke="#ff6b7a" marker-end="url(#r)"/>
+      <path d="M1360,690 V702" stroke="#ff6b7a" marker-end="url(#r)"/>
+    </g>
+    <polygon points="1080,300 1160,380 1080,460 1000,380" fill="rgba(5,14,34,.92)" stroke="#ffc35c" stroke-width="2"/>
+    <g text-anchor="middle">
+      <text x="1080" y="374" style="font-size:20px">payTo trong</text>
+      <text x="1080" y="398" style="font-size:20px">whitelist?</text>
+      <text x="658" y="272">hợp lệ</text>
+      <text class="gold" x="465" y="228">--bypass-rules: agent bị chiếm, bỏ qua tầng 1</text>
+      <text class="gold" x="1120" y="232">có</text>
+      <text class="gold" x="1130" y="540">không</text>
+      <text class="red" x="515" y="520">sai</text>
+      <text class="red" x="880" y="520">đang khóa</text>
+    </g>
+  </svg>
+
+  <div class="node" style="left:0;top:320px;width:220px;height:120px"><b>Agent</b><small>đề xuất khoản chi: payTo, số tiền</small></div>
+  <div class="node" style="left:300px;top:280px;width:330px;height:205px"><b>RuleEngine</b><small>tầng 1 · off-chain, chạy trước khi tốn gas</small><small>danh mục · payTo · giá · ≤ 5 lần/phút · không trùng 60 giây · không lặp</small></div>
+  <div class="node bad" style="left:300px;top:560px;width:330px;height:200px"><b>Chặn sớm</b><small>UNREGISTERED_API · INVALID_PAY_TO · PRICE_MISMATCH · RATE_LIMIT_EXCEEDED · LOOP_DETECTED</small></div>
+  <div class="node chain" style="left:690px;top:300px;width:260px;height:160px"><b>AgentPolicy</b><small>tầng 2 · authorize() trên Fuji</small></div>
+  <div class="node bad" style="left:690px;top:560px;width:260px;height:130px"><b>PausedError</b><small>chủ đã bấm Khóa khẩn cấp</small></div>
+  <div class="tag" style="left:1210px;top:16px;width:300px">ExceedsPerTxCap · ExceedsDailyCap</div>
+  <div class="node chain" style="left:1210px;top:90px;width:300px;height:150px"><b>Trusted · API quen</b><small>≤ 0.002 USDC/lượt<br>≤ 0.003 USDC/chu kỳ</small></div>
+  <div class="node chain" style="left:1210px;top:520px;width:300px;height:170px"><b>Sandbox · API lạ</b><small>≤ 0.0005 USDC/lượt<br>≤ 0.001 USDC/chu kỳ<br>vẫn tính vào dailyCap chung</small></div>
+  <div class="tag" style="left:1150px;top:706px;width:420px">ExceedsSandboxPerTxCap · ExceedsSandboxDailyCap · ExceedsDailyCap</div>
+  <div class="node ok" style="left:1570px;top:300px;width:190px;height:160px"><b>Duyệt</b><small>lưu digest, cộng chi tiêu</small></div>
+</div>
+</body>
+</html>

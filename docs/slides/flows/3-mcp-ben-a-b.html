@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>MCP Bên A – Bên B</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Gentium+Plus:wght@400;700&display=block');
+html, body { margin: 0; background: transparent; }
+.stage { position: relative; width: 1760px; height: 780px; font-family: 'Gentium Plus', serif; color: #eaf6ff; }
+.node { position: absolute; box-sizing: border-box; border: 3px solid #5fd4ff; border-radius: 14px; background: rgba(5, 14, 34, .92); box-shadow: none; padding: 12px 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.node b { font-size: 28px; line-height: 1.15; }
+.node small { font-size: 21px; line-height: 1.3; color: #b9d3ea; }
+.node.chain { border-color: #ffc35c; box-shadow: none; }
+.node.bad { border-color: #ff6b7a; box-shadow: none; }
+.node.bad b { color: #ff9aa5; }
+.node.ok { border-color: #4be3a4; box-shadow: none; }
+.node.ok b { color: #8ff0c6; }
+.band { position: absolute; box-sizing: border-box; border: 2px dashed rgba(95, 212, 255, .45); border-radius: 18px; background: rgba(5, 14, 34, .4); }
+.band span { position: absolute; top: 14px; left: 0; right: 0; text-align: center; font-size: 24px; letter-spacing: .03em; color: #9fd8ff; }
+.note { position: absolute; font-size: 20px; line-height: 1.3; color: #9fbad6; text-align: center; }
+svg { position: absolute; left: 0; top: 0; }
+svg text { font-family: 'Gentium Plus', serif; font-size: 21px; fill: #eaf6ff; paint-order: stroke; stroke: rgba(4, 10, 26, .95); stroke-width: 6px; stroke-linejoin: round; }
+svg text.gold { fill: #ffd38a; }
+svg text.red { fill: #ff9aa5; }
+svg text.green { fill: #8ff0c6; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="band" style="left:330px;top:20px;width:900px;height:360px"><span>Bên B · AgentLeash MCP Gateway</span></div>
+
+  <svg width="1760" height="780" viewBox="0 0 1760 780">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5fd4ff"/></marker>
+      <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffc35c"/></marker>
+      <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ff6b7a"/></marker>
+      <marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4be3a4"/></marker>
+    </defs>
+    <g fill="none" stroke-width="3">
+      <!-- 1. Bên A thử API lạ -->
+      <path d="M260,340 H300 V185 H356" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <path d="M620,185 H646" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <path d="M910,185 H936" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <!-- kết quả -->
+      <path d="M1200,160 H1250 V105 H1296" stroke="#4be3a4" marker-end="url(#k)"/>
+      <path d="M1200,210 H1250 V295 H1296" stroke="#ff6b7a" marker-end="url(#r)"/>
+      <!-- 2. chủ ví duyệt -->
+      <path d="M1530,380 V516" stroke="#ff6b7a" stroke-dasharray="10 8" marker-end="url(#r)"/>
+      <path d="M1300,605 H1204" stroke="#ffc35c" marker-end="url(#g)"/>
+      <!-- 3. Bên A gọi lại API quen -->
+      <path d="M130,470 V605 H326" stroke="#4be3a4" marker-end="url(#k)"/>
+      <path d="M760,605 H714" stroke="#ffc35c" stroke-dasharray="10 8" marker-end="url(#g)"/>
+    </g>
+    <g text-anchor="middle">
+      <text x="130" y="286">1. test_unknown_api(url)</text>
+      <text class="red" x="1530" y="456" text-anchor="start" dx="16">link khung điều khiển</text>
+      <text class="gold" x="1252" y="590">2. bấm</text>
+      <text class="green" x="228" y="590">3. gọi lại</text>
+      
+    </g>
+  </svg>
+
+  <div class="node" style="left:0;top:300px;width:260px;height:170px"><b>Bên A</b><small>Claude Code · Antigravity</small><small>gọi tool qua MCP</small></div>
+  <div class="node" style="left:360px;top:110px;width:260px;height:150px"><b>Lọc URL</b><small>chỉ http/https, chặn metadata cloud (UNSAFE_URL)</small></div>
+  <div class="node" style="left:650px;top:110px;width:260px;height:150px"><b>RuleEngine</b><small>payTo · giá · tần suất · vòng lặp</small></div>
+  <div class="node chain" style="left:940px;top:110px;width:260px;height:150px"><b>AgentPolicy</b><small>trần Sandbox ≤ 0.0005 USDC/lượt</small></div>
+  <div class="note" style="left:360px;top:300px;width:840px">Mỗi lần thử đều được ghi vào nhật ký để chủ ví xem lại trên khung điều khiển</div>
+
+  <div class="node ok" style="left:1300px;top:40px;width:460px;height:130px"><b>Lọt trần Sandbox</b><small>trả dữ liệu cho Bên A</small></div>
+  <div class="node bad" style="left:1300px;top:210px;width:460px;height:170px"><b>Bị chặn</b><small>ví dụ API Tin tức 0.001 USDC vượt trần Sandbox: trả lý do tiếng Việt kèm link khung điều khiển</small></div>
+
+  <div class="node" style="left:1300px;top:520px;width:460px;height:170px"><b>Chủ ví</b><small>đăng nhập Privy, xem API bị chặn, bấm “Chuyển thành API quen”</small></div>
+  <div class="node chain" style="left:760px;top:520px;width:440px;height:170px"><b>setWhitelist(payTo)</b><small>chủ ví ký, ghi on-chain trên Fuji; API lạ thành API quen</small></div>
+  <div class="node ok" style="left:330px;top:520px;width:380px;height:170px"><b>call_trusted_api</b><small>dùng hạn mức Trusted 0.002 / 0.003 USDC</small></div>
+
+  <div class="note" style="left:0;top:724px;width:1760px">MCP chỉ giữ khóa agent, không giữ khóa owner · get_policy_status xem số dư, hạn mức và Kill Switch</div>
+</div>
+</body>
+</html>

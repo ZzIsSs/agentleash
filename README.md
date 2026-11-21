@@ -4,7 +4,7 @@ Ví cho AI agent có **"dây xích" on-chain** và **cổng kiểm thử & bảo
 
 **Một câu:** AI agent tự thanh toán API qua chuẩn HTTP **x402**, nhưng USDC nằm trong `AgentPolicy` contract của chủ sở hữu; agent chỉ được xin duyệt chi (`authorize`), smart contract mới là chốt chặn cuối theo hạn mức 2 tầng (Trusted / Sandbox), whitelist và Kill Switch — bảo vệ dev, AI agent builders và người dùng khi agent gọi các API x402 mới qua CLI hoặc MCP.
 
-> **Khai báo mô phỏng (Luật 6):** Bản demo rút ngắn chu kỳ hạn mức xuống **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và hai API Thời tiết / Tỷ giá trả dữ liệu mock. Lượt chạy agent trong video dùng LLM giả lập (`--mock-llm`) theo kịch bản cố định; thanh toán x402, `AgentPolicy`, ERC-1271/EIP-3009 và quản trị policy vẫn chạy thật trên **Avalanche Fuji**. Tích hợp Gemini thật có sẵn qua `npm --prefix agent run demo:gd2`.
+> **Khai báo mô phỏng (Luật 6):** Bản demo rút ngắn chu kỳ hạn mức xuống **120 giây** (`DEMO_PERIOD_SECONDS=120`) thay cho 1 ngày thật, và ba API Thời tiết / Tỷ giá / Tin tức trả dữ liệu mock. Cảnh agent bị chiếm mã trong video là kịch bản giả lập (`--bypass-rules`, gửi tiền tới địa chỉ lạ `0x1111…`). Bên A trong video là Claude Code thật gọi MCP AgentLeash; thanh toán x402, `AgentPolicy`, ERC-1271/EIP-3009 và quản trị policy chạy thật trên **Avalanche Fuji**. CLI agent có thêm chế độ LLM giả lập (`--mock-llm`) để chạy thử không cần key, và tích hợp Gemini thật qua `npm --prefix agent run demo:gd2`.
 
 ---
 

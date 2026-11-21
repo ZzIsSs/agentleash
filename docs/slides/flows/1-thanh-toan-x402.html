@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Luồng thanh toán x402</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Gentium+Plus:wght@400;700&display=block');
+html, body { margin: 0; background: transparent; }
+.stage { position: relative; width: 1760px; height: 780px; font-family: 'Gentium Plus', serif; color: #eaf6ff; }
+.band { position: absolute; top: 0; height: 770px; box-sizing: border-box; border: 2px dashed rgba(95, 212, 255, .38); border-radius: 18px; background: rgba(5, 14, 34, .38); }
+.band span { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 22px; letter-spacing: .05em; color: #9fd8ff; }
+.band.fuji { border-color: rgba(255, 195, 92, .5); }
+.band.fuji span { color: #ffd38a; }
+.head { position: absolute; top: 14px; width: 250px; height: 88px; margin-left: -125px; box-sizing: border-box; border: 3px solid #5fd4ff; border-radius: 14px; background: rgba(5, 14, 34, .92); box-shadow: none; text-align: center; padding-top: 9px; }
+.head b { display: block; font-size: 28px; }
+.head small { display: block; font-size: 19px; color: #a9c4de; }
+.head.chain { border-color: #ffc35c; box-shadow: none; }
+svg { position: absolute; left: 0; top: 0; }
+svg text { font-family: 'Gentium Plus', serif; font-size: 21px; fill: #eaf6ff; paint-order: stroke; stroke: rgba(4, 10, 26, .95); stroke-width: 6px; stroke-linejoin: round; }
+svg text.gold { fill: #ffd38a; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="band" style="left:10px;width:572px"><span>Máy chạy agent (off-chain)</span></div>
+  <div class="band fuji" style="left:1178px;width:572px"><span>Avalanche Fuji (on-chain)</span></div>
+
+  <div class="head" style="left:150px"><b>AI Agent</b><small>ví chỉ giữ ít AVAX gas</small></div>
+  <div class="head" style="left:442px"><b>RuleEngine</b><small>tầng 1, chặn sớm</small></div>
+  <div class="head" style="left:734px"><b>API Seller</b><small>Thời tiết · Tỷ giá</small></div>
+  <div class="head" style="left:1026px"><b>Facilitator x402</b><small>cổng 4022</small></div>
+  <div class="head chain" style="left:1318px"><b>Circle USDC</b><small>FiatTokenV2_2</small></div>
+  <div class="head chain" style="left:1610px"><b>AgentPolicy</b><small>giữ USDC của chủ</small></div>
+
+  <svg width="1760" height="780" viewBox="0 0 1760 780">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5fd4ff"/></marker>
+      <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffc35c"/></marker>
+      <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9fbad6"/></marker>
+    </defs>
+    <g stroke="rgba(159,216,255,.45)" stroke-width="2" stroke-dasharray="6 7">
+      <line x1="150" y1="102" x2="150" y2="700"/>
+      <line x1="442" y1="102" x2="442" y2="700"/>
+      <line x1="734" y1="102" x2="734" y2="700"/>
+      <line x1="1026" y1="102" x2="1026" y2="700"/>
+      <line x1="1318" y1="102" x2="1318" y2="700"/>
+      <line x1="1610" y1="102" x2="1610" y2="700"/>
+    </g>
+
+    <!-- lời gọi: nét liền xanh; trả về: nét đứt xám; bước on-chain: vàng -->
+    <g fill="none" stroke-width="3">
+      <line x1="150" y1="140" x2="730" y2="140" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <line x1="734" y1="184" x2="154" y2="184" stroke="#9fbad6" stroke-dasharray="9 7" marker-end="url(#r)"/>
+      <line x1="150" y1="228" x2="438" y2="228" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <line x1="442" y1="272" x2="154" y2="272" stroke="#9fbad6" stroke-dasharray="9 7" marker-end="url(#r)"/>
+      <line x1="150" y1="316" x2="1606" y2="316" stroke="#ffc35c" marker-end="url(#g)"/>
+      <line x1="1610" y1="360" x2="154" y2="360" stroke="#9fbad6" stroke-dasharray="9 7" marker-end="url(#r)"/>
+      <line x1="150" y1="404" x2="730" y2="404" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <line x1="734" y1="448" x2="1022" y2="448" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <line x1="1026" y1="492" x2="1314" y2="492" stroke="#5fd4ff" marker-end="url(#a)"/>
+      <line x1="1318" y1="536" x2="1606" y2="536" stroke="#ffc35c" marker-end="url(#g)"/>
+      <line x1="1610" y1="580" x2="1322" y2="580" stroke="#ffc35c" stroke-dasharray="9 7" marker-end="url(#g)"/>
+      <line x1="1318" y1="624" x2="1030" y2="624" stroke="#9fbad6" stroke-dasharray="9 7" marker-end="url(#r)"/>
+      <line x1="734" y1="668" x2="154" y2="668" stroke="#9fbad6" stroke-dasharray="9 7" marker-end="url(#r)"/>
+    </g>
+
+    <g text-anchor="middle">
+      <text x="442" y="130">1. Gọi API trả phí (GET /weather)</text>
+      <text x="442" y="174">2. 402 Payment Required · payTo, 0.001 USDC</text>
+      <text x="296" y="218">3. Kiểm danh mục, payTo, giá, tần suất</text>
+      <text x="296" y="262">hợp lệ</text>
+      <text class="gold" x="880" y="306">4. authorize(payTo, amount, nonce): lưu digest EIP-712, trừ hạn mức</text>
+      <text x="880" y="350">digest đã duyệt</text>
+      <text x="442" y="394">5. Gửi lại kèm header PAYMENT-SIGNATURE</text>
+      <text x="880" y="438">6. verify + settle</text>
+      <text x="1172" y="482">7. transferWithAuthorization (EIP-3009)</text>
+      <text class="gold" x="1464" y="526">8. isValidSignature(digest)</text>
+      <text class="gold" x="1464" y="570">0x1626ba7e (ERC-1271)</text>
+      <text x="1172" y="614">9. Đã chuyển 0.001 USDC: AgentPolicy → payTo</text>
+      <text x="442" y="658">10. 200 OK + dữ liệu</text>
+    </g>
+  </svg>
+</div>
+</body>
+</html>
