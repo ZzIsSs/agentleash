@@ -4,7 +4,7 @@
 (function (global) {
   "use strict";
 
-  const EXPLORER = "https://testnet.snowscan.xyz";
+  const EXPLORER = "https://testnet.snowtrace.io";
   const ADDRESSES = {
     policyMain: "0x62Ea5e422b3ef66174B6Dd6Aa855F1f036894177",
     policyAlt: "0x91Fa78B0c14D2b391A42e10C88F092D1431032c0",

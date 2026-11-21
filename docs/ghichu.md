@@ -39,7 +39,7 @@ Hiện trạng code `agentleash/` **không vi phạm Luật 4**, mà giải tr�
 - [ ] **Luật 8 — Nhắc đúng giới hạn pháp lý Việt Nam (bỏ qua bị trừ điểm, nêu đúng được cộng điểm):**
   - Nhấn mạnh trong slide & lời pitch: **Crypto/USDC trên testnet không phải tiền pháp định tại Việt Nam**, doanh nghiệp trả lương nhân viên tại VN bắt buộc bằng **VND**, và AgentLeash **chỉ là lớp kiểm soát ngân sách kỹ thuật (technical guardrail / tool allowance)** chứ không cung cấp dịch vụ tư vấn tài chính có thu phí hay nắm giữ tiền hộ người dùng.
 - [ ] **Luật 9 — Trả lời sắc nét 3 câu hỏi bắt buộc:**
-  1. **Why on-chain?** Luật chi tiêu (`perTxCap`, `dailyCap`, `whitelist`, `paused`) và dấu vết kiểm toán (`Authorized` / `Released`) nằm bất biến trên Avalanche; kể cả server/agent/Privy bị chiếm bỏ qua rule engine off-chain thì `AgentPolicy` vẫn chặn trên chuỗi và chứng minh được trên Snowscan.
+  1. **Why on-chain?** Luật chi tiêu (`perTxCap`, `dailyCap`, `whitelist`, `paused`) và dấu vết kiểm toán (`Authorized` / `Released`) nằm bất biến trên Avalanche; kể cả server/agent/Privy bị chiếm bỏ qua rule engine off-chain thì `AgentPolicy` vẫn chặn trên chuỗi và chứng minh được trên Snowtrace.
   2. **Why Avalanche?** Thanh toán `x402` pay-per-request cần xác nhận dưới 1 giây (`<1s` finality) và phí gas cực thấp để các micro-transaction `0.001 USDC` khả thi, đồng thời tương thích EVM (`ERC-1271`, `EIP-3009`, `ERC-8004`) và dễ mở rộng sang Avalanche L1 riêng cho doanh nghiệp sau này.
   3. **Where does the money / business model come from?** Doanh nghiệp/người dùng tự nạp ngân sách vào contract của riêng họ (non-custodial, không in token mới, không thu yield ảo); doanh thu bền vững của AgentLeash đến từ phí SaaS quản trị / Dashboard Proxy / gói enterprise cho đội dev & người dùng non-tech.
 - [ ] **Luật 3 & Luật 5 (Kiểm tra nhanh):**
@@ -52,6 +52,6 @@ Hiện trạng code `agentleash/` **không vi phạm Luật 4**, mà giải tr�
 
 - [ ] **Giữ nguyên vẹn luồng lõi Fuji đang chạy ổn** (`x402` + `ERC-1271` + `EIP-3009 USDC` + `ERC-8004` + Dashboard), không thêm tính năng mạo hiểm làm vỡ demo sát giờ nộp.
 - [ ] **Trong video 2–3 phút, bắt buộc quay đủ 3 cảnh đắt giá nhất:**
-  1. Gọi API `x402` thành công và **mở link tx trên Snowscan Fuji** (chứng minh chạy thật, không chỉ là chatbot mock).
+  1. Gọi API `x402` thành công và **mở link tx trên Snowtrace Fuji** (chứng minh chạy thật, không chỉ là chatbot mock).
   2. Bật **`--bypass-rules` (Bỏ qua Rule Engine)** hoặc giả lập prompt injection vượt cap -> chứng minh **lớp on-chain `AgentPolicy` vẫn chặn đứng** (`ExceedsPerTxCap` / `ExceedsSandboxPerTxCap`).
   3. Bấm **Kill Switch (`pause`)** trên Dashboard -> chứng minh khóa cứng dòng tiền tức thì (`PausedError` / `isValidSignature = 0xffffffff`).

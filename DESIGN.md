@@ -114,7 +114,7 @@ Every surface communicates one core distinction within 3 seconds: whether funds 
 A restrained dark slate neutral foundation supports four high-meaning state hues that never compete as decoration.
 
 ### Primary
-- **Flow Cyan (`flow-signal`)** (`#22d3ee`): Reserved for x402 money-flow paths, active settlement amounts, primary owner CTAs (paired with `#020617` dark ink), and Snowscan verification links.
+- **Flow Cyan (`flow-signal`)** (`#22d3ee`): Reserved for x402 money-flow paths, active settlement amounts, primary owner CTAs (paired with `#020617` dark ink), and Snowtrace verification links.
 - **Flow Tint (`flow-ink`)** (`#67e8f9`): Hover state for primary cyan buttons and active link highlights.
 
 ### Secondary

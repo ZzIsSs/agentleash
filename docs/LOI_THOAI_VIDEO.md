@@ -34,7 +34,7 @@ Dành cho **Khuê** và **Giang** thu giọng (21/11/2026). Video dài khoảng 
 ## Lời thoại
 
 ### Đoạn 1 · 0:00–0:07 · khoảng 6 giây · Giang
-*Màn hình: agent bị chiếm mã cố trả tiền, hợp đồng chặn lại.*
+*Màn hình: cảnh dựng bằng AI, lập trình viên hoảng loạn giữa các cảnh báo đỏ, bấm nút xanh, mọi thứ yên trở lại (video có sẵn tiếng nền, giọng đọc đè lên).*
 
 > Nếu AI agent của bạn bị lừa và cố trả tiền cho một API lạ, chuyện gì sẽ xảy ra?
 
