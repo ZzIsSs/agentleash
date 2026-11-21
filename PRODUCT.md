@@ -9,7 +9,7 @@ web
 ## Users
 
 - **Primary user — AI Agent Owner / Developer (Bên B operator & UniHack judge):** Builders and non-custodial wallet owners running autonomous x402 AI agents (via CLI, MCP Gateway in Antigravity/Claude Code, or local demo) who need real-time visibility into USDC spending limits, instant 1-click promotion of newly tested Sandbox APIs to Trusted Whitelist, and an immediate on-chain emergency Kill Switch (`pause()`/`unpause()`).
-- **Secondary observer — Hackathon Evaluator / Auditor:** Evaluators testing the 7-step demo flow on Avalanche Fuji C-Chain via Privy email login (no browser wallet extension required) and verifying every transaction on Snowscan.
+- **Secondary observer — Hackathon Evaluator / Auditor:** Evaluators testing the 7-step demo flow on Avalanche Fuji C-Chain via Privy email login (no browser wallet extension required) and verifying every transaction on Snowtrace.
 
 ## Product Purpose
 
@@ -25,7 +25,7 @@ Unlike standard EOA agent wallets or single-threshold allowance modules (such as
 
 ## Operating Context
 
-- **Network & Settlement:** Avalanche Fuji Testnet (`chainId 43113`), USDC (`FiatTokenV2_2` supporting ERC-1271), Routescan event indexing + Fuji RPC polling every 3 seconds, Snowscan explorer links.
+- **Network & Settlement:** Avalanche Fuji Testnet (`chainId 43113`), USDC (`FiatTokenV2_2` supporting ERC-1271), Routescan event indexing + Fuji RPC polling every 3 seconds, Snowtrace explorer links (`testnet.snowtrace.io`).
 - **Authentication & Signing:** Privy embedded wallet via email login (`@privy-io/react-auth` + pure `viem`); read-only observer mode works without sign-in; mutating on-chain actions require the policy owner's Privy wallet signature after `simulateContract`.
 - **Two-Sided Architecture (Side A / Side B):** Side A coding agents/MCP clients request paid data (`test_unknown_api`, `call_trusted_api`, `get_policy_status`); Side B AgentLeash enforces off-chain Rule Engine checks + on-chain `AgentPolicy` caps and logs off-chain/on-chain rejections to `agent/logs/audit.json`.
 - **Competition Demo Constraint (Rule 6):** Demo cycles use `120` seconds (`DEMO_PERIOD_SECONDS=120`) instead of `1` day, and mock structured sellers (`Thời tiết`, `Tỷ giá`) with mock Gemini (`--mock-llm`) for deterministic 2-minute evaluation.

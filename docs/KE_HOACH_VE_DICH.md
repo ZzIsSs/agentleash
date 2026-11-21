@@ -38,7 +38,7 @@ Lập ngày 13/11/2026 cho Nguyên. File này gom **mọi việc còn lại** đ
 |---|---|---|
 | **T6 13/11** | 1. Dọn git: merge PR #2, tạo nhánh `gd2-agent-sellers`, commit phần GĐ 2, mở PR (0.5h)<br>2. Gỡ blocker 1 theo quyết định 1: deploy policy demo `period=120s`, whitelist 2 seller, `setCaps(2000, 3000, 500, 1000)`, nạp USDC; cập nhật `DEMO_PERIOD_SECONDS`, SPEC, README (1.5h)<br>3. Gỡ blocker 2 theo quyết định 2 (0.5h)<br>4. Chạy Kiểm chứng 3, tick ROADMAP, ghi session log (1h)<br>5. **Mời `tuantqse90` làm collaborator** (5 phút) | `agent/logs/audit.json` có 3 lần 200 OK và lần 4 revert `ExceedsDailyCap`; lời mời đã gửi |
 | **T7 14/11** | GĐ 3a (7–8h): gỡ wagmi, chép `providers.tsx` từ starter kit `privy-agent-wallet`, đăng nhập email bằng Privy, đọc contract bằng viem. Màn Tổng quan: đồng hồ hạn mức Trusted/Sandbox, số dư USDC, trạng thái agent. Dark Mode, Bản A | Đăng nhập được, đồng hồ hiện số khớp on-chain |
-| **CN 15/11** | GĐ 3b (7–8h): Dòng tiền (danh sách event `Authorized` kèm link Snowscan), Kill switch gọi `pause()`, màn Bị từ chối (gộp revert on-chain và `audit.json` qua một API route nhỏ), 3 trạng thái giao dịch (đang ký, đang chờ, xong) | Bấm pause trên web xong, agent chạy tiếp thì bị chặn |
+| **CN 15/11** | GĐ 3b (7–8h): Dòng tiền (danh sách event `Authorized` kèm link Snowtrace), Kill switch gọi `pause()`, màn Bị từ chối (gộp revert on-chain và `audit.json` qua một API route nhỏ), 3 trạng thái giao dịch (đang ký, đang chờ, xong) | Bấm pause trên web xong, agent chạy tiếp thì bị chặn |
 | **T2 16/11** | GĐ 3c (7–8h): Luật chi tiêu (`setCaps`, `setWhitelist`), cập nhật realtime (`watchContractEvent` hoặc hỏi định kỳ 3 giây), chạy agent từ CLI song song với dashboard. **Chạy trọn 7 bước demo trong [SPEC.md](SPEC.md)** | 7 bước chạy liền một mạch, không phải sửa tay |
 | **T3 17/11** | Dư giờ hoặc phương án B của GĐ 3 (4h). Bắt đầu slide (3h): dàn ý 10–12 trang, đủ 3 câu bắt buộc và phần luật Việt Nam. **20:00 Workshop 3** (đăng ký Luma trước) | Demo ổn định; có slide nháp |
 | **T4 18/11** | GĐ 4 (6–8h), làm theo thứ tự, hết giờ thì dừng: nút tạo agent qua factory → công tắc "bỏ qua rule engine" trên UI → danh tính ERC-8004 (registry `0x8004A818BFB912233c491871b3d84c89A494BD9e`) | Mỗi mục làm xong có PR riêng, hoặc ghi rõ "đã bỏ" ở ROADMAP |
@@ -67,14 +67,14 @@ Rút từ [doc/07](../../doc/07-yeu-cau-nop-bai.md) và [doc/06](../../doc/06-ti
 | `tuantqse90` đã **chấp nhận** lời mời collaborator (hoặc repo để public) | ✅ Repo public từ 14/11; 21/11 mở bằng tab ẩn danh để kiểm lại |
 | README nêu cách chạy, kiến trúc, địa chỉ contract và mạng | ✅ (đã cập nhật README & hướng dẫn MCP `18/11`) |
 | Test cho các đường tiền (Foundry đã có) | ✅ |
-| Link Snowscan cho trường "Contract address" | ✅ (factory `0x369251fC…A864`) |
-| Slide Google Slides hoặc Canva, "Anyone with the link can view" | 🟡 Nháp 12 trang Canva xong (`DAHbCvD2kR8`); 19–21/11 bật quyền xem & kiểm ẩn danh |
+| Link Snowtrace cho trường "Contract address" | ✅ Factory `https://testnet.snowtrace.io/address/0x369251fC256D8Ae3B25F66Fe1c4b3114A06BA864#code` (Snowscan testnet đã chết từ 21/11) |
+| Slide Google Slides hoặc Canva, "Anyone with the link can view" | 🟡 Bản Canva 20 trang (`canva.link/jaccx7sy0wk2lam`, xem [SLIDES.md](SLIDES.md)); trước khi nộp bật **Anyone with the link → Can view** và mở thử ở tab ẩn danh |
 | Slide trả lời đủ 3 câu: vì sao on-chain, vì sao Avalanche, tiền từ đâu | 17/11 |
 | Slide nêu giới hạn luật Việt Nam: crypto không phải tiền pháp định, không nhận tiền thật từ người dùng, non-custodial | 17/11 |
 | Slide nhấn Avalanche Integration (25 điểm): ERC-1271 + EIP-3009 trên USDC Fuji, x402, facilitator tự host, ERC-8004 nếu kịp | 19/11 |
 | Khai dữ liệu mock và chu kỳ giả lập ngay đầu pitch và video | 20/11 |
 | Video 2–3 phút, xem được khi chưa đăng nhập | 20/11 |
-| Live app (không bắt buộc) | Để trống: nhóm không dùng Vercel nữa (chốt 20/11), giám khảo xem qua video demo, repo và Snowscan |
+| Live app (không bắt buộc) | Để trống: nhóm không dùng Vercel nữa (chốt 20/11), giám khảo xem qua video demo, repo và Snowtrace |
 | "What it does" ≤ 800 ký tự: vấn đề, cho ai, cái gì chạy được hôm nay | 20/11 |
 | "Anything else" ≤ 800 ký tự: cách chạy agent local, rule engine + policy contract + LLM không giữ khóa | 20/11 |
 | Mở mọi link bằng tab ẩn danh rồi mới bấm **Submit** | 21/11 |
