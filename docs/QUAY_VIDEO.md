@@ -17,7 +17,7 @@ Nguồn: `../doc/07-yeu-cau-nop-bai.md`, `../doc/03-the-le-dieu-kien.md` (tổng
 
 ## 2. Nên có (ảnh hưởng điểm Presentation + UI/UX & Demo = 20đ)
 
-- 3 cảnh đắt giá: (1) x402 thành công + mở tx trên **Snowscan Fuji**; (2) `--bypass-rules` → contract vẫn chặn (`ExceedsPerTxCap` / `ExceedsSandboxPerTxCap`); (3) **Kill Switch** (`pause`).
+- 3 cảnh đắt giá: (1) x402 thành công + mở tx trên **Snowtrace Fuji**; (2) `--bypass-rules` → contract vẫn chặn (`ExceedsPerTxCap` / `ExceedsSandboxPerTxCap`); (3) **Kill Switch** (`pause`).
 - Nhắc ngắn Luật 8 (crypto không phải tiền pháp định ở VN, AgentLeash chỉ là guardrail kỹ thuật, non-custodial) và Luật 9 (why on-chain, why Avalanche, tiền từ đâu) nếu còn thời lượng.
 
 ## 3. Kịch bản (chốt 20/11: bản Nguyên + bổ sung cảnh từ [KICH_BAN_VIDEO_GIANG.md](KICH_BAN_VIDEO_GIANG.md), ước tính ~2:40)
@@ -30,20 +30,20 @@ Bố cục: VS Code (Claude Code = Bên A) bên trái ~40%, Chrome Dashboard `lo
 | 0:07–0:17 | Đọc câu khai Luật 6 (bản rút gọn của mục 1). | Chữ khai Luật 6 |
 | 0:17–0:27 | **Take L (đăng nhập, thêm 21/11):** trang `/` đang "Chỉ xem" (nút Khóa khẩn cấp mờ) → bấm **Đăng nhập bằng email** → popup Privy nhập email → nhập OTP (cắt khoảng chờ mã) → header hiện email đã che + **Đăng xuất**, thanh bước "1 Đăng nhập" được tick. Lời gợi ý: chủ ví đăng nhập bằng email, Privy tạo ví nhúng, không cài extension hay giữ seed phrase; khóa chủ ví tách khỏi khóa agent. | Header đổi từ "Chỉ xem" sang email đã che |
 | 0:27–0:37 | `/mcp`: rê chuột theo sơ đồ Bên A (Claude Code) → AgentLeash → seller x402. | Sơ đồ Bên A – Bên B |
-| 0:37–0:57 | **Take A:** Bên A gọi `call_trusted_api` weather → thành công → `/flows` → mở tx trên Snowscan. | `/flows` sơ đồ chuyển động 0,001 USDC; tx Snowscan |
+| 0:37–0:57 | **Take A:** Bên A gọi `call_trusted_api` weather → thành công → `/flows` → mở tx trên Snowtrace. | `/flows` sơ đồ chuyển động 0,001 USDC; tx Snowtrace |
 | 0:57–1:12 | **Take B (1):** Bên A gọi `test_unknown_api` với `news` (4024) → bị chặn → chuyển sang `/audit`, quay cận dòng bị từ chối. | `ExceedsSandboxPerTxCap` trong mục Bị từ chối |
 | 1:12–1:27 | **Take B (2):** bấm **Chuyển thành API quen** trên `/audit` → popup Privy → ký `setWhitelist`. | Popup Privy, trạng thái ký xong |
-| 1:27–1:35 | **Take B (3):** Bên A gọi lại `news` bằng `call_trusted_api` → thành công. | Dữ liệu `news` + link Snowscan |
+| 1:27–1:35 | **Take B (3):** Bên A gọi lại `news` bằng `call_trusted_api` → thành công. | Dữ liệu `news` + link Snowtrace |
 | 1:35–1:50 | **Take C:** terminal riêng chạy `npm --prefix agent run demo:bypass` (tắt hẳn rule engine) → contract vẫn chặn. | `ExceedsSandboxPerTxCap` trên terminal |
 | 1:50–2:10 | **Take D:** bấm **KHÓA KHẨN CẤP** trên Header → xác nhận → ký Privy → Header "Đang khóa" → Bên A gọi tiếp → `PausedError`. | Header "Đang khóa"; lỗi `PausedError` |
-| 2:10–2:40 | **Take E (rút từ 40 xuống 30 giây để bù take L):** trang `/` → Snowscan Factory `0x3692…A864` đã verify → khung chữ tóm tắt 3 câu hỏi Luật 9 + Luật 8. | Factory verified; khung tóm tắt |
+| 2:10–2:40 | **Take E (rút từ 40 xuống 30 giây để bù take L):** trang `/` → Snowtrace Factory `0x3692…A864` đã verify → khung chữ tóm tắt 3 câu hỏi Luật 9 + Luật 8. | Factory verified; khung tóm tắt |
 
 Ghi chú khi quay:
 
 - **Take L:** trước khi bấm quay phải **Đăng xuất** (Privy giữ phiên đăng nhập). Popup Privy hiện email lúc gõ và ở màn "mã đã gửi tới …" → khi dựng làm mờ vùng email (ffmpeg `boxblur` theo khung hình). Xem OTP trên điện thoại, không mở Gmail trên màn hình đang quay. Quay lại take L thì Đăng xuất rồi lấy OTP mới.
 
 - Bỏ cảnh `ExceedsDailyCap` (chốt 20/11) cho kịp thời lượng; Sandbox (take B) và bypass (take C) đã chứng minh contract chặn.
-- Tx bị từ chối **không lên chuỗi** (revert ở bước ước tính gas) nên không có link Snowscan; chỉ mở Snowscan cho tx thành công, tx bị chặn thì xem lý do trên `/audit`.
+- Tx bị từ chối **không lên chuỗi** (revert ở bước ước tính gas) nên không có link Snowtrace; chỉ mở Snowtrace cho tx thành công, tx bị chặn thì xem lý do trên `/audit`.
 - Không whitelist `0x1111…` của `demo:bypass` (địa chỉ "hacker"); API được chuyển thành API quen là `news`.
 - Take A + B tiêu 0,002 USDC, nằm trong trần Trusted 0,003/chu kỳ. Quay lại take nào thì chờ ≥120 giây cho chu kỳ reset.
 - Quay lại take B: gỡ `news` khỏi whitelist trước. Sau take D: bấm **Mở khóa** trước khi quay lại.
@@ -111,7 +111,7 @@ Ghi chú khi quay:
 
 | Thời gian | Nguồn | Cách xử lý |
 |---|---|---|
-| 0:00–0:07 | `takeC_bypass` (dòng `[BLOCKED ON-CHAIN]`) | Hook; thẻ chữ Luật 6 ở góc từ giây 0 |
+| 0:00–0:07 | `AgentLeash_Hook_Logo_7s.mp4` (Nguyên gửi 21/11, dựng bằng AI, 1280×720 24 fps, có tiếng nền) | Hook; phóng lên 1080p, đổi 30 fps; dải "MÔ PHỎNG · cảnh mở đầu dựng bằng AI" có nền tối từ giây 0; khi ghép giọng thì hạ tiếng nền xuống dưới giọng đọc |
 | 0:07–0:17 | Thẻ chữ Luật 6 | PNG khai báo giả lập (120 s, mock data, mock LLM; x402 + AgentPolicy thật trên Fuji) |
 | 0:17–0:27 | `takeL_login` | Chỉ Chrome; **làm mờ email** trong popup Privy (ô nhập + dòng "Please check…"); cắt khoảng chờ OTP |
 | 0:27–0:37 | `takeM_mcp_tools` + `docs/slides/flows/3-mcp-ben-a-b.png` | Sơ đồ 4–5 s rồi 3 thẻ tool |
